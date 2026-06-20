@@ -47,14 +47,14 @@ model Worklog {
   talento   Talento  @relation(fields: [talentoId], references: [id])
   fecha     DateTime
 
-  actividadesRealizadas String @db.Text
-  queSeEjecuto          String @db.Text
-  detallesRelevantes    String @db.Text
-  informeAvances        String @db.Text
-  objetivoDia           String @db.Text
+  actividadesRealizadas String? @db.Text
+  queSeEjecuto          String? @db.Text
+  detallesRelevantes    String? @db.Text
+  informeAvances        String? @db.Text
+  objetivoDia           String? @db.Text
 
   estadoEnvio String
-  horaEnvio   String
+  horaEnvio   String?
 
   dia    String?
   semana Int?
