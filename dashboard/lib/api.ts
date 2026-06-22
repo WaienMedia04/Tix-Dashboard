@@ -42,8 +42,6 @@ export interface DashboardData {
 export class CodigoInvalidoError extends Error {}
 export class EmpresaNoEncontradaError extends Error {}
 
-export const storageKey = (slug: string) => `talentix_codigo_${slug}`;
-
 export async function listarEmpresas(): Promise<Empresa[]> {
   const res = await fetch(`${API_URL}/empresas`, { cache: "no-store" });
   if (!res.ok) {

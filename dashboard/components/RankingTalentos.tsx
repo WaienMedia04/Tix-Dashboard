@@ -3,13 +3,13 @@ import type { TalentoRanking } from "@/lib/api";
 function colorPuntaje(puntaje: number | null): string {
   if (puntaje === null) return "text-muted";
   if (puntaje >= 8) return "text-success";
-  if (puntaje >= 6) return "text-accent";
+  if (puntaje >= 6) return "text-warning";
   return "text-danger";
 }
 
 export function RankingTalentos({ talentos }: { talentos: TalentoRanking[] }) {
   return (
-    <section className="rounded-xl border border-surface-border bg-surface">
+    <section className="rounded-md border border-surface-border bg-surface shadow-sm">
       <div className="border-b border-surface-border px-5 py-4">
         <h2 className="text-base font-semibold text-foreground">Ranking de talentos</h2>
         <p className="text-sm text-muted">Ordenado por puntaje IA promedio</p>

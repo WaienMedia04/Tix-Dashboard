@@ -15,7 +15,7 @@ function resumenDe(w: WorklogReciente): string {
 
 export function WorklogsRecientes({ worklogs }: { worklogs: WorklogReciente[] }) {
   return (
-    <section className="rounded-xl border border-surface-border bg-surface">
+    <section className="rounded-md border border-surface-border bg-surface shadow-sm">
       <div className="border-b border-surface-border px-5 py-4">
         <h2 className="text-base font-semibold text-foreground">Bitácoras recientes</h2>
         <p className="text-sm text-muted">Últimos {worklogs.length} reportes registrados</p>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { type Empresa, listarEmpresas } from "@/lib/api";
+import { BrandMark } from "@/components/BrandMark";
 
 export default function Home() {
   const [empresas, setEmpresas] = useState<Empresa[] | null>(null);
@@ -16,8 +17,8 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-1 flex-col items-center bg-background px-4 py-16">
-      <p className="text-sm font-semibold tracking-wide text-accent uppercase">Talentix</p>
-      <h1 className="mt-2 text-2xl font-semibold text-foreground">Selecciona una empresa</h1>
+      <BrandMark />
+      <h1 className="mt-3 text-2xl font-semibold text-foreground">Selecciona una empresa</h1>
       <p className="mt-1 text-sm text-muted">Te pedirá el código de acceso la primera vez.</p>
 
       <div className="mt-10 w-full max-w-md space-y-3">
@@ -27,7 +28,7 @@ export default function Home() {
           <Link
             key={empresa.id}
             href={`/${empresa.slug}`}
-            className="block rounded-xl border border-surface-border bg-surface px-5 py-4 transition-colors hover:border-accent"
+            className="block rounded-md border border-surface-border bg-surface px-5 py-4 shadow-sm transition-colors hover:border-accent"
           >
             <p className="font-medium text-foreground">{empresa.nombre}</p>
             <p className="text-sm text-muted">

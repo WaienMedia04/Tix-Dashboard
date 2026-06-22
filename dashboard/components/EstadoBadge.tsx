@@ -1,23 +1,27 @@
 const ESTILOS: Record<string, string> = {
-  enviada: "bg-success/15 text-success border-success/30",
-  no_enviada: "bg-danger/15 text-danger border-danger/30",
-  permiso: "bg-accent/15 text-accent border-accent/30",
-  default: "bg-surface-border text-muted border-surface-border",
+  enviada: "bg-success/10 text-success border-success/20",
+  no_enviada: "bg-danger/10 text-danger border-danger/20",
+  permiso: "bg-warning/10 text-warning border-warning/20",
+  default: "bg-surface text-muted border-surface-border",
 };
 
-function claseParaEstado(estado: string): string {
-  if (estado.includes("✅")) return ESTILOS.enviada;
-  if (estado.includes("❌")) return ESTILOS.no_enviada;
-  if (estado.includes("📋")) return ESTILOS.permiso;
+function claseParaEstado(estadoCrudo: string): string {
+  if (estadoCrudo.includes("✅")) return ESTILOS.enviada;
+  if (estadoCrudo.includes("❌")) return ESTILOS.no_enviada;
+  if (estadoCrudo.includes("📋")) return ESTILOS.permiso;
   return ESTILOS.default;
+}
+
+function limpiarTexto(estadoCrudo: string): string {
+  return estadoCrudo.replace(/[✅❌📋]/g, "").trim();
 }
 
 export function EstadoBadge({ estado }: { estado: string }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap ${claseParaEstado(estado)}`}
+      className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap ${claseParaEstado(estado)}`}
     >
-      {estado}
+      {limpiarTexto(estado)}
     </span>
   );
 }
