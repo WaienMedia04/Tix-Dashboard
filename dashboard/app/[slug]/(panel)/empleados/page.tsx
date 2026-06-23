@@ -1,5 +1,5 @@
-import { ProximamenteStub } from "@/components/panel/ProximamenteStub";
+import { EmpleadosView } from "@/components/panel/empleados/EmpleadosView";
 
 export default function EmpleadosPage() {
-  return <ProximamenteStub titulo="Empleados" />;
+  return <EmpleadosView />;
 }

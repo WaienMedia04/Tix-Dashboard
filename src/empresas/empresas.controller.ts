@@ -1,6 +1,7 @@
 import { Controller, Get, Headers, Param, Query } from '@nestjs/common';
 import { EmpresasService } from './empresas.service';
 import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
+import { EmpleadoDetalleQueryDto } from './dto/empleado-detalle-query.dto';
 
 @Controller('empresas')
 export class EmpresasController {
@@ -17,7 +18,10 @@ export class EmpresasController {
     @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
     @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
   ) {
-    return this.empresasService.dashboard(slug, codigoAccesoQuery ?? codigoAccesoHeader);
+    return this.empresasService.dashboard(
+      slug,
+      codigoAccesoQuery ?? codigoAccesoHeader,
+    );
   }
 
   @Get(':slug/bitacoras')
@@ -27,6 +31,39 @@ export class EmpresasController {
     @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
     @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
   ) {
-    return this.empresasService.bitacoras(slug, codigoAccesoQuery ?? codigoAccesoHeader, query);
+    return this.empresasService.bitacoras(
+      slug,
+      codigoAccesoQuery ?? codigoAccesoHeader,
+      query,
+    );
+  }
+
+  @Get(':slug/empleados')
+  empleados(
+    @Param('slug') slug: string,
+    @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
+    @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
+  ) {
+    return this.empresasService.empleados(
+      slug,
+      codigoAccesoQuery ?? codigoAccesoHeader,
+    );
+  }
+
+  @Get(':slug/empleados/:talentoId')
+  empleadoDetalle(
+    @Param('slug') slug: string,
+    @Param('talentoId') talentoId: string,
+    @Query() query: EmpleadoDetalleQueryDto,
+    @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
+    @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
+  ) {
+    return this.empresasService.empleadoDetalle(
+      slug,
+      codigoAccesoQuery ?? codigoAccesoHeader,
+      talentoId,
+      query.page ?? 1,
+      query.limit ?? 20,
+    );
   }
 }

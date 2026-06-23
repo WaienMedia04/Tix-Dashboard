@@ -78,7 +78,7 @@ export interface BitacorasResponse {
   resumen: BitacorasResumen;
 }
 
-export type EstadoFiltro = "enviada" | "no_enviada" | "pendiente";
+export type EstadoFiltro = "enviada" | "no_enviada" | "permiso";
 
 export interface BitacorasFiltros {
   fechaInicio?: string;
@@ -87,6 +87,39 @@ export interface BitacorasFiltros {
   estado?: EstadoFiltro;
   page?: number;
   limit?: number;
+}
+
+export interface EmpleadoResumen {
+  id: string;
+  nombreCompleto: string;
+  rol: string;
+  estado: string;
+  puntajeIAPromedio: number | null;
+  totalBitacoras: number;
+  porcentajeCumplimiento: number | null;
+}
+
+export interface SeriePuntaje {
+  fecha: string;
+  puntajeIA: number | null;
+}
+
+export interface HistorialBitacoras {
+  data: BitacoraItem[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface EmpleadoDetalle {
+  talento: { id: string; nombreCompleto: string; rol: string; estado: string };
+  metricas: {
+    puntajeIAPromedio: number | null;
+    totalBitacoras: number;
+    porcentajeCumplimiento: number | null;
+  };
+  serieIA: SeriePuntaje[];
+  historial: HistorialBitacoras;
 }
 
 export class CodigoInvalidoError extends Error {}
@@ -142,6 +175,75 @@ export async function fetchBitacoras(
   }
   if (!res.ok) {
     throw new Error("No se pudo cargar las bitácoras");
+  }
+  return res.json();
+}
+
+export async function fetchEmpleados(slug: string, codigoAcceso: string): Promise<EmpleadoResumen[]> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/empleados?codigoAcceso=${encodeURIComponent(codigoAcceso)}`,
+    { cache: "no-store" },
+  );
+  if (res.status === 401) {
+    throw new CodigoInvalidoError("Código de acceso inválido");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar los empleados");
+  }
+  return res.json();
+}
+
+export async function fetchEmpleadoDetalle(
+  slug: string,
+  codigoAcceso: string,
+  talentoId: string,
+  page: number = 1,
+): Promise<EmpleadoDetalle> {
+  const params = new URLSearchParams();
+  params.set("codigoAcceso", codigoAcceso);
+  params.set("page", String(page));
+  params.set("limit", "20");
+
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/empleados/${encodeURIComponent(talentoId)}?${params.toString()}`,
+    { cache: "no-store" },
+  );
+  if (res.status === 401) {
+    throw new CodigoInvalidoError("Código de acceso inválido");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError("Empleado no encontrado");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el empleado");
+  }
+  return res.json();
+}
+
+export async function actualizarEstadoTalento(
+  talentoId: string,
+  codigoAcceso: string,
+  estado: "activo" | "inactivo",
+): Promise<{ id: string; nombreCompleto: string; rol: string; estado: string }> {
+  const res = await fetch(
+    `${API_URL}/talentos/${encodeURIComponent(talentoId)}?codigoAcceso=${encodeURIComponent(codigoAcceso)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado }),
+    },
+  );
+  if (res.status === 401) {
+    throw new CodigoInvalidoError("Código de acceso inválido");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError("Empleado no encontrado");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo actualizar el estado del empleado");
   }
   return res.json();
 }

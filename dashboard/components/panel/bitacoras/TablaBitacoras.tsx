@@ -9,7 +9,12 @@ function colorPuntaje(puntaje: number | null): string {
 }
 
 function formatearFecha(fecha: string): string {
-  return new Date(fecha).toLocaleDateString("es-DO", { day: "2-digit", month: "short", year: "numeric" });
+  return new Date(fecha).toLocaleDateString("es-DO", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 export function TablaBitacoras({

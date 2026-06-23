@@ -13,7 +13,7 @@ const OPCIONES_ESTADO: { value: EstadoFiltro | ""; label: string }[] = [
   { value: "", label: "Todos" },
   { value: "enviada", label: "Enviada" },
   { value: "no_enviada", label: "No enviada" },
-  { value: "pendiente", label: "Permiso autorizado" },
+  { value: "permiso", label: "Permiso autorizado" },
 ];
 
 const CAMPO_CLASES =

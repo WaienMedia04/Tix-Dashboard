@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
-export type EstadoFiltro = 'enviada' | 'no_enviada' | 'pendiente';
+export type EstadoFiltro = 'enviada' | 'no_enviada' | 'permiso';
 
 export class BitacorasQueryDto {
   @IsOptional()
@@ -17,7 +17,7 @@ export class BitacorasQueryDto {
   talentoId?: string;
 
   @IsOptional()
-  @IsIn(['enviada', 'no_enviada', 'pendiente'])
+  @IsIn(['enviada', 'no_enviada', 'permiso'])
   estado?: EstadoFiltro;
 
   @IsOptional()

@@ -7,7 +7,9 @@ export class WorklogsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateWorklogDto) {
-    const empresa = await this.prisma.empresa.findUnique({ where: { slug: dto.empresaSlug } });
+    const empresa = await this.prisma.empresa.findUnique({
+      where: { slug: dto.empresaSlug },
+    });
     if (!empresa) {
       throw new NotFoundException(`Empresa "${dto.empresaSlug}" no encontrada`);
     }
@@ -15,7 +17,10 @@ export class WorklogsService {
     const talento = await this.prisma.talento.findFirst({
       where: {
         empresaId: empresa.id,
-        nombreCompleto: { equals: dto.talentoNombre.trim(), mode: 'insensitive' },
+        nombreCompleto: {
+          equals: dto.talentoNombre.trim(),
+          mode: 'insensitive',
+        },
       },
     });
     if (!talento) {

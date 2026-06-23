@@ -6,6 +6,7 @@ function formatearFecha(fecha: string): string {
     weekday: "short",
     day: "2-digit",
     month: "short",
+    timeZone: "UTC",
   });
 }
 

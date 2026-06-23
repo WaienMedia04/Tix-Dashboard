@@ -59,6 +59,7 @@ export function BitacoraDrawer({
                     day: "2-digit",
                     month: "long",
                     year: "numeric",
+                    timeZone: "UTC",
                   })}
                 />
                 <Campo etiqueta="Día" valor={bitacora.dia} />
