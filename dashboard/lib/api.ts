@@ -122,6 +122,52 @@ export interface EmpleadoDetalle {
   historial: HistorialBitacoras;
 }
 
+export interface EvolucionSemanal {
+  semana: string;
+  puntajeProm: number | null;
+}
+
+export interface BitacorasSemanal {
+  semana: string;
+  enviadas: number;
+  esperadas: number;
+}
+
+export type EstadoColorKey = "success" | "destructive" | "info" | "warning" | "neutral" | "muted";
+
+export interface DistribucionEstado {
+  estado: string;
+  colorKey: EstadoColorKey;
+  count: number;
+}
+
+export interface DistribucionProductividad {
+  alta: number;
+  media: number;
+  baja: number;
+  sinDatos: number;
+}
+
+export type Tendencia = "subio" | "bajo" | "igual" | null;
+
+export interface KpiEmpleado {
+  talentoId: string;
+  nombre: string;
+  puntajeProm: number | null;
+  cumplimiento: number | null;
+  enviadas: number;
+  tendencia: Tendencia;
+}
+
+export interface KpisResponse {
+  periodo: string;
+  evolucionSemanal: EvolucionSemanal[];
+  bitacorasSemanal: BitacorasSemanal[];
+  distribucionEstado: DistribucionEstado[];
+  distribucionProductividad: DistribucionProductividad;
+  kpisPorEmpleado: KpiEmpleado[];
+}
+
 export class CodigoInvalidoError extends Error {}
 export class EmpresaNoEncontradaError extends Error {}
 
@@ -244,6 +290,31 @@ export async function actualizarEstadoTalento(
   }
   if (!res.ok) {
     throw new Error("No se pudo actualizar el estado del empleado");
+  }
+  return res.json();
+}
+
+export async function fetchKpis(
+  slug: string,
+  codigoAcceso: string,
+  periodo: string,
+): Promise<KpisResponse> {
+  const params = new URLSearchParams();
+  params.set("codigoAcceso", codigoAcceso);
+  params.set("periodo", periodo);
+
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/kpis?${params.toString()}`,
+    { cache: "no-store" },
+  );
+  if (res.status === 401) {
+    throw new CodigoInvalidoError("Código de acceso inválido");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar los KPIs");
   }
   return res.json();
 }

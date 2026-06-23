@@ -1,5 +1,5 @@
-import { ProximamenteStub } from "@/components/panel/ProximamenteStub";
+import { KpisView } from "@/components/panel/kpis/KpisView";
 
 export default function KpisPage() {
-  return <ProximamenteStub titulo="KPIs" />;
+  return <KpisView />;
 }

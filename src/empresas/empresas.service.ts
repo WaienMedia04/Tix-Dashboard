@@ -6,6 +6,8 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
+import { KpisQueryDto } from './dto/kpis-query.dto';
+import { clasificarEstado } from './estado.util';
 
 const MARCADOR_ESTADO: Record<string, string> = {
   enviada: '✅',
@@ -302,6 +304,234 @@ export class EmpresasService {
         page,
         totalPages,
       },
+    };
+  }
+
+  async kpis(
+    slug: string,
+    codigoAcceso: string | undefined,
+    query: KpisQueryDto,
+  ) {
+    const empresa = await this.validarAcceso(slug, codigoAcceso);
+
+    const ahora = new Date();
+    const periodo =
+      query.periodo ??
+      `${ahora.getUTCFullYear()}-${String(ahora.getUTCMonth() + 1).padStart(2, '0')}`;
+    const [anioStr, mesStr] = periodo.split('-');
+    const anio = Number(anioStr);
+    const mes = Number(mesStr);
+
+    const periodoInicio = new Date(Date.UTC(anio, mes - 1, 1, 0, 0, 0, 0));
+    const periodoFin = new Date(Date.UTC(anio, mes, 0, 23, 59, 59, 999));
+
+    const mesAnteriorRef = new Date(Date.UTC(anio, mes - 2, 1));
+    const periodoAnteriorInicio = new Date(
+      Date.UTC(
+        mesAnteriorRef.getUTCFullYear(),
+        mesAnteriorRef.getUTCMonth(),
+        1,
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
+    const periodoAnteriorFin = new Date(
+      Date.UTC(
+        mesAnteriorRef.getUTCFullYear(),
+        mesAnteriorRef.getUTCMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+        999,
+      ),
+    );
+
+    function mondayOf(fecha: Date): Date {
+      const copia = new Date(fecha);
+      const dia = copia.getUTCDay();
+      const diff = dia === 0 ? -6 : 1 - dia;
+      copia.setUTCDate(copia.getUTCDate() + diff);
+      copia.setUTCHours(0, 0, 0, 0);
+      return copia;
+    }
+
+    const ultimaSemanaInicio = mondayOf(periodoFin);
+    const semanas: { inicio: Date; fin: Date }[] = [];
+    for (let i = 7; i >= 0; i--) {
+      const inicio = new Date(ultimaSemanaInicio);
+      inicio.setUTCDate(inicio.getUTCDate() - i * 7);
+      const fin = new Date(inicio);
+      fin.setUTCDate(fin.getUTCDate() + 6);
+      fin.setUTCHours(23, 59, 59, 999);
+      semanas.push({ inicio, fin });
+    }
+
+    // TODO: filtrar por empresaId es manual porque todavia no hay RLS en Postgres.
+    const [
+      worklogsRangoSemanal,
+      worklogsPeriodo,
+      worklogsPeriodoAnterior,
+      talentos,
+    ] = await Promise.all([
+      this.prisma.worklog.findMany({
+        where: {
+          empresaId: empresa.id,
+          fecha: { gte: semanas[0].inicio, lte: semanas[7].fin },
+        },
+        select: { fecha: true, estadoEnvio: true, puntajeIA: true },
+      }),
+      this.prisma.worklog.findMany({
+        where: {
+          empresaId: empresa.id,
+          fecha: { gte: periodoInicio, lte: periodoFin },
+        },
+        select: { talentoId: true, estadoEnvio: true, puntajeIA: true },
+      }),
+      this.prisma.worklog.findMany({
+        where: {
+          empresaId: empresa.id,
+          fecha: { gte: periodoAnteriorInicio, lte: periodoAnteriorFin },
+        },
+        select: { talentoId: true, puntajeIA: true },
+      }),
+      this.prisma.talento.findMany({ where: { empresaId: empresa.id } }),
+    ]);
+
+    const evolucionSemanal = semanas.map(({ inicio, fin }) => {
+      const enSemana = worklogsRangoSemanal.filter(
+        (w) => w.fecha >= inicio && w.fecha <= fin,
+      );
+      const conPuntaje = enSemana.filter((w) => w.puntajeIA !== null);
+      const puntajeProm =
+        conPuntaje.length === 0
+          ? null
+          : Math.round(
+              (conPuntaje.reduce((sum, w) => sum + (w.puntajeIA ?? 0), 0) /
+                conPuntaje.length) *
+                10,
+            ) / 10;
+      return { semana: inicio.toISOString().slice(0, 10), puntajeProm };
+    });
+
+    const bitacorasSemanal = semanas.map(({ inicio, fin }) => {
+      const enSemana = worklogsRangoSemanal.filter(
+        (w) => w.fecha >= inicio && w.fecha <= fin,
+      );
+      const enviadas = enSemana.filter((w) =>
+        w.estadoEnvio.includes('✅'),
+      ).length;
+      return {
+        semana: inicio.toISOString().slice(0, 10),
+        enviadas,
+        esperadas: enSemana.length,
+      };
+    });
+
+    const distribucionMap = new Map<
+      string,
+      { estado: string; colorKey: string; count: number }
+    >();
+    for (const w of worklogsPeriodo) {
+      const { label, colorKey } = clasificarEstado(w.estadoEnvio);
+      const clave = `${label}|${colorKey}`;
+      const actual = distribucionMap.get(clave) ?? {
+        estado: label,
+        colorKey,
+        count: 0,
+      };
+      actual.count += 1;
+      distribucionMap.set(clave, actual);
+    }
+    const distribucionEstado = Array.from(distribucionMap.values()).sort(
+      (a, b) => b.count - a.count,
+    );
+
+    function promedioPorTalento(
+      registros: { talentoId: string; puntajeIA: number | null }[],
+    ): Map<string, number | null> {
+      const mapa = new Map<string, number | null>();
+      for (const t of talentos) {
+        const propios = registros.filter((w) => w.talentoId === t.id);
+        const conPuntaje = propios.filter((w) => w.puntajeIA !== null);
+        const prom =
+          conPuntaje.length === 0
+            ? null
+            : conPuntaje.reduce((sum, w) => sum + (w.puntajeIA ?? 0), 0) /
+              conPuntaje.length;
+        mapa.set(t.id, prom);
+      }
+      return mapa;
+    }
+
+    const promedioActual = promedioPorTalento(worklogsPeriodo);
+    const promedioAnterior = promedioPorTalento(worklogsPeriodoAnterior);
+
+    let alta = 0;
+    let media = 0;
+    let baja = 0;
+    let sinDatos = 0;
+    for (const prom of promedioActual.values()) {
+      if (prom === null) {
+        sinDatos += 1;
+      } else if (prom >= 8) {
+        alta += 1;
+      } else if (prom >= 5) {
+        media += 1;
+      } else {
+        baja += 1;
+      }
+    }
+    const distribucionProductividad = { alta, media, baja, sinDatos };
+
+    const kpisPorEmpleado = talentos
+      .map((t) => {
+        const propios = worklogsPeriodo.filter((w) => w.talentoId === t.id);
+        const conPuntaje = propios.filter((w) => w.puntajeIA !== null);
+        const puntajeProm =
+          conPuntaje.length === 0
+            ? null
+            : Math.round(
+                (conPuntaje.reduce((sum, w) => sum + (w.puntajeIA ?? 0), 0) /
+                  conPuntaje.length) *
+                  10,
+              ) / 10;
+        const enviadas = propios.filter((w) =>
+          w.estadoEnvio.includes('✅'),
+        ).length;
+        const cumplimiento =
+          propios.length === 0
+            ? null
+            : Math.round((enviadas / propios.length) * 1000) / 10;
+
+        const actual = promedioActual.get(t.id) ?? null;
+        const anterior = promedioAnterior.get(t.id) ?? null;
+        let tendencia: 'subio' | 'bajo' | 'igual' | null = null;
+        if (actual !== null && anterior !== null) {
+          const diff = actual - anterior;
+          tendencia = diff > 0.05 ? 'subio' : diff < -0.05 ? 'bajo' : 'igual';
+        }
+
+        return {
+          talentoId: t.id,
+          nombre: t.nombreCompleto,
+          puntajeProm,
+          cumplimiento,
+          enviadas,
+          tendencia,
+        };
+      })
+      .sort((a, b) => (b.puntajeProm ?? -1) - (a.puntajeProm ?? -1));
+
+    return {
+      periodo,
+      evolucionSemanal,
+      bitacorasSemanal,
+      distribucionEstado,
+      distribucionProductividad,
+      kpisPorEmpleado,
     };
   }
 }

@@ -15,7 +15,7 @@ export function Header({ empresaNombre, plan }: { empresaNombre: string; plan: s
     dashboard: { titulo: "Dashboard", subtitulo: `Resumen general — ${mesAnoActual()}` },
     bitacoras: { titulo: "Bitácoras", subtitulo: "Historial de bitácoras enviadas" },
     empleados: { titulo: "Empleados", subtitulo: "Gestión y perfiles del equipo" },
-    kpis: { titulo: "KPIs", subtitulo: "Métricas y tendencias del equipo" },
+    kpis: { titulo: "KPIs y Métricas", subtitulo: "Análisis de productividad del equipo" },
     reportes: { titulo: "Reportes", subtitulo: "Resúmenes ejecutivos por período" },
     configuracion: { titulo: "Configuración", subtitulo: "Datos y accesos de la empresa" },
   };
