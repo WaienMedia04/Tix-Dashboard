@@ -39,6 +39,56 @@ export interface DashboardData {
   worklogsRecientes: WorklogReciente[];
 }
 
+export interface BitacoraTalento {
+  id: string;
+  nombreCompleto: string;
+  rol: string;
+}
+
+export interface BitacoraItem {
+  id: string;
+  fecha: string;
+  dia: string | null;
+  semana: number | null;
+  estadoEnvio: string;
+  horaEnvio: string | null;
+  puntajeIA: number | null;
+  calificacionCeo: string | null;
+  actividadesRealizadas: string | null;
+  capacitacion: string | null;
+  queSeEjecuto: string | null;
+  detallesRelevantes: string | null;
+  informeAvances: string | null;
+  objetivoDia: string | null;
+  notasTix: string | null;
+  talento: BitacoraTalento;
+}
+
+export interface BitacorasResumen {
+  totalBitacoras: number;
+  porcentajeEnviadas: number;
+  puntajeProm: number | null;
+}
+
+export interface BitacorasResponse {
+  data: BitacoraItem[];
+  total: number;
+  page: number;
+  totalPages: number;
+  resumen: BitacorasResumen;
+}
+
+export type EstadoFiltro = "enviada" | "no_enviada" | "pendiente";
+
+export interface BitacorasFiltros {
+  fechaInicio?: string;
+  fechaFin?: string;
+  talentoId?: string;
+  estado?: EstadoFiltro;
+  page?: number;
+  limit?: number;
+}
+
 export class CodigoInvalidoError extends Error {}
 export class EmpresaNoEncontradaError extends Error {}
 
@@ -63,6 +113,35 @@ export async function fetchDashboard(slug: string, codigoAcceso: string): Promis
   }
   if (!res.ok) {
     throw new Error("No se pudo cargar el dashboard");
+  }
+  return res.json();
+}
+
+export async function fetchBitacoras(
+  slug: string,
+  codigoAcceso: string,
+  filtros: BitacorasFiltros,
+): Promise<BitacorasResponse> {
+  const params = new URLSearchParams();
+  params.set("codigoAcceso", codigoAcceso);
+  if (filtros.fechaInicio) params.set("fechaInicio", filtros.fechaInicio);
+  if (filtros.fechaFin) params.set("fechaFin", filtros.fechaFin);
+  if (filtros.talentoId) params.set("talentoId", filtros.talentoId);
+  if (filtros.estado) params.set("estado", filtros.estado);
+  params.set("page", String(filtros.page ?? 1));
+  params.set("limit", String(filtros.limit ?? 20));
+
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/bitacoras?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new CodigoInvalidoError("Código de acceso inválido");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar las bitácoras");
   }
   return res.json();
 }

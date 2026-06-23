@@ -16,13 +16,13 @@ function resumenDe(w: WorklogReciente): string {
 export function WorklogsRecientes({ worklogs }: { worklogs: WorklogReciente[] }) {
   return (
     <section className="rounded-lg border border-border bg-card shadow-card">
-      <div className="border-b border-border px-5 py-4">
+      <div className="border-b border-border px-4 py-3">
         <h2 className="text-base font-semibold text-foreground">Bitácoras recientes</h2>
         <p className="text-sm text-muted-foreground">Últimos {worklogs.length} reportes registrados</p>
       </div>
       <ul className="divide-y divide-border">
         {worklogs.map((w) => (
-          <li key={w.id} className="px-5 py-4 transition-colors hover:bg-muted/50">
+          <li key={w.id} className="px-4 py-3 transition-colors hover:bg-muted/50">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-foreground">{w.talento}</span>

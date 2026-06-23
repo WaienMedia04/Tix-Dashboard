@@ -1,5 +1,5 @@
-import { ProximamenteStub } from "@/components/panel/ProximamenteStub";
+import { BitacorasView } from "@/components/panel/bitacoras/BitacorasView";
 
 export default function BitacorasPage() {
-  return <ProximamenteStub titulo="Bitácoras" />;
+  return <BitacorasView />;
 }
