@@ -1,17 +1,42 @@
+import type { LucideIcon } from "lucide-react";
+
+export interface MetricDelta {
+  valor: string;
+  direccion: "subida" | "bajada";
+}
+
 export function MetricCard({
   label,
   value,
   hint,
+  icon: Icon,
+  delta,
 }: {
   label: string;
   value: string;
   hint?: string;
+  icon: LucideIcon;
+  delta?: MetricDelta;
 }) {
   return (
-    <div className="rounded-md border border-surface-border bg-surface p-5 shadow-sm">
-      <p className="text-sm font-medium text-muted">{label}</p>
-      <p className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{value}</p>
-      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+    <div className="rounded-lg border border-border bg-card p-5 shadow-card">
+      <div className="flex items-start justify-between">
+        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{label}</p>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <p className="font-display mt-3 text-3xl font-semibold tracking-tight text-foreground">{value}</p>
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      {delta && (
+        <span
+          className={`mt-3 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
+            delta.direccion === "subida" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+          }`}
+        >
+          {delta.valor}
+        </span>
+      )}
     </div>
   );
 }

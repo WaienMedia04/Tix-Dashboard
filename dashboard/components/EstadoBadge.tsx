@@ -1,8 +1,8 @@
 const ESTILOS: Record<string, string> = {
   enviada: "bg-success/10 text-success border-success/20",
-  no_enviada: "bg-danger/10 text-danger border-danger/20",
+  no_enviada: "bg-destructive/10 text-destructive border-destructive/20",
   permiso: "bg-warning/10 text-warning border-warning/20",
-  default: "bg-surface text-muted border-surface-border",
+  default: "bg-muted text-muted-foreground border-border",
 };
 
 function claseParaEstado(estadoCrudo: string): string {

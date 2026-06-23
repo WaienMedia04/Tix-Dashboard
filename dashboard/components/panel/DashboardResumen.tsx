@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckCircle2, ClipboardList, Sparkles } from "lucide-react";
 import type { DashboardData } from "@/lib/api";
 import { usePanel } from "./PanelContext";
 import { MetricCard } from "../MetricCard";
@@ -20,13 +21,18 @@ export function DashboardResumen() {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <MetricCard label="Total de bitácoras" value={String(data.metricas.totalBitacoras)} />
+        <MetricCard
+          label="Total de bitácoras"
+          value={String(data.metricas.totalBitacoras)}
+          icon={ClipboardList}
+        />
         <MetricCard
           label="% de cumplimiento"
           value={`${data.metricas.porcentajeEnviadas}%`}
           hint={`${data.metricas.enviadas} de ${data.metricas.totalBitacoras} enviadas`}
+          icon={CheckCircle2}
         />
-        <MetricCard label="Puntaje IA promedio" value={puntajeIAPromedioGlobal(data)} />
+        <MetricCard label="Puntaje IA promedio" value={puntajeIAPromedioGlobal(data)} icon={Sparkles} />
       </div>
 
       <RankingTalentos talentos={data.rankingTalentos} />

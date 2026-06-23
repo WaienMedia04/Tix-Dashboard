@@ -15,28 +15,28 @@ function resumenDe(w: WorklogReciente): string {
 
 export function WorklogsRecientes({ worklogs }: { worklogs: WorklogReciente[] }) {
   return (
-    <section className="rounded-md border border-surface-border bg-surface shadow-sm">
-      <div className="border-b border-surface-border px-5 py-4">
+    <section className="rounded-lg border border-border bg-card shadow-card">
+      <div className="border-b border-border px-5 py-4">
         <h2 className="text-base font-semibold text-foreground">Bitácoras recientes</h2>
-        <p className="text-sm text-muted">Últimos {worklogs.length} reportes registrados</p>
+        <p className="text-sm text-muted-foreground">Últimos {worklogs.length} reportes registrados</p>
       </div>
-      <ul className="divide-y divide-surface-border">
+      <ul className="divide-y divide-border">
         {worklogs.map((w) => (
-          <li key={w.id} className="px-5 py-4">
+          <li key={w.id} className="px-5 py-4 transition-colors hover:bg-muted/50">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-foreground">{w.talento}</span>
-                <span className="text-xs text-muted">{formatearFecha(w.fecha)}</span>
-                {w.horaEnvio && <span className="text-xs text-muted">{w.horaEnvio}</span>}
+                <span className="text-xs text-muted-foreground">{formatearFecha(w.fecha)}</span>
+                {w.horaEnvio && <span className="text-xs tabular-nums text-muted-foreground">{w.horaEnvio}</span>}
               </div>
               <div className="flex items-center gap-3">
                 {w.puntajeIA !== null && (
-                  <span className="text-xs font-semibold text-accent">IA: {w.puntajeIA}/10</span>
+                  <span className="text-xs font-semibold tabular-nums text-primary">IA: {w.puntajeIA}/10</span>
                 )}
                 <EstadoBadge estado={w.estadoEnvio} />
               </div>
             </div>
-            <p className="mt-2 text-sm text-muted">{resumenDe(w)}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{resumenDe(w)}</p>
           </li>
         ))}
       </ul>
