@@ -1,12 +1,5 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
-export interface Empresa {
-  id: string;
-  nombre: string;
-  slug: string;
-  plan: string;
-}
-
 export interface TalentoRanking {
   talentoId: string;
   nombreCompleto: string;
@@ -198,14 +191,6 @@ export interface ReporteResponse {
 
 export class CodigoInvalidoError extends Error {}
 export class EmpresaNoEncontradaError extends Error {}
-
-export async function listarEmpresas(): Promise<Empresa[]> {
-  const res = await fetch(`${API_URL}/empresas`, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error("No se pudo cargar el listado de empresas");
-  }
-  return res.json();
-}
 
 export async function fetchDashboard(slug: string, codigoAcceso: string): Promise<DashboardData> {
   const res = await fetch(
