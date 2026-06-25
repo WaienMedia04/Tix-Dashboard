@@ -8,12 +8,16 @@ export interface RangoFechas {
 export function rangoMensual(valor: string): RangoFechas {
   const match = /^(\d{4})-(\d{2})$/.exec(valor);
   if (!match) {
-    throw new BadRequestException('valor debe tener el formato YYYY-MM para periodo mensual');
+    throw new BadRequestException(
+      'valor debe tener el formato YYYY-MM para periodo mensual',
+    );
   }
   const anio = Number(match[1]);
   const mes = Number(match[2]);
   if (mes < 1 || mes > 12) {
-    throw new BadRequestException('valor debe tener el formato YYYY-MM para periodo mensual');
+    throw new BadRequestException(
+      'valor debe tener el formato YYYY-MM para periodo mensual',
+    );
   }
   return {
     inicio: new Date(Date.UTC(anio, mes - 1, 1, 0, 0, 0, 0)),
@@ -24,12 +28,16 @@ export function rangoMensual(valor: string): RangoFechas {
 export function rangoSemanal(valor: string): RangoFechas {
   const match = /^(\d{4})-W(\d{2})$/.exec(valor);
   if (!match) {
-    throw new BadRequestException('valor debe tener el formato YYYY-Www para periodo semanal');
+    throw new BadRequestException(
+      'valor debe tener el formato YYYY-Www para periodo semanal',
+    );
   }
   const anio = Number(match[1]);
   const semana = Number(match[2]);
   if (semana < 1 || semana > 53) {
-    throw new BadRequestException('valor debe tener el formato YYYY-Www para periodo semanal');
+    throw new BadRequestException(
+      'valor debe tener el formato YYYY-Www para periodo semanal',
+    );
   }
 
   const jan4 = new Date(Date.UTC(anio, 0, 4));

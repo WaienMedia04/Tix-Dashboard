@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
 import { KpisQueryDto } from './dto/kpis-query.dto';
 import { ReportesQueryDto } from './dto/reportes-query.dto';
+import { CrearTalentoDto } from './dto/crear-talento.dto';
 import { clasificarEstado } from './estado.util';
 import { rangoMensual, rangoSemanal } from './periodo.util';
 
@@ -537,11 +538,17 @@ export class EmpresasService {
     };
   }
 
-  async reportes(slug: string, codigoAcceso: string | undefined, query: ReportesQueryDto) {
+  async reportes(
+    slug: string,
+    codigoAcceso: string | undefined,
+    query: ReportesQueryDto,
+  ) {
     const empresa = await this.validarAcceso(slug, codigoAcceso);
 
     const { inicio, fin } =
-      query.periodo === 'mensual' ? rangoMensual(query.valor) : rangoSemanal(query.valor);
+      query.periodo === 'mensual'
+        ? rangoMensual(query.valor)
+        : rangoSemanal(query.valor);
 
     const [worklogs, talentos] = await Promise.all([
       this.prisma.worklog.findMany({
@@ -552,15 +559,21 @@ export class EmpresasService {
     ]);
 
     const totalBitacoras = worklogs.length;
-    const enviadas = worklogs.filter((w) => w.estadoEnvio.includes('✅')).length;
+    const enviadas = worklogs.filter((w) =>
+      w.estadoEnvio.includes('✅'),
+    ).length;
     const porcentajeEnviadas =
-      totalBitacoras === 0 ? null : Math.round((enviadas / totalBitacoras) * 1000) / 10;
+      totalBitacoras === 0
+        ? null
+        : Math.round((enviadas / totalBitacoras) * 1000) / 10;
     const conPuntaje = worklogs.filter((w) => w.puntajeIA !== null);
     const puntajeProm =
       conPuntaje.length === 0
         ? null
         : Math.round(
-            (conPuntaje.reduce((sum, w) => sum + (w.puntajeIA ?? 0), 0) / conPuntaje.length) * 10,
+            (conPuntaje.reduce((sum, w) => sum + (w.puntajeIA ?? 0), 0) /
+              conPuntaje.length) *
+              10,
           ) / 10;
 
     const detalle = talentos
@@ -571,13 +584,20 @@ export class EmpresasService {
           propiosConPuntaje.length === 0
             ? null
             : Math.round(
-                (propiosConPuntaje.reduce((sum, w) => sum + (w.puntajeIA ?? 0), 0) /
+                (propiosConPuntaje.reduce(
+                  (sum, w) => sum + (w.puntajeIA ?? 0),
+                  0,
+                ) /
                   propiosConPuntaje.length) *
                   10,
               ) / 10;
-        const propiasEnviadas = propios.filter((w) => w.estadoEnvio.includes('✅')).length;
+        const propiasEnviadas = propios.filter((w) =>
+          w.estadoEnvio.includes('✅'),
+        ).length;
         const propioCumplimiento =
-          propios.length === 0 ? null : Math.round((propiasEnviadas / propios.length) * 1000) / 10;
+          propios.length === 0
+            ? null
+            : Math.round((propiasEnviadas / propios.length) * 1000) / 10;
 
         return {
           talentoId: t.id,
@@ -596,7 +616,9 @@ export class EmpresasService {
       conPuntajeProm.length === 0
         ? null
         : conPuntajeProm.reduce((mejor, actual) =>
-            (actual.puntajeProm ?? -1) > (mejor.puntajeProm ?? -1) ? actual : mejor,
+            (actual.puntajeProm ?? -1) > (mejor.puntajeProm ?? -1)
+              ? actual
+              : mejor,
           );
 
     const conCumplimiento = detalle.filter((d) => d.cumplimiento !== null);
@@ -604,7 +626,9 @@ export class EmpresasService {
       conCumplimiento.length === 0
         ? null
         : conCumplimiento.reduce((peor, actual) =>
-            (actual.cumplimiento ?? 101) < (peor.cumplimiento ?? 101) ? actual : peor,
+            (actual.cumplimiento ?? 101) < (peor.cumplimiento ?? 101)
+              ? actual
+              : peor,
           );
 
     return {
@@ -618,13 +642,46 @@ export class EmpresasService {
         porcentajeEnviadas,
         puntajeProm,
         empleadoDelMes: empleadoDelMes
-          ? { nombre: empleadoDelMes.nombre, puntajeProm: empleadoDelMes.puntajeProm }
+          ? {
+              nombre: empleadoDelMes.nombre,
+              puntajeProm: empleadoDelMes.puntajeProm,
+            }
           : null,
         empleadoEnRiesgo: empleadoEnRiesgo
-          ? { nombre: empleadoEnRiesgo.nombre, cumplimiento: empleadoEnRiesgo.cumplimiento }
+          ? {
+              nombre: empleadoEnRiesgo.nombre,
+              cumplimiento: empleadoEnRiesgo.cumplimiento,
+            }
           : null,
       },
       detalle,
+    };
+  }
+
+  async crearTalento(
+    slug: string,
+    codigoAcceso: string | undefined,
+    dto: CrearTalentoDto,
+  ) {
+    const empresa = await this.validarAcceso(slug, codigoAcceso);
+
+    const talento = await this.prisma.talento.create({
+      data: {
+        empresaId: empresa.id,
+        nombreCompleto: dto.nombreCompleto.trim(),
+        rol: dto.rol.trim(),
+        estado: 'activo',
+      },
+    });
+
+    return {
+      id: talento.id,
+      nombreCompleto: talento.nombreCompleto,
+      rol: talento.rol,
+      estado: talento.estado,
+      puntajeIAPromedio: null,
+      totalBitacoras: 0,
+      porcentajeCumplimiento: null,
     };
   }
 }

@@ -1,5 +1,5 @@
-import { ProximamenteStub } from "@/components/panel/ProximamenteStub";
+import { ConfiguracionView } from "@/components/panel/configuracion/ConfiguracionView";
 
 export default function ConfiguracionPage() {
-  return <ProximamenteStub titulo="Configuración" />;
+  return <ConfiguracionView />;
 }

@@ -1,9 +1,18 @@
-import { Controller, Get, Headers, Param, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { EmpresasService } from './empresas.service';
 import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
 import { EmpleadoDetalleQueryDto } from './dto/empleado-detalle-query.dto';
 import { KpisQueryDto } from './dto/kpis-query.dto';
 import { ReportesQueryDto } from './dto/reportes-query.dto';
+import { CrearTalentoDto } from './dto/crear-talento.dto';
 
 @Controller('empresas')
 export class EmpresasController {
@@ -94,6 +103,20 @@ export class EmpresasController {
       slug,
       codigoAccesoQuery ?? codigoAccesoHeader,
       query,
+    );
+  }
+
+  @Post(':slug/talentos')
+  crearTalento(
+    @Param('slug') slug: string,
+    @Body() dto: CrearTalentoDto,
+    @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
+    @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
+  ) {
+    return this.empresasService.crearTalento(
+      slug,
+      codigoAccesoQuery ?? codigoAccesoHeader,
+      dto,
     );
   }
 }
