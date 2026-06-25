@@ -3,6 +3,7 @@ import { EmpresasService } from './empresas.service';
 import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
 import { EmpleadoDetalleQueryDto } from './dto/empleado-detalle-query.dto';
 import { KpisQueryDto } from './dto/kpis-query.dto';
+import { ReportesQueryDto } from './dto/reportes-query.dto';
 
 @Controller('empresas')
 export class EmpresasController {
@@ -76,6 +77,20 @@ export class EmpresasController {
     @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
   ) {
     return this.empresasService.kpis(
+      slug,
+      codigoAccesoQuery ?? codigoAccesoHeader,
+      query,
+    );
+  }
+
+  @Get(':slug/reportes')
+  reportes(
+    @Param('slug') slug: string,
+    @Query() query: ReportesQueryDto,
+    @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
+    @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
+  ) {
+    return this.empresasService.reportes(
       slug,
       codigoAccesoQuery ?? codigoAccesoHeader,
       query,

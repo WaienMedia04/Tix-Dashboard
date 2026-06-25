@@ -43,7 +43,7 @@ export function Sidebar({ slug, empresaNombre }: { slug: string; empresaNombre: 
   }
 
   return (
-    <aside className="bg-gradient-sidebar fixed inset-y-0 left-0 flex w-60 flex-col text-sidebar-foreground">
+    <aside className="bg-gradient-sidebar fixed inset-y-0 left-0 flex w-60 flex-col text-sidebar-foreground print:hidden">
       <div className="px-6 py-6">
         <p className="text-base font-semibold tracking-tight">
           TalentiX RD<sup className="ml-0.5 text-[10px] text-sidebar-foreground/60">™</sup>

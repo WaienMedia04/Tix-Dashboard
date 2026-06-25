@@ -168,6 +168,34 @@ export interface KpisResponse {
   kpisPorEmpleado: KpiEmpleado[];
 }
 
+export type PeriodoReporte = "mensual" | "semanal";
+
+export interface ReporteDetalleItem {
+  talentoId: string;
+  nombre: string;
+  rol: string;
+  puntajeProm: number | null;
+  cumplimiento: number | null;
+  enviadas: number;
+  totalBitacoras: number;
+}
+
+export interface ReporteResponse {
+  periodo: PeriodoReporte;
+  valor: string;
+  rangoInicio: string;
+  rangoFin: string;
+  empresa: { nombre: string; slug: string };
+  resumen: {
+    totalBitacoras: number;
+    porcentajeEnviadas: number | null;
+    puntajeProm: number | null;
+    empleadoDelMes: { nombre: string; puntajeProm: number | null } | null;
+    empleadoEnRiesgo: { nombre: string; cumplimiento: number | null } | null;
+  };
+  detalle: ReporteDetalleItem[];
+}
+
 export class CodigoInvalidoError extends Error {}
 export class EmpresaNoEncontradaError extends Error {}
 
@@ -315,6 +343,58 @@ export async function fetchKpis(
   }
   if (!res.ok) {
     throw new Error("No se pudo cargar los KPIs");
+  }
+  return res.json();
+}
+
+export async function fetchReporte(
+  slug: string,
+  codigoAcceso: string,
+  periodo: PeriodoReporte,
+  valor: string,
+): Promise<ReporteResponse> {
+  const params = new URLSearchParams();
+  params.set("codigoAcceso", codigoAcceso);
+  params.set("periodo", periodo);
+  params.set("valor", valor);
+
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/reportes?${params.toString()}`,
+    { cache: "no-store" },
+  );
+  if (res.status === 401) {
+    throw new CodigoInvalidoError("Código de acceso inválido");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el reporte");
+  }
+  return res.json();
+}
+
+export async function crearTalento(
+  slug: string,
+  codigoAcceso: string,
+  datos: { nombreCompleto: string; rol: string },
+): Promise<EmpleadoResumen> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/talentos?codigoAcceso=${encodeURIComponent(codigoAcceso)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos),
+    },
+  );
+  if (res.status === 401) {
+    throw new CodigoInvalidoError("Código de acceso inválido");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo crear el empleado");
   }
   return res.json();
 }

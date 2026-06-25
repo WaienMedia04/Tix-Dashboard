@@ -23,7 +23,7 @@ export function Header({ empresaNombre, plan }: { empresaNombre: string; plan: s
   const seccion = SECCIONES[segmento] ?? SECCIONES.dashboard;
 
   return (
-    <header className="flex h-20 items-center justify-between border-b border-border bg-background px-8">
+    <header className="flex h-20 items-center justify-between border-b border-border bg-background px-8 print:hidden">
       <div>
         <h1 className="text-lg font-semibold text-foreground">{seccion.titulo}</h1>
         <p className="text-sm text-muted-foreground">{seccion.subtitulo}</p>

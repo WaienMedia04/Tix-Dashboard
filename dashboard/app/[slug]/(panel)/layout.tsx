@@ -65,9 +65,9 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
     >
       <div className="min-h-screen bg-background">
         <Sidebar slug={slug} empresaNombre={estado.data.empresa.nombre} />
-        <div className="flex min-h-screen flex-col pl-60">
+        <div className="flex min-h-screen flex-col pl-60 print:pl-0">
           <Header empresaNombre={estado.data.empresa.nombre} plan={estado.data.empresa.plan} />
-          <main className="flex-1 px-6 py-5">
+          <main className="flex-1 px-6 py-5 print:p-0">
             <div className="mx-auto max-w-7xl">{children}</div>
           </main>
         </div>

@@ -7,7 +7,9 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
 import { KpisQueryDto } from './dto/kpis-query.dto';
+import { ReportesQueryDto } from './dto/reportes-query.dto';
 import { clasificarEstado } from './estado.util';
+import { rangoMensual, rangoSemanal } from './periodo.util';
 
 const MARCADOR_ESTADO: Record<string, string> = {
   enviada: '✅',
@@ -532,6 +534,97 @@ export class EmpresasService {
       distribucionEstado,
       distribucionProductividad,
       kpisPorEmpleado,
+    };
+  }
+
+  async reportes(slug: string, codigoAcceso: string | undefined, query: ReportesQueryDto) {
+    const empresa = await this.validarAcceso(slug, codigoAcceso);
+
+    const { inicio, fin } =
+      query.periodo === 'mensual' ? rangoMensual(query.valor) : rangoSemanal(query.valor);
+
+    const [worklogs, talentos] = await Promise.all([
+      this.prisma.worklog.findMany({
+        where: { empresaId: empresa.id, fecha: { gte: inicio, lte: fin } },
+        select: { talentoId: true, estadoEnvio: true, puntajeIA: true },
+      }),
+      this.prisma.talento.findMany({ where: { empresaId: empresa.id } }),
+    ]);
+
+    const totalBitacoras = worklogs.length;
+    const enviadas = worklogs.filter((w) => w.estadoEnvio.includes('✅')).length;
+    const porcentajeEnviadas =
+      totalBitacoras === 0 ? null : Math.round((enviadas / totalBitacoras) * 1000) / 10;
+    const conPuntaje = worklogs.filter((w) => w.puntajeIA !== null);
+    const puntajeProm =
+      conPuntaje.length === 0
+        ? null
+        : Math.round(
+            (conPuntaje.reduce((sum, w) => sum + (w.puntajeIA ?? 0), 0) / conPuntaje.length) * 10,
+          ) / 10;
+
+    const detalle = talentos
+      .map((t) => {
+        const propios = worklogs.filter((w) => w.talentoId === t.id);
+        const propiosConPuntaje = propios.filter((w) => w.puntajeIA !== null);
+        const propioPuntajeProm =
+          propiosConPuntaje.length === 0
+            ? null
+            : Math.round(
+                (propiosConPuntaje.reduce((sum, w) => sum + (w.puntajeIA ?? 0), 0) /
+                  propiosConPuntaje.length) *
+                  10,
+              ) / 10;
+        const propiasEnviadas = propios.filter((w) => w.estadoEnvio.includes('✅')).length;
+        const propioCumplimiento =
+          propios.length === 0 ? null : Math.round((propiasEnviadas / propios.length) * 1000) / 10;
+
+        return {
+          talentoId: t.id,
+          nombre: t.nombreCompleto,
+          rol: t.rol,
+          puntajeProm: propioPuntajeProm,
+          cumplimiento: propioCumplimiento,
+          enviadas: propiasEnviadas,
+          totalBitacoras: propios.length,
+        };
+      })
+      .sort((a, b) => (b.puntajeProm ?? -1) - (a.puntajeProm ?? -1));
+
+    const conPuntajeProm = detalle.filter((d) => d.puntajeProm !== null);
+    const empleadoDelMes =
+      conPuntajeProm.length === 0
+        ? null
+        : conPuntajeProm.reduce((mejor, actual) =>
+            (actual.puntajeProm ?? -1) > (mejor.puntajeProm ?? -1) ? actual : mejor,
+          );
+
+    const conCumplimiento = detalle.filter((d) => d.cumplimiento !== null);
+    const empleadoEnRiesgo =
+      conCumplimiento.length === 0
+        ? null
+        : conCumplimiento.reduce((peor, actual) =>
+            (actual.cumplimiento ?? 101) < (peor.cumplimiento ?? 101) ? actual : peor,
+          );
+
+    return {
+      periodo: query.periodo,
+      valor: query.valor,
+      rangoInicio: inicio,
+      rangoFin: fin,
+      empresa: { nombre: empresa.nombre, slug: empresa.slug },
+      resumen: {
+        totalBitacoras,
+        porcentajeEnviadas,
+        puntajeProm,
+        empleadoDelMes: empleadoDelMes
+          ? { nombre: empleadoDelMes.nombre, puntajeProm: empleadoDelMes.puntajeProm }
+          : null,
+        empleadoEnRiesgo: empleadoEnRiesgo
+          ? { nombre: empleadoEnRiesgo.nombre, cumplimiento: empleadoEnRiesgo.cumplimiento }
+          : null,
+      },
+      detalle,
     };
   }
 }
