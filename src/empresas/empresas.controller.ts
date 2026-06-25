@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Query,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { EmpresasService } from './empresas.service';
 import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
@@ -19,7 +20,10 @@ export class EmpresasController {
   constructor(private readonly empresasService: EmpresasService) {}
 
   @Get()
-  listar() {
+  listar(@Headers('x-admin-token') tokenAdmin: string | undefined) {
+    if (!process.env.ADMIN_TOKEN || tokenAdmin !== process.env.ADMIN_TOKEN) {
+      throw new UnauthorizedException('No autorizado');
+    }
     return this.empresasService.listar();
   }
 
