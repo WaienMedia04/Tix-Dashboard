@@ -1,5 +1,6 @@
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import type { KpiEmpleado, Tendencia } from "@/lib/api";
+import { StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 
 function colorPuntaje(puntaje: number | null): string {
   if (puntaje === null) return "text-muted-foreground";
@@ -37,24 +38,28 @@ export function TablaKpisEmpleado({ datos }: { datos: KpiEmpleado[] }) {
                 </td>
               </tr>
             )}
-            {datos.map((d) => (
-              <tr key={d.talentoId} className="border-t border-border transition-colors hover:bg-muted/50">
-                <td className="px-4 py-2.5 font-medium text-foreground">{d.nombre}</td>
-                <td className={`px-4 py-2.5 font-semibold tabular-nums ${colorPuntaje(d.puntajeProm)}`}>
-                  {d.puntajeProm === null ? "—" : d.puntajeProm.toFixed(1)}
-                </td>
-                <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
-                  {d.cumplimiento === null ? "—" : `${d.cumplimiento}%`}
-                </td>
-                <td className="px-4 py-2.5 tabular-nums text-muted-foreground">{d.enviadas}</td>
-                <td className="px-4 py-2.5 text-right">
-                  <div className="flex justify-end">
-                    <IconoTendencia tendencia={d.tendencia} />
-                  </div>
-                </td>
-              </tr>
-            ))}
           </tbody>
+          {datos.length > 0 && (
+            <StaggerTableBody>
+              {datos.map((d) => (
+                <StaggerRow key={d.talentoId} className="border-t border-border transition-colors hover:bg-muted/50">
+                  <td className="px-4 py-2.5 font-medium text-foreground">{d.nombre}</td>
+                  <td className={`px-4 py-2.5 font-semibold tabular-nums ${colorPuntaje(d.puntajeProm)}`}>
+                    {d.puntajeProm === null ? "—" : d.puntajeProm.toFixed(1)}
+                  </td>
+                  <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
+                    {d.cumplimiento === null ? "—" : `${d.cumplimiento}%`}
+                  </td>
+                  <td className="px-4 py-2.5 tabular-nums text-muted-foreground">{d.enviadas}</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <div className="flex justify-end">
+                      <IconoTendencia tendencia={d.tendencia} />
+                    </div>
+                  </td>
+                </StaggerRow>
+              ))}
+            </StaggerTableBody>
+          )}
         </table>
       </div>
     </section>

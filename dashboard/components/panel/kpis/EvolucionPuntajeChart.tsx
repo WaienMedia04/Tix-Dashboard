@@ -58,6 +58,8 @@ export function EvolucionPuntajeChart({ datos }: { datos: EvolucionSemanal[] }) 
                 strokeWidth={2}
                 fill="url(#gradientPuntajeIA)"
                 connectNulls
+                isAnimationActive
+                animationDuration={600}
                 dot={{ r: 3 }}
               />
             </AreaChart>

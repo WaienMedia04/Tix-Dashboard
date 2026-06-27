@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Plus, Users } from "lucide-react";
 import { type EmpleadoResumen, crearTalento, fetchEmpleados } from "@/lib/api";
+import { StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
+import { SkeletonTableRows } from "@/components/motion/Skeleton";
 
 const CAMPO_CLASES =
   "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring";
@@ -114,13 +116,7 @@ export function ListaEmpleados({ slug, codigoAcceso }: { slug: string; codigoAcc
             </tr>
           </thead>
           <tbody>
-            {estado.tipo === "cargando" && (
-              <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  Cargando...
-                </td>
-              </tr>
-            )}
+            {estado.tipo === "cargando" && <SkeletonTableRows rows={4} cols={3} />}
             {estado.tipo === "error" && (
               <tr>
                 <td colSpan={3} className="px-4 py-8 text-center text-sm text-destructive">
@@ -128,9 +124,11 @@ export function ListaEmpleados({ slug, codigoAcceso }: { slug: string; codigoAcc
                 </td>
               </tr>
             )}
-            {estado.tipo === "listo" &&
-              estado.empleados.map((e) => (
-                <tr key={e.id} className="border-t border-border transition-colors hover:bg-muted/50">
+          </tbody>
+          {estado.tipo === "listo" && (
+            <StaggerTableBody>
+              {estado.empleados.map((e) => (
+                <StaggerRow key={e.id} className="border-t border-border transition-colors hover:bg-muted/50">
                   <td className="px-4 py-2.5 font-medium text-foreground">{e.nombreCompleto}</td>
                   <td className="max-w-[260px] truncate px-4 py-2.5 text-muted-foreground" title={e.rol}>
                     {e.rol}
@@ -144,9 +142,10 @@ export function ListaEmpleados({ slug, codigoAcceso }: { slug: string; codigoAcc
                       {e.estado === "activo" ? "Activo" : "Inactivo"}
                     </span>
                   </td>
-                </tr>
+                </StaggerRow>
               ))}
-          </tbody>
+            </StaggerTableBody>
+          )}
         </table>
       </div>
     </div>

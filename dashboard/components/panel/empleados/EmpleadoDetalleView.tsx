@@ -15,6 +15,8 @@ import { MetricCard } from "@/components/MetricCard";
 import { TablaBitacoras } from "../bitacoras/TablaBitacoras";
 import { BitacoraDrawer } from "../bitacoras/BitacoraDrawer";
 import { PuntajeIAChart } from "./PuntajeIAChart";
+import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
+import { Skeleton, SkeletonChart, SkeletonStatCards } from "@/components/motion/Skeleton";
 
 type Estado =
   | { tipo: "cargando" }
@@ -62,7 +64,21 @@ function EmpleadoDetalleResultado({
   }, [slug, codigoAcceso, talentoId, page]);
 
   if (estado.tipo === "cargando") {
-    return <p className="text-sm text-muted-foreground">Cargando empleado...</p>;
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg border border-border bg-card p-5 shadow-card">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-14 w-14 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+        </div>
+        <SkeletonStatCards count={3} />
+        <SkeletonChart />
+      </div>
+    );
   }
   if (estado.tipo === "error") {
     return <p className="text-sm text-destructive">No se pudo cargar este empleado.</p>;
@@ -120,19 +136,25 @@ function EmpleadoDetalleResultado({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <MetricCard
-          label="Puntaje IA promedio"
-          value={detalle.metricas.puntajeIAPromedio === null ? "—" : `${detalle.metricas.puntajeIAPromedio.toFixed(1)} / 10`}
-          icon={Sparkles}
-        />
-        <MetricCard label="Total de bitácoras" value={String(detalle.metricas.totalBitacoras)} icon={ClipboardList} />
-        <MetricCard
-          label="% cumplimiento"
-          value={detalle.metricas.porcentajeCumplimiento === null ? "—" : `${detalle.metricas.porcentajeCumplimiento}%`}
-          icon={CheckCircle2}
-        />
-      </div>
+      <StaggerGroup className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StaggerItem>
+          <MetricCard
+            label="Puntaje IA promedio"
+            value={detalle.metricas.puntajeIAPromedio === null ? "—" : `${detalle.metricas.puntajeIAPromedio.toFixed(1)} / 10`}
+            icon={Sparkles}
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <MetricCard label="Total de bitácoras" value={String(detalle.metricas.totalBitacoras)} icon={ClipboardList} />
+        </StaggerItem>
+        <StaggerItem>
+          <MetricCard
+            label="% cumplimiento"
+            value={detalle.metricas.porcentajeCumplimiento === null ? "—" : `${detalle.metricas.porcentajeCumplimiento}%`}
+            icon={CheckCircle2}
+          />
+        </StaggerItem>
+      </StaggerGroup>
 
       <div className="rounded-lg border border-border bg-card p-4 shadow-card">
         <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   CodigoInvalidoError,
   DashboardData,
@@ -22,6 +23,7 @@ type Estado =
 
 function PanelInterno({ slug, children }: { slug: string; children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
 
   useEffect(() => {
@@ -63,12 +65,22 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
         dashboardInicial: estado.data,
       }}
     >
-      <div className="min-h-screen bg-background">
+      <div className="flex h-screen w-screen overflow-hidden bg-background print:h-auto print:w-auto print:overflow-visible">
         <Sidebar slug={slug} empresaNombre={estado.data.empresa.nombre} />
-        <div className="flex min-h-screen flex-col pl-60 print:pl-0">
+        <div className="flex min-w-0 flex-1 flex-col print:overflow-visible">
           <Header empresaNombre={estado.data.empresa.nombre} plan={estado.data.empresa.plan} />
-          <main className="flex-1 px-6 py-5 print:p-0">
-            <div className="mx-auto max-w-7xl">{children}</div>
+          <main className="bg-page-backdrop flex-1 overflow-y-auto px-6 py-5 print:overflow-visible print:bg-transparent print:p-0">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={pathname}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
           </main>
         </div>
       </div>

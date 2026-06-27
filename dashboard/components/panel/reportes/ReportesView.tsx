@@ -7,6 +7,7 @@ import { usePanel } from "../PanelContext";
 import { FiltroPeriodoReporte } from "./FiltroPeriodoReporte";
 import { ResumenEjecutivoReporte } from "./ResumenEjecutivoReporte";
 import { TablaReporte } from "./TablaReporte";
+import { SkeletonStatCards, SkeletonTableRows } from "@/components/motion/Skeleton";
 
 function mesActual(): string {
   const hoy = new Date();
@@ -87,7 +88,18 @@ function ReporteResultado({
   }, [slug, codigoAcceso, periodo, valor]);
 
   if (estado.tipo === "cargando") {
-    return <p className="text-sm text-muted-foreground">Cargando reporte...</p>;
+    return (
+      <div className="space-y-4">
+        <SkeletonStatCards count={3} />
+        <section className="rounded-lg border border-border bg-card shadow-card">
+          <table className="w-full text-left text-sm">
+            <tbody>
+              <SkeletonTableRows rows={5} cols={6} />
+            </tbody>
+          </table>
+        </section>
+      </div>
+    );
   }
   if (estado.tipo === "error") {
     return <p className="text-sm text-destructive">No se pudo cargar el reporte para este período.</p>;

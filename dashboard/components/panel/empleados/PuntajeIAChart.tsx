@@ -2,6 +2,7 @@
 
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { SeriePuntaje } from "@/lib/api";
+import { COLOR_CHART_1, COLOR_GRID, COLOR_TICK } from "../kpis/colorTokens";
 
 function formatearFechaCorta(fecha: string): string {
   return new Date(fecha).toLocaleDateString("es-DO", { day: "2-digit", month: "short", timeZone: "UTC" });
@@ -24,12 +25,12 @@ export function PuntajeIAChart({ serie }: { serie: SeriePuntaje[] }) {
     <div className="h-48">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={datos} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
-          <CartesianGrid stroke="oklch(0.9 0.012 255)" vertical={false} />
-          <XAxis dataKey="fecha" tick={{ fontSize: 11, fill: "oklch(0.5 0.03 256)" }} axisLine={false} tickLine={false} />
+          <CartesianGrid stroke={COLOR_GRID} vertical={false} />
+          <XAxis dataKey="fecha" tick={{ fontSize: 11, fill: COLOR_TICK }} axisLine={false} tickLine={false} />
           <YAxis
             domain={[0, 10]}
             ticks={[0, 2, 4, 6, 8, 10]}
-            tick={{ fontSize: 11, fill: "oklch(0.5 0.03 256)" }}
+            tick={{ fontSize: 11, fill: COLOR_TICK }}
             axisLine={false}
             tickLine={false}
             width={32}
@@ -37,17 +38,19 @@ export function PuntajeIAChart({ serie }: { serie: SeriePuntaje[] }) {
           <Tooltip
             contentStyle={{
               borderRadius: 8,
-              borderColor: "oklch(0.9 0.012 255)",
+              borderColor: COLOR_GRID,
               fontSize: 12,
             }}
           />
           <Line
             type="monotone"
             dataKey="puntajeIA"
-            stroke="oklch(0.42 0.13 258)"
+            stroke={COLOR_CHART_1}
             strokeWidth={2}
             dot={{ r: 3 }}
             connectNulls
+            isAnimationActive
+            animationDuration={600}
           />
         </LineChart>
       </ResponsiveContainer>

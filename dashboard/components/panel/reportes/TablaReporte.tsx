@@ -1,4 +1,5 @@
 import type { ReporteDetalleItem } from "@/lib/api";
+import { StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 
 function colorPuntaje(puntaje: number | null): string {
   if (puntaje === null) return "text-muted-foreground";
@@ -30,23 +31,30 @@ export function TablaReporte({ datos }: { datos: ReporteDetalleItem[] }) {
                 </td>
               </tr>
             )}
-            {datos.map((d) => (
-              <tr key={d.talentoId} className="border-t border-border transition-colors hover:bg-muted/50 print:hover:bg-transparent">
-                <td className="px-4 py-2.5 font-medium text-foreground">{d.nombre}</td>
-                <td className="max-w-[220px] truncate px-4 py-2.5 text-muted-foreground" title={d.rol}>
-                  {d.rol}
-                </td>
-                <td className={`px-4 py-2.5 font-semibold tabular-nums ${colorPuntaje(d.puntajeProm)}`}>
-                  {d.puntajeProm === null ? "—" : d.puntajeProm.toFixed(1)}
-                </td>
-                <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
-                  {d.cumplimiento === null ? "—" : `${d.cumplimiento}%`}
-                </td>
-                <td className="px-4 py-2.5 tabular-nums text-muted-foreground">{d.enviadas}</td>
-                <td className="px-4 py-2.5 tabular-nums text-muted-foreground">{d.totalBitacoras}</td>
-              </tr>
-            ))}
           </tbody>
+          {datos.length > 0 && (
+            <StaggerTableBody>
+              {datos.map((d) => (
+                <StaggerRow
+                  key={d.talentoId}
+                  className="border-t border-border transition-colors hover:bg-muted/50 print:hover:bg-transparent"
+                >
+                  <td className="px-4 py-2.5 font-medium text-foreground">{d.nombre}</td>
+                  <td className="max-w-[220px] truncate px-4 py-2.5 text-muted-foreground" title={d.rol}>
+                    {d.rol}
+                  </td>
+                  <td className={`px-4 py-2.5 font-semibold tabular-nums ${colorPuntaje(d.puntajeProm)}`}>
+                    {d.puntajeProm === null ? "—" : d.puntajeProm.toFixed(1)}
+                  </td>
+                  <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
+                    {d.cumplimiento === null ? "—" : `${d.cumplimiento}%`}
+                  </td>
+                  <td className="px-4 py-2.5 tabular-nums text-muted-foreground">{d.enviadas}</td>
+                  <td className="px-4 py-2.5 tabular-nums text-muted-foreground">{d.totalBitacoras}</td>
+                </StaggerRow>
+              ))}
+            </StaggerTableBody>
+          )}
         </table>
       </div>
     </section>

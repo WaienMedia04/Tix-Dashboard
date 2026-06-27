@@ -8,6 +8,8 @@ import { BitacorasSemanalChart } from "./BitacorasSemanalChart";
 import { DistribucionEstadoChart } from "./DistribucionEstadoChart";
 import { DistribucionProductividadChart } from "./DistribucionProductividadChart";
 import { TablaKpisEmpleado } from "./TablaKpisEmpleado";
+import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
+import { SkeletonChart } from "@/components/motion/Skeleton";
 
 function periodoActual(): string {
   const hoy = new Date();
@@ -42,7 +44,16 @@ function KpisResultado({
   }, [slug, codigoAcceso, periodo]);
 
   if (estado.tipo === "cargando") {
-    return <p className="text-sm text-muted-foreground">Cargando KPIs...</p>;
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <SkeletonChart />
+          <SkeletonChart />
+          <SkeletonChart />
+          <SkeletonChart />
+        </div>
+      </div>
+    );
   }
   if (estado.tipo === "error") {
     return <p className="text-sm text-destructive">No se pudieron cargar los KPIs.</p>;
@@ -52,12 +63,20 @@ function KpisResultado({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <EvolucionPuntajeChart datos={datos.evolucionSemanal} />
-        <BitacorasSemanalChart datos={datos.bitacorasSemanal} />
-        <DistribucionEstadoChart datos={datos.distribucionEstado} />
-        <DistribucionProductividadChart datos={datos.distribucionProductividad} />
-      </div>
+      <StaggerGroup className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <StaggerItem>
+          <EvolucionPuntajeChart datos={datos.evolucionSemanal} />
+        </StaggerItem>
+        <StaggerItem>
+          <BitacorasSemanalChart datos={datos.bitacorasSemanal} />
+        </StaggerItem>
+        <StaggerItem>
+          <DistribucionEstadoChart datos={datos.distribucionEstado} />
+        </StaggerItem>
+        <StaggerItem>
+          <DistribucionProductividadChart datos={datos.distribucionProductividad} />
+        </StaggerItem>
+      </StaggerGroup>
       <TablaKpisEmpleado datos={datos.kpisPorEmpleado} />
     </div>
   );

@@ -29,7 +29,16 @@ export function DistribucionProductividadChart({ datos }: { datos: DistribucionP
             <div className="h-44 w-44 shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={segmentos} dataKey="count" nameKey="label" innerRadius={45} outerRadius={70} paddingAngle={2}>
+                  <Pie
+                    data={segmentos}
+                    dataKey="count"
+                    nameKey="label"
+                    innerRadius={45}
+                    outerRadius={70}
+                    paddingAngle={2}
+                    isAnimationActive
+                    animationDuration={500}
+                  >
                     {segmentos.map((s) => (
                       <Cell key={s.label} fill={COLOR_ESTADO[s.colorKey]} />
                     ))}

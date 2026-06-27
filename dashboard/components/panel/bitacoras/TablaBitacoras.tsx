@@ -1,5 +1,7 @@
 import type { BitacoraItem } from "@/lib/api";
 import { EstadoBadge } from "@/components/EstadoBadge";
+import { SkeletonTableRows } from "@/components/motion/Skeleton";
+import { StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 
 function colorPuntaje(puntaje: number | null): string {
   if (puntaje === null) return "text-muted-foreground";
@@ -49,13 +51,7 @@ export function TablaBitacoras({
             </tr>
           </thead>
           <tbody>
-            {cargando && (
-              <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  Cargando...
-                </td>
-              </tr>
-            )}
+            {cargando && <SkeletonTableRows rows={6} cols={6} />}
             {!cargando && error && (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-sm text-destructive">
@@ -70,10 +66,11 @@ export function TablaBitacoras({
                 </td>
               </tr>
             )}
-            {!cargando &&
-              !error &&
-              items.map((item) => (
-                <tr key={item.id} className="border-t border-border transition-colors hover:bg-muted/50">
+          </tbody>
+          {!cargando && !error && items.length > 0 && (
+            <StaggerTableBody>
+              {items.map((item) => (
+                <StaggerRow key={item.id} className="border-t border-border transition-colors hover:bg-muted/50">
                   <td className="px-4 py-2.5 tabular-nums text-muted-foreground">{formatearFecha(item.fecha)}</td>
                   <td className="px-4 py-2.5 font-medium text-foreground">{item.talento.nombreCompleto}</td>
                   <td className="max-w-[220px] truncate px-4 py-2.5 text-muted-foreground" title={item.talento.rol}>
@@ -93,9 +90,10 @@ export function TablaBitacoras({
                       Ver
                     </button>
                   </td>
-                </tr>
+                </StaggerRow>
               ))}
-          </tbody>
+            </StaggerTableBody>
+          )}
         </table>
       </div>
 

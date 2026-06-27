@@ -21,7 +21,16 @@ export function DistribucionEstadoChart({ datos }: { datos: DistribucionEstado[]
           <div className="h-44 w-44 shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={datos} dataKey="count" nameKey="estado" innerRadius={45} outerRadius={70} paddingAngle={2}>
+                <Pie
+                  data={datos}
+                  dataKey="count"
+                  nameKey="estado"
+                  innerRadius={45}
+                  outerRadius={70}
+                  paddingAngle={2}
+                  isAnimationActive
+                  animationDuration={500}
+                >
                   {datos.map((d) => (
                     <Cell key={d.estado} fill={COLOR_ESTADO[d.colorKey]} />
                   ))}

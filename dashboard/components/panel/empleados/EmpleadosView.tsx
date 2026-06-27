@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { type EmpleadoResumen, fetchEmpleados } from "@/lib/api";
 import { usePanel } from "../PanelContext";
 import { EmpleadoCard } from "./EmpleadoCard";
+import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
+import { SkeletonCardGrid } from "@/components/motion/Skeleton";
 
 type Estado =
   | { tipo: "cargando" }
@@ -29,7 +31,7 @@ export function EmpleadosView() {
   }, [slug, codigoAcceso]);
 
   if (estado.tipo === "cargando") {
-    return <p className="text-sm text-muted-foreground">Cargando empleados...</p>;
+    return <SkeletonCardGrid count={8} />;
   }
   if (estado.tipo === "error") {
     return <p className="text-sm text-destructive">No se pudo cargar el listado de empleados.</p>;
@@ -39,10 +41,12 @@ export function EmpleadosView() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <StaggerGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {estado.empleados.map((empleado) => (
-        <EmpleadoCard key={empleado.id} slug={slug} empleado={empleado} />
+        <StaggerItem key={empleado.id}>
+          <EmpleadoCard slug={slug} empleado={empleado} />
+        </StaggerItem>
       ))}
-    </div>
+    </StaggerGroup>
   );
 }

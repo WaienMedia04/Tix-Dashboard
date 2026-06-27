@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 const ESTILOS: Record<string, string> = {
   enviada: "bg-success/10 text-success border-success/20",
   no_enviada: "bg-destructive/10 text-destructive border-destructive/20",
@@ -23,10 +27,14 @@ function limpiarTexto(estadoCrudo: string): string {
 
 export function EstadoBadge({ estado }: { estado: string }) {
   return (
-    <span
+    <motion.span
+      key={estado}
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap ${claseParaEstado(estado)}`}
     >
       {limpiarTexto(estado)}
-    </span>
+    </motion.span>
   );
 }

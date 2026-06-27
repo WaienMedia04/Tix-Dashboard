@@ -35,8 +35,8 @@ export function BitacorasSemanalChart({ datos }: { datos: BitacorasSemanal[] }) 
               <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: COLOR_TICK }} axisLine={false} tickLine={false} width={24} />
               <Tooltip labelFormatter={(v) => formatearSemana(String(v))} contentStyle={{ borderRadius: 8, borderColor: COLOR_GRID, fontSize: 12 }} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="esperadas" name="Esperadas" fill={COLOR_CHART_2} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="enviadas" name="Enviadas" fill={COLOR_CHART_1} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="esperadas" name="Esperadas" fill={COLOR_CHART_2} radius={[4, 4, 0, 0]} isAnimationActive animationDuration={500} />
+              <Bar dataKey="enviadas" name="Enviadas" fill={COLOR_CHART_1} radius={[4, 4, 0, 0]} isAnimationActive animationDuration={500} />
             </BarChart>
           </ResponsiveContainer>
         </div>
