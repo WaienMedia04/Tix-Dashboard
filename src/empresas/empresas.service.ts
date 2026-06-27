@@ -105,15 +105,80 @@ export class EmpresasService {
       notasTix: w.notasTix,
     }));
 
+    const empleadosActivos = talentos.filter(
+      (t) => t.estado === 'activo',
+    ).length;
+
+    const hoyIso = new Date().toISOString().slice(0, 10);
+    const bitacorasHoy = worklogs.filter(
+      (w) => w.fecha.toISOString().slice(0, 10) === hoyIso,
+    ).length;
+
+    // Referencia para la semana de productividad: la fecha de la bitacora
+    // mas reciente (si existe), no la fecha calendario de hoy. Asi el
+    // dashboard siempre muestra la ultima semana con actividad real en
+    // lugar de una semana en blanco cuando no hay registros recientes.
+    const fechaReferencia = worklogs[0]?.fecha ?? new Date();
+    const referenciaUtc = new Date(
+      Date.UTC(
+        fechaReferencia.getUTCFullYear(),
+        fechaReferencia.getUTCMonth(),
+        fechaReferencia.getUTCDate(),
+      ),
+    );
+    const diaIso = referenciaUtc.getUTCDay() || 7; // 1=lunes .. 7=domingo
+    const lunes = new Date(referenciaUtc);
+    lunes.setUTCDate(referenciaUtc.getUTCDate() - diaIso + 1);
+
+    const ETIQUETAS_DIA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const productividadSemanal = ETIQUETAS_DIA.map((dia, idx) => {
+      const fechaDia = new Date(lunes);
+      fechaDia.setUTCDate(lunes.getUTCDate() + idx);
+      const isoDia = fechaDia.toISOString().slice(0, 10);
+      const enviadas = worklogs.filter(
+        (w) =>
+          w.fecha.toISOString().slice(0, 10) === isoDia &&
+          w.estadoEnvio === '✅ Enviada',
+      ).length;
+      return { dia, fecha: fechaDia.toISOString(), enviadas };
+    });
+
+    const actividadEquipo = talentos
+      .map((t) => {
+        const ultimo = worklogs.find((w) => w.talentoId === t.id);
+        return {
+          talentoId: t.id,
+          nombreCompleto: t.nombreCompleto,
+          rol: t.rol,
+          fecha: ultimo?.fecha ?? null,
+          estadoEnvio: ultimo?.estadoEnvio ?? null,
+          puntajeIA: ultimo?.puntajeIA ?? null,
+        };
+      })
+      .sort((a, b) => {
+        if (!a.fecha && !b.fecha) return 0;
+        if (!a.fecha) return 1;
+        if (!b.fecha) return -1;
+        return a.fecha < b.fecha ? 1 : -1;
+      });
+
     return {
       empresa: {
         nombre: empresa.nombre,
         slug: empresa.slug,
         plan: empresa.plan,
       },
-      metricas: { totalBitacoras, enviadas, porcentajeEnviadas },
+      metricas: {
+        totalBitacoras,
+        enviadas,
+        porcentajeEnviadas,
+        empleadosActivos,
+        bitacorasHoy,
+      },
+      productividadSemanal,
       rankingTalentos,
       worklogsRecientes,
+      actividadEquipo,
     };
   }
 

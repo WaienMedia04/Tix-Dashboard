@@ -25,11 +25,34 @@ export interface WorklogReciente {
   notasTix: string | null;
 }
 
+export interface ProductividadDia {
+  dia: string;
+  fecha: string;
+  enviadas: number;
+}
+
+export interface ActividadEmpleado {
+  talentoId: string;
+  nombreCompleto: string;
+  rol: string;
+  fecha: string | null;
+  estadoEnvio: string | null;
+  puntajeIA: number | null;
+}
+
 export interface DashboardData {
   empresa: { nombre: string; slug: string; plan: string };
-  metricas: { totalBitacoras: number; enviadas: number; porcentajeEnviadas: number };
+  metricas: {
+    totalBitacoras: number;
+    enviadas: number;
+    porcentajeEnviadas: number;
+    empleadosActivos: number;
+    bitacorasHoy: number;
+  };
+  productividadSemanal: ProductividadDia[];
   rankingTalentos: TalentoRanking[];
   worklogsRecientes: WorklogReciente[];
+  actividadEquipo: ActividadEmpleado[];
 }
 
 export interface BitacoraTalento {
