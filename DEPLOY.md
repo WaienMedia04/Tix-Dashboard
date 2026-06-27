@@ -23,10 +23,19 @@ API), y al final el DNS.
    raíz del repo, no en `/dashboard`).
 3. En **Settings → Build**, configura:
    - **Build Command:** `npm install && npm run build`
-     (`npm install` ya dispara `postinstall` → `prisma generate`)
-   - **Start Command:** `npx prisma migrate deploy && node dist/main.js`
-     (aplica las migraciones pendientes antes de levantar el servidor; es seguro
-     ejecutarlo en cada deploy, Prisma no reaplica migraciones ya corridas)
+     (`npm install` ya dispara `postinstall` → `prisma generate`; el script
+     `build` también corre `prisma generate` de forma explícita antes de
+     `nest build`)
+   - **Start Command:** `node dist/main.js`
+4. En **Settings → Deploy → Release Command** (Railway lo corre una sola vez
+   antes de que la nueva versión reciba tráfico, NO en cada reinicio):
+   - **Release Command:** `npx prisma migrate deploy`
+     (NUNCA `migrate dev` en producción — `migrate deploy` solo aplica
+     migraciones ya generadas en `prisma/migrations/`, no crea nuevas ni pide
+     confirmación interactiva. Si no usas Release Command, como alternativa
+     puedes encadenarlo en el Start Command: `npx prisma migrate deploy &&
+     node dist/main.js`, pero el Release Command es la forma correcta porque
+     corre una sola vez por deploy, no en cada arranque/escalado de instancia)
 
 ### 1.2 Variables de entorno
 
