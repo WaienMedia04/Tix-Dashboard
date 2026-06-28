@@ -1,70 +1,84 @@
-import { BarChart3, MessageSquareText, ShieldCheck, Sparkles } from "lucide-react";
-import { PublicHeader } from "@/components/public/PublicHeader";
-import { PublicFooter } from "@/components/public/PublicFooter";
-import { AccesoPanelForm } from "@/components/public/AccesoPanelForm";
+"use client";
 
-const CARACTERISTICAS = [
-  {
-    icon: MessageSquareText,
-    titulo: "Bitácoras por WhatsApp",
-    descripcion:
-      "Tu equipo reporta su trabajo diario directamente por WhatsApp, sin formularios ni apps adicionales.",
-  },
-  {
-    icon: Sparkles,
-    titulo: "Puntaje de productividad con IA",
-    descripcion: "Cada bitácora se analiza automáticamente y recibe un puntaje objetivo y consistente.",
-  },
-  {
-    icon: BarChart3,
-    titulo: "KPIs y reportes ejecutivos",
-    descripcion: "Tendencias, distribución del equipo y reportes exportables listos para presentar.",
-  },
-  {
-    icon: ShieldCheck,
-    titulo: "Datos aislados por empresa",
-    descripcion: "Cada empresa accede únicamente a su propia información, protegida por un código de acceso.",
-  },
-];
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  CodigoInvalidoError,
+  DemasiadosIntentosError,
+  validarCodigoAcceso,
+} from "@/lib/api";
+import { guardarCodigo } from "@/lib/auth";
+import { BrandMark } from "@/components/BrandMark";
+
+function AccesoInterno() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialError =
+    searchParams.get("error") === "codigo_invalido"
+      ? "Tu código de acceso ya no es válido. Ingrésalo nuevamente."
+      : null;
+
+  const [codigo, setCodigo] = useState("");
+  const [error, setError] = useState<string | null>(initialError);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!codigo.trim()) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const { slug } = await validarCodigoAcceso(codigo.trim());
+      guardarCodigo(slug, codigo.trim());
+      router.push(`/${slug}/dashboard`);
+    } catch (err) {
+      if (err instanceof CodigoInvalidoError) {
+        setError("Código de acceso incorrecto.");
+      } else if (err instanceof DemasiadosIntentosError) {
+        setError(err.message);
+      } else {
+        setError("No se pudo conectar con el servidor. Intenta de nuevo.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm rounded-lg border border-border bg-card p-8 shadow-card">
+        <div className="mb-6 text-center">
+          <BrandMark />
+          <h1 className="mt-4 text-xl font-semibold text-foreground">Acceso al panel</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Ingresa el código de acceso de tu empresa.</p>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="password"
+            autoFocus
+            value={codigo}
+            onChange={(e) => setCodigo(e.target.value)}
+            placeholder="Código de acceso"
+            className="w-full rounded-md border border-border bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <button
+            type="submit"
+            disabled={loading || !codigo.trim()}
+            className="w-full rounded-md bg-primary px-4 py-2.5 font-medium text-primary-foreground transition-opacity disabled:opacity-50"
+          >
+            {loading ? "Verificando..." : "Entrar"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <PublicHeader />
-
-      <main className="flex-1">
-        <section className="bg-gradient-mesh px-6 py-20 text-center sm:px-10">
-          <h1 className="font-display mx-auto max-w-2xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            La productividad de tu equipo, medida con inteligencia artificial.
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground">
-            TalentiX RD convierte las bitácoras diarias enviadas por WhatsApp en métricas claras de
-            cumplimiento y desempeño para tu empresa.
-          </p>
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <AccesoPanelForm />
-            <p className="text-xs text-muted-foreground">
-              ¿Ya eres cliente? Ingresa el identificador que te compartimos para acceder a tu panel.
-            </p>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-5xl px-6 py-16 sm:px-10">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {CARACTERISTICAS.map((c) => (
-              <div key={c.titulo} className="rounded-lg border border-border bg-card p-5 shadow-card">
-                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-accent text-accent-foreground">
-                  <c.icon className="h-4 w-4" />
-                </span>
-                <p className="font-display mt-3 text-base font-semibold text-foreground">{c.titulo}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{c.descripcion}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      </main>
-
-      <PublicFooter />
-    </div>
+    <Suspense fallback={null}>
+      <AccesoInterno />
+    </Suspense>
   );
 }

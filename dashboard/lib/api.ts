@@ -214,6 +214,26 @@ export interface ReporteResponse {
 
 export class CodigoInvalidoError extends Error {}
 export class EmpresaNoEncontradaError extends Error {}
+export class DemasiadosIntentosError extends Error {}
+
+export async function validarCodigoAcceso(codigo: string): Promise<{ slug: string; nombre: string }> {
+  const res = await fetch(`${API_URL}/auth/acceso`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ codigo }),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new CodigoInvalidoError("Código de acceso inválido");
+  }
+  if (res.status === 429) {
+    throw new DemasiadosIntentosError("Demasiados intentos. Espera un momento antes de volver a intentar.");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo validar el código de acceso");
+  }
+  return res.json();
+}
 
 export async function fetchDashboard(slug: string, codigoAcceso: string): Promise<DashboardData> {
   const res = await fetch(

@@ -29,7 +29,7 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
   useEffect(() => {
     const codigo = leerCodigoGuardado(slug);
     if (!codigo) {
-      router.replace(`/${slug}`);
+      router.replace("/");
       return;
     }
     let cancelado = false;
@@ -41,7 +41,7 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
         if (cancelado) return;
         if (err instanceof CodigoInvalidoError) {
           borrarCodigo(slug);
-          router.replace(`/${slug}?error=codigo_invalido`);
+          router.replace("/?error=codigo_invalido");
         } else if (err instanceof EmpresaNoEncontradaError) {
           setEstado({ tipo: "error", mensaje: err.message });
         } else {
