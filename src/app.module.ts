@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { EmpresasModule } from './empresas/empresas.module';
 import { WorklogsModule } from './worklogs/worklogs.module';
 import { TalentosModule } from './talentos/talentos.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { TalentosModule } from './talentos/talentos.module';
     EmpresasModule,
     WorklogsModule,
     TalentosModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
