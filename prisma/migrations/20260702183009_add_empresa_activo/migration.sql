@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Empresa" ADD COLUMN     "activo" BOOLEAN NOT NULL DEFAULT true;

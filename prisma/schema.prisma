@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,62 +7,51 @@ datasource db {
 }
 
 model Empresa {
-  id     String @id @default(cuid())
-  nombre String
-  slug   String @unique
-  plan   String
-
-  // Código simple para proteger el dashboard por empresa en la demo (no es auth real)
+  id           String    @id @default(cuid())
+  nombre       String
+  slug         String    @unique
+  plan         String
   codigoAcceso String
-
-  talentos  Talento[]
-  worklogs  Worklog[]
-  createdAt DateTime  @default(now())
+  activo       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  talentos     Talento[]
+  worklogs     Worklog[]
 }
 
 model Talento {
-  id             String @id @default(cuid())
+  id             String    @id @default(cuid())
   empresaId      String
-  empresa        Empresa @relation(fields: [empresaId], references: [id])
   nombreCompleto String
   rol            String
   estado         String
-
-  worklogs Worklog[]
+  empresa        Empresa   @relation(fields: [empresaId], references: [id])
+  worklogs       Worklog[]
 
   @@index([empresaId])
 }
 
 model Worklog {
-  id        String   @id @default(cuid())
-  empresaId String
-  empresa   Empresa  @relation(fields: [empresaId], references: [id])
-  talentoId String
-  talento   Talento  @relation(fields: [talentoId], references: [id])
-  fecha     DateTime
+  id                    String   @id @default(cuid())
+  empresaId             String
+  talentoId             String
+  fecha                 DateTime
+  actividadesRealizadas String?
+  queSeEjecuto          String?
+  detallesRelevantes    String?
+  informeAvances        String?
+  objetivoDia           String?
+  estadoEnvio           String
+  horaEnvio             String?
+  dia                   String?
+  semana                Int?
+  capacitacion          String?
+  puntajeIA             Int?
+  calificacionCeo       String?
+  notasTix              String?
+  createdAt             DateTime @default(now())
+  empresa               Empresa  @relation(fields: [empresaId], references: [id])
+  talento               Talento  @relation(fields: [talentoId], references: [id])
 
-  actividadesRealizadas String? @db.Text
-  queSeEjecuto          String? @db.Text
-  detallesRelevantes    String? @db.Text
-  informeAvances        String? @db.Text
-  objetivoDia           String? @db.Text
-
-  estadoEnvio String
-  horaEnvio   String?
-
-  dia    String?
-  semana Int?
-
-  capacitacion String? @db.Text
-
-  puntajeIA       Int?
-  calificacionCeo String?
-  notasTix        String? @db.Text
-
-  createdAt DateTime @default(now())
-
-  // TODO: agregar Row Level Security por empresaId en Postgres (post-MVP).
-  // Por ahora todo filtro de empresa se hace a mano en las queries del servicio.
   @@index([empresaId])
   @@index([empresaId, fecha])
 }

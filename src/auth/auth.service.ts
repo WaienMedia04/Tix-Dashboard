@@ -7,7 +7,7 @@ export class AuthService {
 
   async validarCodigo(codigo: string) {
     const empresa = await this.prisma.empresa.findFirst({
-      where: { codigoAcceso: codigo },
+      where: { codigoAcceso: codigo, activo: true },
       select: { slug: true, nombre: true },
     });
 
