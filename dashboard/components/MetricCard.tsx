@@ -31,7 +31,7 @@ export function MetricCard({
     <motion.div
       whileHover={{ y: -2 }}
       transition={{ duration: 0.15, ease: "easeOut" }}
-      className={`rounded-xl p-4 shadow-card transition-shadow hover:shadow-elegant ${
+      className={`select-none rounded-xl p-4 shadow-card transition-shadow hover:shadow-elegant ${
         primario ? "bg-primary-dark text-primary-dark-foreground" : "border border-border bg-card"
       }`}
     >

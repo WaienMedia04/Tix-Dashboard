@@ -7,7 +7,7 @@ function fechaHoy(): string {
 
 export function ResumenHoyCard({ bitacorasHoy, totalBitacoras }: { bitacorasHoy: number; totalBitacoras: number }) {
   return (
-    <div className="bg-gradient-mesh-dark relative flex h-full flex-col overflow-hidden rounded-xl bg-accent-dark p-4 text-accent-dark-foreground shadow-elegant">
+    <div className="bg-gradient-mesh-dark relative flex h-full select-none flex-col overflow-hidden rounded-xl bg-accent-dark p-4 text-accent-dark-foreground shadow-elegant">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold tracking-wide text-accent-dark-foreground/60 uppercase">Hoy</p>
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/10">

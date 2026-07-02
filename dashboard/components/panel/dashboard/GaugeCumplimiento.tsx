@@ -10,22 +10,22 @@ export function GaugeCumplimiento({ porcentaje }: { porcentaje: number | null })
   const data = [{ value: valor, fill: COLOR_CHART_1 }];
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-border bg-card p-4 shadow-card">
+    <div className="flex h-full select-none flex-col rounded-xl border border-border bg-card p-4 shadow-card">
       <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Cumplimiento del equipo</p>
       <p className="mt-0.5 text-[11px] text-muted-foreground">% de bitácoras enviadas</p>
-      <div className="relative mt-1 flex flex-1 items-center justify-center">
+      <div className="relative mt-1 flex flex-1 items-end justify-center">
         {porcentaje === null ? (
           <p className="text-sm text-muted-foreground">—</p>
         ) : (
-          <>
+          <div className="relative">
             <RadialBarChart
               width={180}
-              height={110}
+              height={96}
               cx="50%"
               cy="100%"
-              innerRadius="75%"
+              innerRadius="72%"
               outerRadius="100%"
-              barSize={16}
+              barSize={14}
               startAngle={180}
               endAngle={0}
               data={data}
@@ -39,10 +39,10 @@ export function GaugeCumplimiento({ porcentaje }: { porcentaje: number | null })
                 animationDuration={600}
               />
             </RadialBarChart>
-            <p className="font-display absolute bottom-1 text-2xl font-semibold text-foreground tabular-nums">
+            <p className="font-display absolute inset-x-0 bottom-1 text-center text-2xl font-semibold text-foreground tabular-nums">
               {porcentaje}%
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

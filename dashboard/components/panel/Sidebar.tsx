@@ -102,14 +102,14 @@ export function Sidebar({ slug, empresaNombre }: { slug: string; empresaNombre: 
 
   function handleLogout() {
     borrarCodigo(slug);
-    router.push(`/${slug}`);
+    router.push("/");
   }
 
   return (
     <motion.aside
       animate={{ width: colapsado ? 72 : 240 }}
       transition={{ duration: reducirMovimiento ? 0 : 0.22, ease: "easeOut" }}
-      className="bg-sidebar flex h-full shrink-0 flex-col border-r border-sidebar-border text-sidebar-foreground print:hidden"
+      className="bg-sidebar flex h-full shrink-0 select-none flex-col border-r border-sidebar-border text-sidebar-foreground print:hidden"
     >
       <div className={`flex items-center gap-2 px-4 py-5 ${colapsado ? "justify-center px-0" : "justify-between"}`}>
         {!colapsado && (
