@@ -1,7 +1,8 @@
 /* ============================================================
-   TalentiX RD — Sistema de diseño "Verde Esmeralda"
-   Layout bento tipo Donezo: sidebar claro, fondo gris muy claro,
-   cards blancas flotando con sombra sutil, acento verde esmeralda.
+   TalentiX RD — Sistema de diseño "Azul Corporativo"
+   Layout bento tipo Donezo: sidebar blanco, fondo blanco puro,
+   cards flotando separadas por border y shadow-card, acento azul
+   marino (#0F3A5F) + azul acero (#3E7CA6).
    Mantiene intactos: doble tipografía (Inter + Fraunces), sombras de
    dos capas, escala de radios, gradiente mesh.
    ============================================================ */
@@ -72,132 +73,131 @@
 :root {
   --radius: 0.75rem;
 
-  /* Verde Esmeralda — light */
-  --background: oklch(0.97 0.005 150);
-  --foreground: oklch(0.22 0.02 160);
+  /* Azul Corporativo — light */
+  --background: oklch(1 0 0);                       /* #FFFFFF blanco puro */
+  --foreground: oklch(0.22 0 0);                    /* #2B2B2B casi negro */
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.02 160);
+  --card: oklch(1 0 0);                             /* blanco, separación via border+shadow */
+  --card-foreground: oklch(0.22 0 0);
 
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.02 160);
+  --popover-foreground: oklch(0.22 0 0);
 
-  --primary: oklch(0.55 0.13 158);
-  --primary-foreground: oklch(0.98 0.01 155);
-  --primary-glow: oklch(0.68 0.15 155);
-  --primary-dark: oklch(0.42 0.11 160);
-  --primary-dark-foreground: oklch(0.97 0.015 150);
+  --primary: oklch(0.30 0.10 252);                  /* #0F3A5F azul marino profundo */
+  --primary-foreground: oklch(0.98 0 0);
+  --primary-glow: oklch(0.53 0.09 236);             /* #3E7CA6 azul acero (variante más clara) */
+  --primary-dark: oklch(0.22 0.08 255);             /* azul marino muy oscuro */
+  --primary-dark-foreground: oklch(0.95 0.01 240);
 
-  --secondary: oklch(0.95 0.012 155);
-  --secondary-foreground: oklch(0.3 0.05 160);
+  --secondary: oklch(0.94 0.018 240);               /* azul tenue de superficie */
+  --secondary-foreground: oklch(0.30 0.10 252);
 
-  --muted: oklch(0.95 0.01 150);
-  --muted-foreground: oklch(0.55 0.02 155);
+  --muted: oklch(0.94 0.008 240);
+  --muted-foreground: oklch(0.50 0.025 240);        /* gris azulado — texto secundario */
 
-  --accent: oklch(0.93 0.03 155);
-  --accent-foreground: oklch(0.3 0.07 160);
+  --accent: oklch(0.93 0.022 240);                  /* superficie azul muy suave */
+  --accent-foreground: oklch(0.30 0.10 252);
 
-  /* Acento secundario: dorado tenue para detalles premium */
+  /* Dorado — detalles premium, no cambia con la marca */
   --gold: oklch(0.74 0.13 85);
-  --gold-foreground: oklch(0.22 0.04 160);
+  --gold-foreground: oklch(0.22 0 0);
 
+  /* Semánticos: verde=enviada, rojo=no enviada, ámbar=pendiente, azul=permiso */
   --destructive: oklch(0.55 0.22 27);
   --destructive-foreground: oklch(0.98 0 0);
 
-  --success: oklch(0.6 0.15 155);
+  --success: oklch(0.60 0.15 155);
   --success-foreground: oklch(0.98 0 0);
 
   --warning: oklch(0.75 0.15 70);
-  --warning-foreground: oklch(0.22 0.04 160);
+  --warning-foreground: oklch(0.22 0.04 80);
 
-  /* Info: permisos autorizados (ausencia legitima, no es incumplimiento) */
-  --info: oklch(0.55 0.13 230);
+  --info: oklch(0.53 0.09 236);                     /* azul acero — permiso autorizado */
   --info-foreground: oklch(0.98 0 0);
 
-  /* Neutral: estados administrativos sin connotacion positiva/negativa (ej. licencia medica) */
-  --neutral: oklch(0.55 0.015 160);
+  --neutral: oklch(0.55 0.015 240);
   --neutral-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.9 0.012 150);
-  --input: oklch(0.92 0.01 150);
-  --ring: oklch(0.68 0.15 155);
+  --border: oklch(0.90 0.012 240);
+  --input: oklch(0.92 0.008 240);
+  --ring: oklch(0.53 0.09 236);
 
-  /* Paleta de gráficas: verdes + dorado de acento + un rojo para alertas */
-  --chart-1: oklch(0.55 0.13 158);
-  --chart-2: oklch(0.68 0.15 155);
-  --chart-3: oklch(0.75 0.1 145);
-  --chart-4: oklch(0.74 0.13 85);
-  --chart-5: oklch(0.55 0.18 25);
+  /* Gráficas: gama de azules de marino a claro + gris para inactivos */
+  --chart-1: oklch(0.30 0.10 252);                  /* azul marino */
+  --chart-2: oklch(0.53 0.09 236);                  /* azul acero */
+  --chart-3: oklch(0.43 0.10 245);                  /* azul medio */
+  --chart-4: oklch(0.64 0.07 228);                  /* azul claro */
+  --chart-5: oklch(0.78 0.005 240);                 /* gris-azulado para sin datos */
 
-  /* Sidebar claro — fondo blanco, item activo en verde suave con barra indicadora */
+  /* Sidebar: fondo blanco, item activo en azul acero suave, barra indicadora marina */
   --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.45 0.02 155);
-  --sidebar-primary: oklch(0.55 0.13 158);
-  --sidebar-primary-foreground: oklch(0.98 0.01 155);
-  --sidebar-accent: oklch(0.95 0.03 155);
-  --sidebar-accent-foreground: oklch(0.42 0.11 160);
-  --sidebar-border: oklch(0.92 0.012 150);
-  --sidebar-ring: oklch(0.68 0.15 155);
+  --sidebar-foreground: oklch(0.45 0.018 240);
+  --sidebar-primary: oklch(0.30 0.10 252);          /* barra indicadora azul marino */
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.93 0.022 240);          /* fondo item activo azul acero suave */
+  --sidebar-accent-foreground: oklch(0.30 0.10 252);
+  --sidebar-border: oklch(0.92 0.010 240);
+  --sidebar-ring: oklch(0.53 0.09 236);
 
-  /* Fondo de pagina detras de las cards flotantes */
-  --page-backdrop: oklch(0.97 0.005 150);
+  /* Fondo de página — levísimo tinte frío para separar visualmente las cards blancas */
+  --page-backdrop: oklch(0.98 0.008 240);
 
-  /* Acento oscuro para cards destacadas (equivalente al "time tracker" de la referencia) */
-  --accent-dark: oklch(0.19 0.035 160);
-  --accent-dark-foreground: oklch(0.95 0.015 150);
+  /* Card de acento oscura type "HOY": casi negro #2B2B2B con tinte azul */
+  --accent-dark: oklch(0.22 0.015 252);
+  --accent-dark-foreground: oklch(0.95 0.012 240);
 
   --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-glow) 100%);
   --gradient-gold: linear-gradient(135deg, oklch(0.74 0.13 85) 0%, oklch(0.85 0.1 90) 100%);
-  --gradient-subtle: linear-gradient(180deg, oklch(0.985 0.006 150) 0%, oklch(0.96 0.012 150) 100%);
+  --gradient-subtle: linear-gradient(180deg, oklch(0.99 0.005 240) 0%, oklch(0.96 0.015 240) 100%);
   --shadow-elegant: 0 10px 40px -12px color-mix(in oklab, var(--primary) 25%, transparent);
-  --shadow-card: 0 1px 3px 0 oklch(0.22 0.02 160 / 0.06), 0 1px 2px -1px oklch(0.22 0.02 160 / 0.04);
+  --shadow-card: 0 1px 4px 0 oklch(0.22 0 0 / 0.07), 0 1px 2px -1px oklch(0.22 0 0 / 0.05);
   --shadow-gold: 0 8px 30px -8px color-mix(in oklab, var(--gold) 40%, transparent);
-  --gradient-sidebar: linear-gradient(180deg, oklch(0.19 0.035 160) 0%, oklch(0.24 0.045 158) 100%);
-  --gradient-mesh: radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--gold) 14%, transparent) 0%, transparent 45%), radial-gradient(circle at 80% 100%, color-mix(in oklab, var(--primary-glow) 22%, transparent) 0%, transparent 50%);
-  --gradient-mesh-dark: radial-gradient(circle at 15% 10%, color-mix(in oklab, var(--primary-glow) 35%, transparent) 0%, transparent 50%), radial-gradient(circle at 85% 90%, color-mix(in oklab, var(--gold) 20%, transparent) 0%, transparent 55%);
+  --gradient-sidebar: linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.97 0.015 240) 100%);
+  --gradient-mesh: radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--primary-glow) 14%, transparent) 0%, transparent 45%), radial-gradient(circle at 80% 100%, color-mix(in oklab, var(--primary) 18%, transparent) 0%, transparent 50%);
+  --gradient-mesh-dark: radial-gradient(circle at 15% 10%, color-mix(in oklab, var(--primary-glow) 35%, transparent) 0%, transparent 50%), radial-gradient(circle at 85% 90%, color-mix(in oklab, var(--primary) 22%, transparent) 0%, transparent 55%);
 }
 
 .dark {
-  --background: oklch(0.18 0.025 160);
-  --foreground: oklch(0.95 0.015 150);
-  --card: oklch(0.22 0.03 160);
-  --card-foreground: oklch(0.95 0.015 150);
-  --popover: oklch(0.22 0.03 160);
-  --popover-foreground: oklch(0.95 0.015 150);
-  --primary: oklch(0.62 0.15 156);
-  --primary-foreground: oklch(0.15 0.02 160);
-  --primary-glow: oklch(0.7 0.15 153);
-  --primary-dark: oklch(0.42 0.11 160);
-  --primary-dark-foreground: oklch(0.95 0.015 150);
-  --secondary: oklch(0.28 0.03 160);
-  --secondary-foreground: oklch(0.95 0.015 150);
-  --muted: oklch(0.26 0.025 160);
-  --muted-foreground: oklch(0.7 0.02 155);
-  --accent: oklch(0.3 0.04 158);
-  --accent-foreground: oklch(0.95 0.015 150);
+  --background: oklch(0.16 0.025 252);
+  --foreground: oklch(0.95 0.01 240);
+  --card: oklch(0.20 0.028 252);
+  --card-foreground: oklch(0.95 0.01 240);
+  --popover: oklch(0.20 0.028 252);
+  --popover-foreground: oklch(0.95 0.01 240);
+  --primary: oklch(0.55 0.09 236);                  /* azul acero más claro en dark */
+  --primary-foreground: oklch(0.15 0.05 252);
+  --primary-glow: oklch(0.65 0.09 228);
+  --primary-dark: oklch(0.30 0.10 252);
+  --primary-dark-foreground: oklch(0.95 0.01 240);
+  --secondary: oklch(0.26 0.03 252);
+  --secondary-foreground: oklch(0.95 0.01 240);
+  --muted: oklch(0.24 0.022 252);
+  --muted-foreground: oklch(0.68 0.02 240);
+  --accent: oklch(0.28 0.038 248);
+  --accent-foreground: oklch(0.95 0.01 240);
   --gold: oklch(0.78 0.13 85);
-  --gold-foreground: oklch(0.18 0.02 160);
-  --destructive: oklch(0.65 0.2 27);
+  --gold-foreground: oklch(0.16 0.025 252);
+  --destructive: oklch(0.65 0.20 27);
   --destructive-foreground: oklch(0.98 0 0);
   --success: oklch(0.65 0.15 155);
   --success-foreground: oklch(0.98 0 0);
   --warning: oklch(0.78 0.14 75);
-  --warning-foreground: oklch(0.18 0.02 160);
-  --info: oklch(0.65 0.13 230);
-  --info-foreground: oklch(0.15 0.02 160);
-  --neutral: oklch(0.65 0.015 160);
-  --neutral-foreground: oklch(0.15 0.02 160);
-  --border: oklch(0.3 0.025 160);
-  --input: oklch(0.3 0.025 160);
-  --ring: oklch(0.62 0.15 156);
-  --sidebar: oklch(0.15 0.025 162);
-  --sidebar-foreground: oklch(0.92 0.015 150);
-  --sidebar-primary: oklch(0.62 0.15 156);
-  --sidebar-primary-foreground: oklch(0.15 0.02 160);
-  --sidebar-accent: oklch(0.22 0.03 160);
-  --sidebar-accent-foreground: oklch(0.95 0.015 150);
-  --sidebar-border: oklch(0.25 0.025 160);
-  --sidebar-ring: oklch(0.62 0.15 156);
+  --warning-foreground: oklch(0.18 0.02 80);
+  --info: oklch(0.65 0.09 236);
+  --info-foreground: oklch(0.15 0.02 252);
+  --neutral: oklch(0.62 0.015 240);
+  --neutral-foreground: oklch(0.15 0.02 252);
+  --border: oklch(0.28 0.028 252);
+  --input: oklch(0.28 0.028 252);
+  --ring: oklch(0.55 0.09 236);
+  --sidebar: oklch(0.14 0.028 255);
+  --sidebar-foreground: oklch(0.92 0.01 240);
+  --sidebar-primary: oklch(0.55 0.09 236);
+  --sidebar-primary-foreground: oklch(0.15 0.03 252);
+  --sidebar-accent: oklch(0.22 0.038 250);
+  --sidebar-accent-foreground: oklch(0.95 0.01 240);
+  --sidebar-border: oklch(0.23 0.028 252);
+  --sidebar-ring: oklch(0.55 0.09 236);
 }
 
 @layer base {
@@ -237,7 +237,7 @@
     background: linear-gradient(
       90deg,
       var(--color-muted) 25%,
-      oklch(0.98 0.004 255) 37%,
+      oklch(0.98 0.006 240) 37%,
       var(--color-muted) 63%
     );
     background-size: 200% 100%;

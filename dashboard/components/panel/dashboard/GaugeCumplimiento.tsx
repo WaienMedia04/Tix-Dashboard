@@ -3,7 +3,7 @@
 import { PolarAngleAxis, RadialBar, RadialBarChart } from "recharts";
 import { COLOR_CHART_1 } from "../kpis/colorTokens";
 
-const COLOR_PISTA = "oklch(0.93 0.01 150)";
+const COLOR_PISTA = "oklch(0.93 0.022 240)";
 
 export function GaugeCumplimiento({ porcentaje }: { porcentaje: number | null }) {
   const valor = porcentaje ?? 0;

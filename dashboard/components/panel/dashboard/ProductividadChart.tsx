@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import type { ProductividadDia } from "@/lib/api";
 import { COLOR_CHART_1, COLOR_GRID, COLOR_TICK } from "../kpis/colorTokens";
 
-const COLOR_SIN_DATOS = "oklch(0.93 0.01 150)";
+const COLOR_SIN_DATOS = "oklch(0.93 0.022 240)";
 
 function formatearRango(datos: ProductividadDia[]): string {
   if (datos.length === 0) return "";
