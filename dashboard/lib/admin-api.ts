@@ -14,6 +14,7 @@ export interface EmpresaAdmin {
   plan: string;
   activo: boolean;
   codigoAcceso?: string;
+  botToken?: string;
   createdAt: string;
   totalEmpleados: number;
   totalBitacoras: number;
@@ -38,6 +39,38 @@ export interface EmpleadoAdmin {
   rol: string;
   estado: string;
   _count: { worklogs: number };
+}
+
+export interface WorklogFichaAdmin {
+  id: string;
+  fecha: string;
+  estadoEnvio: string;
+  puntajeIA: number | null;
+  actividadesRealizadas: string | null;
+  horaEnvio: string | null;
+  semana: number | null;
+  dia: string | null;
+}
+
+export interface FichaTalentoAdmin {
+  id: string;
+  nombreCompleto: string;
+  rol: string;
+  estado: string;
+  cedula: string | null;
+  correo: string | null;
+  telefono: string | null;
+  fechaIngreso: string | null;
+  fechaNacimiento: string | null;
+  direccion: string | null;
+  notas: string | null;
+  empresa: { nombre: string; slug: string };
+  metricas: {
+    totalBitacoras: number;
+    puntajePromedio: number | null;
+    cumplimiento: number;
+  };
+  worklogs: WorklogFichaAdmin[];
 }
 
 async function adminFetch<T>(path: string, token: string, options: RequestInit = {}): Promise<T> {
@@ -99,11 +132,19 @@ export function editarEmpresa(
   });
 }
 
-export function cambiarEstadoEmpresa(token: string, id: string, activo: boolean): Promise<{ id: string; nombre: string; activo: boolean }> {
+export function cambiarEstadoEmpresa(
+  token: string,
+  id: string,
+  activo: boolean,
+): Promise<{ id: string; nombre: string; activo: boolean }> {
   return adminFetch(`/admin/empresas/${id}/estado`, token, {
     method: "PATCH",
     body: JSON.stringify({ activo }),
   });
+}
+
+export function borrarEmpresaAdmin(token: string, id: string): Promise<{ ok: boolean }> {
+  return adminFetch(`/admin/empresas/${id}`, token, { method: "DELETE" });
 }
 
 export function fetchEmpleadosAdmin(token: string, empresaId: string): Promise<EmpleadoAdmin[]> {
@@ -121,6 +162,31 @@ export function crearEmpleadoAdmin(
   });
 }
 
+export function fichaEmpleadoAdmin(token: string, talentoId: string): Promise<FichaTalentoAdmin> {
+  return adminFetch<FichaTalentoAdmin>(`/admin/talentos/${talentoId}`, token);
+}
+
+export function editarEmpleadoAdmin(
+  token: string,
+  talentoId: string,
+  data: Partial<{
+    nombreCompleto: string;
+    rol: string;
+    cedula: string | null;
+    correo: string | null;
+    telefono: string | null;
+    fechaIngreso: string | null;
+    fechaNacimiento: string | null;
+    direccion: string | null;
+    notas: string | null;
+  }>,
+): Promise<FichaTalentoAdmin> {
+  return adminFetch<FichaTalentoAdmin>(`/admin/talentos/${talentoId}`, token, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
 export function cambiarEstadoEmpleadoAdmin(
   token: string,
   talentoId: string,
@@ -130,4 +196,8 @@ export function cambiarEstadoEmpleadoAdmin(
     method: "PATCH",
     body: JSON.stringify({ estado }),
   });
+}
+
+export function borrarEmpleadoAdmin(token: string, talentoId: string): Promise<{ ok: boolean }> {
+  return adminFetch(`/admin/talentos/${talentoId}`, token, { method: "DELETE" });
 }
