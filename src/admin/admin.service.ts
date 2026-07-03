@@ -7,6 +7,7 @@ import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import { EditarEmpresaDto } from './dto/editar-empresa.dto';
+import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
 import { CrearTalentoAdminDto } from './dto/crear-talento-admin.dto';
 
 @Injectable()
@@ -22,6 +23,8 @@ export class AdminService {
           slug: true,
           plan: true,
           activo: true,
+          codigoAcceso: true,
+          botToken: true,
           createdAt: true,
           _count: { select: { talentos: true, worklogs: true } },
         },
@@ -45,6 +48,8 @@ export class AdminService {
         slug: e.slug,
         plan: e.plan,
         activo: e.activo,
+        codigoAcceso: e.codigoAcceso,
+        botToken: e.botToken,
         createdAt: e.createdAt,
         totalEmpleados: e._count.talentos,
         totalBitacoras: e._count.worklogs,
@@ -55,6 +60,7 @@ export class AdminService {
   async crearEmpresa(dto: CrearEmpresaDto) {
     const slug = dto.slug ?? this.generarSlug(dto.nombre);
     const codigoAcceso = dto.codigoAcceso?.trim() || this.generarCodigo();
+    const botToken = this.generarBotToken();
 
     const [slugExistente, codigoExistente] = await Promise.all([
       this.prisma.empresa.findUnique({ where: { slug } }),
@@ -68,7 +74,7 @@ export class AdminService {
       );
 
     return this.prisma.empresa.create({
-      data: { nombre: dto.nombre.trim(), slug, plan: dto.plan, codigoAcceso },
+      data: { nombre: dto.nombre.trim(), slug, plan: dto.plan, codigoAcceso, botToken },
       select: {
         id: true,
         nombre: true,
@@ -76,13 +82,14 @@ export class AdminService {
         plan: true,
         activo: true,
         codigoAcceso: true,
+        botToken: true,
         createdAt: true,
       },
     });
   }
 
   async editarEmpresa(id: string, dto: EditarEmpresaDto) {
-    await this.validarExiste(id);
+    await this.validarEmpresaExiste(id);
 
     if (dto.codigoAcceso) {
       const existente = await this.prisma.empresa.findFirst({
@@ -108,13 +115,14 @@ export class AdminService {
         plan: true,
         activo: true,
         codigoAcceso: true,
+        botToken: true,
         createdAt: true,
       },
     });
   }
 
   async cambiarEstadoEmpresa(id: string, activo: boolean) {
-    await this.validarExiste(id);
+    await this.validarEmpresaExiste(id);
     return this.prisma.empresa.update({
       where: { id },
       data: { activo },
@@ -122,8 +130,14 @@ export class AdminService {
     });
   }
 
+  async borrarEmpresa(id: string) {
+    await this.validarEmpresaExiste(id);
+    await this.prisma.empresa.delete({ where: { id } });
+    return { ok: true };
+  }
+
   async empleadosDeEmpresa(id: string) {
-    await this.validarExiste(id);
+    await this.validarEmpresaExiste(id);
     return this.prisma.talento.findMany({
       where: { empresaId: id },
       select: {
@@ -138,7 +152,7 @@ export class AdminService {
   }
 
   async crearEmpleado(empresaId: string, dto: CrearTalentoAdminDto) {
-    await this.validarExiste(empresaId);
+    await this.validarEmpresaExiste(empresaId);
     return this.prisma.talento.create({
       data: {
         empresaId,
@@ -147,6 +161,99 @@ export class AdminService {
         estado: 'activo',
       },
       select: { id: true, nombreCompleto: true, rol: true, estado: true },
+    });
+  }
+
+  async fichaTalento(talentoId: string) {
+    const talento = await this.prisma.talento.findUnique({
+      where: { id: talentoId },
+      select: {
+        id: true,
+        nombreCompleto: true,
+        rol: true,
+        estado: true,
+        cedula: true,
+        correo: true,
+        telefono: true,
+        fechaIngreso: true,
+        fechaNacimiento: true,
+        direccion: true,
+        notas: true,
+        empresa: { select: { nombre: true, slug: true } },
+      },
+    });
+    if (!talento) throw new NotFoundException('Empleado no encontrado');
+
+    const [worklogs, totalBitacoras, enviadas, agg] = await Promise.all([
+      this.prisma.worklog.findMany({
+        where: { talentoId },
+        orderBy: { fecha: 'desc' },
+        take: 50,
+        select: {
+          id: true,
+          fecha: true,
+          estadoEnvio: true,
+          puntajeIA: true,
+          actividadesRealizadas: true,
+          horaEnvio: true,
+          semana: true,
+          dia: true,
+        },
+      }),
+      this.prisma.worklog.count({ where: { talentoId } }),
+      this.prisma.worklog.count({ where: { talentoId, estadoEnvio: 'enviada' } }),
+      this.prisma.worklog.aggregate({ where: { talentoId }, _avg: { puntajeIA: true } }),
+    ]);
+
+    const puntajePromedio = agg._avg.puntajeIA
+      ? Math.round(agg._avg.puntajeIA)
+      : null;
+    const cumplimiento =
+      totalBitacoras > 0 ? Math.round((enviadas / totalBitacoras) * 100) : 0;
+
+    return {
+      ...talento,
+      metricas: { totalBitacoras, puntajePromedio, cumplimiento },
+      worklogs,
+    };
+  }
+
+  async editarTalento(talentoId: string, dto: EditarTalentoAdminDto) {
+    const talento = await this.prisma.talento.findUnique({
+      where: { id: talentoId },
+    });
+    if (!talento) throw new NotFoundException('Empleado no encontrado');
+
+    return this.prisma.talento.update({
+      where: { id: talentoId },
+      data: {
+        ...(dto.nombreCompleto && { nombreCompleto: dto.nombreCompleto.trim() }),
+        ...(dto.rol && { rol: dto.rol.trim() }),
+        ...(dto.cedula !== undefined && { cedula: dto.cedula?.trim() || null }),
+        ...(dto.correo !== undefined && { correo: dto.correo?.trim() || null }),
+        ...(dto.telefono !== undefined && { telefono: dto.telefono?.trim() || null }),
+        ...(dto.fechaIngreso !== undefined && {
+          fechaIngreso: dto.fechaIngreso ? new Date(dto.fechaIngreso) : null,
+        }),
+        ...(dto.fechaNacimiento !== undefined && {
+          fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
+        }),
+        ...(dto.direccion !== undefined && { direccion: dto.direccion?.trim() || null }),
+        ...(dto.notas !== undefined && { notas: dto.notas?.trim() || null }),
+      },
+      select: {
+        id: true,
+        nombreCompleto: true,
+        rol: true,
+        estado: true,
+        cedula: true,
+        correo: true,
+        telefono: true,
+        fechaIngreso: true,
+        fechaNacimiento: true,
+        direccion: true,
+        notas: true,
+      },
     });
   }
 
@@ -162,7 +269,16 @@ export class AdminService {
     });
   }
 
-  private async validarExiste(id: string) {
+  async borrarTalento(talentoId: string) {
+    const talento = await this.prisma.talento.findUnique({
+      where: { id: talentoId },
+    });
+    if (!talento) throw new NotFoundException('Empleado no encontrado');
+    await this.prisma.talento.delete({ where: { id: talentoId } });
+    return { ok: true };
+  }
+
+  private async validarEmpresaExiste(id: string) {
     const empresa = await this.prisma.empresa.findUnique({ where: { id } });
     if (!empresa) throw new NotFoundException('Empresa no encontrada');
     return empresa;
@@ -179,5 +295,9 @@ export class AdminService {
 
   private generarCodigo(): string {
     return randomBytes(6).toString('hex').toUpperCase();
+  }
+
+  private generarBotToken(): string {
+    return randomBytes(20).toString('hex');
   }
 }

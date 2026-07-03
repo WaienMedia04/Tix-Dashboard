@@ -12,6 +12,7 @@ model Empresa {
   slug         String    @unique
   plan         String
   codigoAcceso String
+  botToken     String?   @unique
   activo       Boolean   @default(true)
   createdAt    DateTime  @default(now())
   talentos     Talento[]
@@ -19,13 +20,20 @@ model Empresa {
 }
 
 model Talento {
-  id             String    @id @default(cuid())
-  empresaId      String
-  nombreCompleto String
-  rol            String
-  estado         String
-  empresa        Empresa   @relation(fields: [empresaId], references: [id])
-  worklogs       Worklog[]
+  id              String    @id @default(cuid())
+  empresaId       String
+  nombreCompleto  String
+  rol             String
+  estado          String
+  cedula          String?
+  correo          String?
+  telefono        String?
+  fechaIngreso    DateTime?
+  fechaNacimiento DateTime?
+  direccion       String?
+  notas           String?
+  empresa         Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  worklogs        Worklog[]
 
   @@index([empresaId])
 }
@@ -49,8 +57,8 @@ model Worklog {
   calificacionCeo       String?
   notasTix              String?
   createdAt             DateTime @default(now())
-  empresa               Empresa  @relation(fields: [empresaId], references: [id])
-  talento               Talento  @relation(fields: [talentoId], references: [id])
+  empresa               Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento               Talento  @relation(fields: [talentoId], references: [id], onDelete: Cascade)
 
   @@index([empresaId])
   @@index([empresaId, fecha])

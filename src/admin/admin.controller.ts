@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
   Post,
   Put,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
@@ -16,7 +18,7 @@ import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import { EditarEmpresaDto } from './dto/editar-empresa.dto';
 import { EstadoEmpresaDto } from './dto/estado-empresa.dto';
 import { CrearTalentoAdminDto } from './dto/crear-talento-admin.dto';
-import { UnauthorizedException } from '@nestjs/common';
+import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -37,6 +39,8 @@ export class AdminController {
     return this.adminService.dashboard();
   }
 
+  // ── Empresas ─────────────────────────────────────────────────────────────
+
   @Post('empresas')
   @UseGuards(AdminGuard)
   crearEmpresa(@Body() dto: CrearEmpresaDto) {
@@ -55,6 +59,14 @@ export class AdminController {
     return this.adminService.cambiarEstadoEmpresa(id, dto.activo);
   }
 
+  @Delete('empresas/:id')
+  @UseGuards(AdminGuard)
+  borrarEmpresa(@Param('id') id: string) {
+    return this.adminService.borrarEmpresa(id);
+  }
+
+  // ── Empleados por empresa ─────────────────────────────────────────────────
+
   @Get('empresas/:id/empleados')
   @UseGuards(AdminGuard)
   empleadosDeEmpresa(@Param('id') id: string) {
@@ -67,6 +79,20 @@ export class AdminController {
     return this.adminService.crearEmpleado(id, dto);
   }
 
+  // ── Talentos individuales ─────────────────────────────────────────────────
+
+  @Get('talentos/:id')
+  @UseGuards(AdminGuard)
+  fichaTalento(@Param('id') id: string) {
+    return this.adminService.fichaTalento(id);
+  }
+
+  @Put('talentos/:id')
+  @UseGuards(AdminGuard)
+  editarTalento(@Param('id') id: string, @Body() dto: EditarTalentoAdminDto) {
+    return this.adminService.editarTalento(id, dto);
+  }
+
   @Patch('talentos/:id/estado')
   @UseGuards(AdminGuard)
   cambiarEstadoTalento(
@@ -77,5 +103,11 @@ export class AdminController {
       throw new UnauthorizedException('estado debe ser activo o inactivo');
     }
     return this.adminService.cambiarEstadoTalento(id, estado);
+  }
+
+  @Delete('talentos/:id')
+  @UseGuards(AdminGuard)
+  borrarTalento(@Param('id') id: string) {
+    return this.adminService.borrarTalento(id);
   }
 }
