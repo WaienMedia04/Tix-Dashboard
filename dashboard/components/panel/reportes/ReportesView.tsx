@@ -33,12 +33,21 @@ function formatearRango(inicio: string, fin: string): string {
 
 function generarCsv(reporte: ReporteResponse): string {
   const filas = [
-    ["Empleado", "Rol", "Puntaje promedio", "% Cumplimiento", "Enviadas", "Total bitácoras"],
+    [
+      "Empleado",
+      "Rol",
+      "Puntaje promedio",
+      "% Cumplimiento",
+      "Cumplimiento de tareas",
+      "Enviadas",
+      "Total bitácoras",
+    ],
     ...reporte.detalle.map((d) => [
       d.nombre,
       d.rol,
       d.puntajeProm === null ? "—" : String(d.puntajeProm),
       d.cumplimiento === null ? "—" : String(d.cumplimiento),
+      d.cumplimientoTareasProm === null ? "—" : String(d.cumplimientoTareasProm),
       String(d.enviadas),
       String(d.totalBitacoras),
     ]),

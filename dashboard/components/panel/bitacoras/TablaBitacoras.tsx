@@ -1,5 +1,6 @@
 import type { BitacoraItem } from "@/lib/api";
 import { EstadoBadge } from "@/components/EstadoBadge";
+import { CheckinBadge } from "@/components/CheckinBadge";
 import { SkeletonTableRows } from "@/components/motion/Skeleton";
 import { StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 
@@ -45,23 +46,25 @@ export function TablaBitacoras({
               <th className="px-4 py-2">Fecha</th>
               <th className="px-4 py-2">Empleado</th>
               <th className="px-4 py-2">Rol</th>
+              <th className="px-4 py-2">Check-in</th>
               <th className="px-4 py-2">Estado</th>
               <th className="px-4 py-2">Puntaje IA</th>
+              <th className="px-4 py-2">Cumpl. tareas</th>
               <th className="px-4 py-2 text-right">Acción</th>
             </tr>
           </thead>
           <tbody>
-            {cargando && <SkeletonTableRows rows={6} cols={6} />}
+            {cargando && <SkeletonTableRows rows={6} cols={8} />}
             {!cargando && error && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-destructive">
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-destructive">
                   {error}
                 </td>
               </tr>
             )}
             {!cargando && !error && items.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-muted-foreground">
                   No hay bitácoras para los filtros seleccionados.
                 </td>
               </tr>
@@ -77,10 +80,16 @@ export function TablaBitacoras({
                     {item.talento.rol}
                   </td>
                   <td className="px-4 py-2.5">
+                    <CheckinBadge checkinEnviado={item.checkinEnviado} horaCheckin={item.horaCheckin} />
+                  </td>
+                  <td className="px-4 py-2.5">
                     <EstadoBadge estado={item.estadoEnvio} />
                   </td>
                   <td className={`px-4 py-2.5 font-semibold tabular-nums ${colorPuntaje(item.puntajeIA)}`}>
                     {item.puntajeIA === null ? "—" : item.puntajeIA}
+                  </td>
+                  <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
+                    {item.cumplimientoTareas === null ? "—" : `${item.cumplimientoTareas}%`}
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     <button

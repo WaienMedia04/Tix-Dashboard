@@ -77,25 +77,33 @@ async function crearEmpresaConDatos(input: EmpresaSeedInput) {
         `Worklog referencia un talento inexistente: "${w.talento_nombre}" en empresa "${input.nombre}"`,
       );
     }
-    await prisma.worklog.create({
-      data: {
-        empresaId: empresa.id,
-        talentoId,
-        fecha: new Date(w.fecha),
-        dia: w.dia,
-        semana: w.semana,
-        actividadesRealizadas: w.actividades_realizadas,
-        capacitacion: w.capacitacion,
-        queSeEjecuto: w.que_se_ejecuto,
-        detallesRelevantes: w.detalles_relevantes,
-        informeAvances: w.informe_avances,
-        objetivoDia: w.objetivo_dia,
-        estadoEnvio: w.estado_envio,
-        horaEnvio: w.hora_envio,
-        puntajeIA: w.puntaje_ia,
-        calificacionCeo: w.calificacion_ceo,
-        notasTix: w.notas_tix,
-      },
+    // Algunas fechas del pilotaje real tienen mas de un registro para el
+    // mismo talento (bug historico previo al constraint unico). Con
+    // talentoId+fecha ya unico en el schema, hacemos upsert y nos quedamos
+    // con la ultima ocurrencia del JSON para esa combinacion.
+    const fecha = new Date(w.fecha);
+    const datosWorklog = {
+      empresaId: empresa.id,
+      talentoId,
+      fecha,
+      dia: w.dia,
+      semana: w.semana,
+      actividadesRealizadas: w.actividades_realizadas,
+      capacitacion: w.capacitacion,
+      queSeEjecuto: w.que_se_ejecuto,
+      detallesRelevantes: w.detalles_relevantes,
+      informeAvances: w.informe_avances,
+      objetivoDia: w.objetivo_dia,
+      estadoEnvio: w.estado_envio,
+      horaEnvio: w.hora_envio,
+      puntajeIA: w.puntaje_ia,
+      calificacionCeo: w.calificacion_ceo,
+      notasTix: w.notas_tix,
+    };
+    await prisma.worklog.upsert({
+      where: { talentoId_fecha: { talentoId, fecha } },
+      create: datosWorklog,
+      update: datosWorklog,
     });
   }
 

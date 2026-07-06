@@ -7,7 +7,7 @@ import {
   Min,
 } from 'class-validator';
 
-export class CreateWorklogDto {
+export class CreateCheckoutDto {
   @IsString()
   empresaSlug: string;
 
@@ -62,6 +62,12 @@ export class CreateWorklogDto {
   @Min(0)
   @Max(10)
   puntajeIA?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  cumplimientoTareas?: number;
 
   @IsOptional()
   @IsString()

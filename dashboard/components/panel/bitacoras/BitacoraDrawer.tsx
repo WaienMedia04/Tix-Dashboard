@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import type { BitacoraItem } from "@/lib/api";
 import { EstadoBadge } from "@/components/EstadoBadge";
+import { CheckinBadge } from "@/components/CheckinBadge";
 
 function Campo({ etiqueta, valor }: { etiqueta: string; valor: string | number | null }) {
   return (
@@ -67,20 +68,36 @@ export function BitacoraDrawer({
                 <Campo etiqueta="Hora de envío" valor={bitacora.horaEnvio} />
               </div>
 
-              <div>
-                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Estado</p>
-                <div className="mt-1">
-                  <EstadoBadge estado={bitacora.estadoEnvio} />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Check-in</p>
+                  <div className="mt-1">
+                    <CheckinBadge checkinEnviado={bitacora.checkinEnviado} horaCheckin={bitacora.horaCheckin} />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Estado (check-out)
+                  </p>
+                  <div className="mt-1">
+                    <EstadoBadge estado={bitacora.estadoEnvio} />
+                  </div>
                 </div>
               </div>
+
+              <Campo etiqueta="Tareas planificadas (check-in)" valor={bitacora.tareasPlanificadas} />
 
               <div className="grid grid-cols-2 gap-4">
                 <Campo
                   etiqueta="Puntaje IA"
                   valor={bitacora.puntajeIA === null ? null : `${bitacora.puntajeIA} / 10`}
                 />
-                <Campo etiqueta="Calificación CEO" valor={bitacora.calificacionCeo} />
+                <Campo
+                  etiqueta="Cumplimiento de tareas"
+                  valor={bitacora.cumplimientoTareas === null ? null : `${bitacora.cumplimientoTareas}%`}
+                />
               </div>
+              <Campo etiqueta="Calificación CEO" valor={bitacora.calificacionCeo} />
 
               <Campo etiqueta="Actividades realizadas" valor={bitacora.actividadesRealizadas} />
               <Campo etiqueta="Capacitación" valor={bitacora.capacitacion} />

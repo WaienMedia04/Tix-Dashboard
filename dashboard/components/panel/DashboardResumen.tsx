@@ -8,6 +8,7 @@ import { RankingTalentos } from "../RankingTalentos";
 import { StaggerGroup, StaggerItem } from "../motion/Stagger";
 import { ProductividadChart } from "./dashboard/ProductividadChart";
 import { GaugeCumplimiento } from "./dashboard/GaugeCumplimiento";
+import { GaugeCheckin } from "./dashboard/GaugeCheckin";
 import { BitacoraDestacada } from "./dashboard/BitacoraDestacada";
 import { ResumenHoyCard } from "./dashboard/ResumenHoyCard";
 import { ActividadEquipo } from "./dashboard/ActividadEquipo";
@@ -76,10 +77,15 @@ export function DashboardResumen() {
             </StaggerItem>
             <StaggerItem>
               <div className="h-44">
-                <ResumenHoyCard bitacorasHoy={data.metricas.bitacorasHoy} totalBitacoras={data.metricas.totalBitacoras} />
+                <GaugeCheckin porcentaje={data.metricas.empleadosActivos === 0 ? null : data.metricas.porcentajeCheckinHoy} />
               </div>
             </StaggerItem>
           </div>
+          <StaggerItem>
+            <div className="h-44">
+              <ResumenHoyCard bitacorasHoy={data.metricas.bitacorasHoy} totalBitacoras={data.metricas.totalBitacoras} />
+            </div>
+          </StaggerItem>
           <StaggerItem>
             <BitacoraDestacada worklog={data.worklogsRecientes[0]} />
           </StaggerItem>

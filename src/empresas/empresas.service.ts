@@ -93,6 +93,10 @@ export class EmpresasService {
       id: w.id,
       talento: w.talento.nombreCompleto,
       fecha: w.fecha,
+      tareasPlanificadas: w.tareasPlanificadas,
+      horaCheckin: w.horaCheckin,
+      checkinEnviado: w.checkinEnviado,
+      cumplimientoTareas: w.cumplimientoTareas,
       estadoEnvio: w.estadoEnvio,
       horaEnvio: w.horaEnvio,
       puntajeIA: w.puntajeIA,
@@ -113,6 +117,13 @@ export class EmpresasService {
     const bitacorasHoy = worklogs.filter(
       (w) => w.fecha.toISOString().slice(0, 10) === hoyIso,
     ).length;
+    const checkinsHoy = worklogs.filter(
+      (w) => w.fecha.toISOString().slice(0, 10) === hoyIso && w.checkinEnviado,
+    ).length;
+    const porcentajeCheckinHoy =
+      talentos.length === 0
+        ? 0
+        : Math.round((checkinsHoy / talentos.length) * 1000) / 10;
 
     // Referencia para la semana de productividad: la fecha de la bitacora
     // mas reciente (si existe), no la fecha calendario de hoy. Asi el
@@ -174,6 +185,8 @@ export class EmpresasService {
         porcentajeEnviadas,
         empleadosActivos,
         bitacorasHoy,
+        checkinsHoy,
+        porcentajeCheckinHoy,
       },
       productividadSemanal,
       rankingTalentos,
@@ -250,7 +263,11 @@ export class EmpresasService {
 
     const talentos = await this.prisma.talento.findMany({
       where: { empresaId: empresa.id },
-      include: { worklogs: { select: { estadoEnvio: true, puntajeIA: true } } },
+      include: {
+        worklogs: {
+          select: { estadoEnvio: true, puntajeIA: true, cumplimientoTareas: true },
+        },
+      },
       orderBy: { nombreCompleto: 'asc' },
     });
 
@@ -271,6 +288,18 @@ export class EmpresasService {
         t.worklogs.length === 0
           ? null
           : Math.round((enviadas / t.worklogs.length) * 1000) / 10;
+      const conCumplimientoTareas = t.worklogs.filter(
+        (w) => w.cumplimientoTareas !== null,
+      );
+      const cumplimientoTareasPromedio =
+        conCumplimientoTareas.length === 0
+          ? null
+          : Math.round(
+              conCumplimientoTareas.reduce(
+                (sum, w) => sum + (w.cumplimientoTareas ?? 0),
+                0,
+              ) / conCumplimientoTareas.length,
+            );
 
       return {
         id: t.id,
@@ -280,6 +309,7 @@ export class EmpresasService {
         puntajeIAPromedio,
         totalBitacoras: t.worklogs.length,
         porcentajeCumplimiento,
+        cumplimientoTareasPromedio,
       };
     });
   }
@@ -309,6 +339,10 @@ export class EmpresasService {
       .filter((w) => w.puntajeIA !== null)
       .map((w) => ({ fecha: w.fecha, puntajeIA: w.puntajeIA }));
 
+    const serieCumplimiento = todos
+      .filter((w) => w.cumplimientoTareas !== null)
+      .map((w) => ({ fecha: w.fecha, cumplimientoTareas: w.cumplimientoTareas }));
+
     const conPuntaje = serieIA;
     const puntajeIAPromedio =
       conPuntaje.length === 0
@@ -323,6 +357,15 @@ export class EmpresasService {
       todos.length === 0
         ? null
         : Math.round((enviadas / todos.length) * 1000) / 10;
+    const cumplimientoTareasPromedio =
+      serieCumplimiento.length === 0
+        ? null
+        : Math.round(
+            serieCumplimiento.reduce(
+              (sum, w) => sum + (w.cumplimientoTareas ?? 0),
+              0,
+            ) / serieCumplimiento.length,
+          );
 
     const ordenDesc = [...todos].reverse();
     const total = ordenDesc.length;
@@ -343,14 +386,20 @@ export class EmpresasService {
         puntajeIAPromedio,
         totalBitacoras: total,
         porcentajeCumplimiento,
+        cumplimientoTareasPromedio,
       },
       serieIA,
+      serieCumplimiento,
       historial: {
         data: pagina.map((w) => ({
           id: w.id,
           fecha: w.fecha,
           dia: w.dia,
           semana: w.semana,
+          tareasPlanificadas: w.tareasPlanificadas,
+          horaCheckin: w.horaCheckin,
+          checkinEnviado: w.checkinEnviado,
+          cumplimientoTareas: w.cumplimientoTareas,
           estadoEnvio: w.estadoEnvio,
           horaEnvio: w.horaEnvio,
           puntajeIA: w.puntajeIA,
@@ -456,7 +505,12 @@ export class EmpresasService {
           empresaId: empresa.id,
           fecha: { gte: periodoInicio, lte: periodoFin },
         },
-        select: { talentoId: true, estadoEnvio: true, puntajeIA: true },
+        select: {
+          talentoId: true,
+          estadoEnvio: true,
+          puntajeIA: true,
+          cumplimientoTareas: true,
+        },
       }),
       this.prisma.worklog.findMany({
         where: {
@@ -573,6 +627,18 @@ export class EmpresasService {
           propios.length === 0
             ? null
             : Math.round((enviadas / propios.length) * 1000) / 10;
+        const conCumplimientoTareas = propios.filter(
+          (w) => w.cumplimientoTareas !== null,
+        );
+        const cumplimientoTareasProm =
+          conCumplimientoTareas.length === 0
+            ? null
+            : Math.round(
+                conCumplimientoTareas.reduce(
+                  (sum, w) => sum + (w.cumplimientoTareas ?? 0),
+                  0,
+                ) / conCumplimientoTareas.length,
+              );
 
         const actual = promedioActual.get(t.id) ?? null;
         const anterior = promedioAnterior.get(t.id) ?? null;
@@ -587,6 +653,7 @@ export class EmpresasService {
           nombre: t.nombreCompleto,
           puntajeProm,
           cumplimiento,
+          cumplimientoTareasProm,
           enviadas,
           tendencia,
         };
@@ -618,7 +685,12 @@ export class EmpresasService {
     const [worklogs, talentos] = await Promise.all([
       this.prisma.worklog.findMany({
         where: { empresaId: empresa.id, fecha: { gte: inicio, lte: fin } },
-        select: { talentoId: true, estadoEnvio: true, puntajeIA: true },
+        select: {
+          talentoId: true,
+          estadoEnvio: true,
+          puntajeIA: true,
+          cumplimientoTareas: true,
+        },
       }),
       this.prisma.talento.findMany({ where: { empresaId: empresa.id } }),
     ]);
@@ -663,6 +735,18 @@ export class EmpresasService {
           propios.length === 0
             ? null
             : Math.round((propiasEnviadas / propios.length) * 1000) / 10;
+        const propiosConCumplimientoTareas = propios.filter(
+          (w) => w.cumplimientoTareas !== null,
+        );
+        const propioCumplimientoTareasProm =
+          propiosConCumplimientoTareas.length === 0
+            ? null
+            : Math.round(
+                propiosConCumplimientoTareas.reduce(
+                  (sum, w) => sum + (w.cumplimientoTareas ?? 0),
+                  0,
+                ) / propiosConCumplimientoTareas.length,
+              );
 
         return {
           talentoId: t.id,
@@ -670,6 +754,7 @@ export class EmpresasService {
           rol: t.rol,
           puntajeProm: propioPuntajeProm,
           cumplimiento: propioCumplimiento,
+          cumplimientoTareasProm: propioCumplimientoTareasProm,
           enviadas: propiasEnviadas,
           totalBitacoras: propios.length,
         };
@@ -747,6 +832,7 @@ export class EmpresasService {
       puntajeIAPromedio: null,
       totalBitacoras: 0,
       porcentajeCumplimiento: null,
+      cumplimientoTareasPromedio: null,
     };
   }
 }

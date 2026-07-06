@@ -19,6 +19,7 @@ export function TablaReporte({ datos }: { datos: ReporteDetalleItem[] }) {
               <th className="px-4 py-2">Rol</th>
               <th className="px-4 py-2">Puntaje promedio</th>
               <th className="px-4 py-2">% Cumplimiento</th>
+              <th className="px-4 py-2">Cumpl. tareas</th>
               <th className="px-4 py-2">Enviadas</th>
               <th className="px-4 py-2">Total bitácoras</th>
             </tr>
@@ -26,7 +27,7 @@ export function TablaReporte({ datos }: { datos: ReporteDetalleItem[] }) {
           <tbody>
             {datos.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">
                   No hay empleados registrados.
                 </td>
               </tr>
@@ -48,6 +49,9 @@ export function TablaReporte({ datos }: { datos: ReporteDetalleItem[] }) {
                   </td>
                   <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
                     {d.cumplimiento === null ? "—" : `${d.cumplimiento}%`}
+                  </td>
+                  <td className="px-4 py-2.5 tabular-nums text-muted-foreground">
+                    {d.cumplimientoTareasProm === null ? "—" : `${d.cumplimientoTareasProm}%`}
                   </td>
                   <td className="px-4 py-2.5 tabular-nums text-muted-foreground">{d.enviadas}</td>
                   <td className="px-4 py-2.5 tabular-nums text-muted-foreground">{d.totalBitacoras}</td>

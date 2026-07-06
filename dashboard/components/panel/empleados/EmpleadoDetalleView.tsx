@@ -15,6 +15,7 @@ import { MetricCard } from "@/components/MetricCard";
 import { TablaBitacoras } from "../bitacoras/TablaBitacoras";
 import { BitacoraDrawer } from "../bitacoras/BitacoraDrawer";
 import { PuntajeIAChart } from "./PuntajeIAChart";
+import { CumplimientoTareasChart } from "./CumplimientoTareasChart";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { Skeleton, SkeletonChart, SkeletonStatCards } from "@/components/motion/Skeleton";
 
@@ -136,7 +137,7 @@ function EmpleadoDetalleResultado({
         </div>
       </div>
 
-      <StaggerGroup className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <StaggerGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StaggerItem>
           <MetricCard
             label="Puntaje IA promedio"
@@ -154,13 +155,32 @@ function EmpleadoDetalleResultado({
             icon={CheckCircle2}
           />
         </StaggerItem>
+        <StaggerItem>
+          <MetricCard
+            label="Cumplimiento de tareas"
+            value={
+              detalle.metricas.cumplimientoTareasPromedio === null
+                ? "—"
+                : `${detalle.metricas.cumplimientoTareasPromedio}%`
+            }
+            icon={CheckCircle2}
+          />
+        </StaggerItem>
       </StaggerGroup>
 
-      <div className="rounded-lg border border-border bg-card p-4 shadow-card">
-        <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Evolución de puntaje IA
-        </p>
-        <PuntajeIAChart serie={detalle.serieIA} />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+          <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            Evolución de puntaje IA
+          </p>
+          <PuntajeIAChart serie={detalle.serieIA} />
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+          <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            Evolución de cumplimiento de tareas (check-in vs check-out)
+          </p>
+          <CumplimientoTareasChart serie={detalle.serieCumplimiento} />
+        </div>
       </div>
 
       <TablaBitacoras

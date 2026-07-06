@@ -13,6 +13,10 @@ export interface WorklogReciente {
   id: string;
   talento: string;
   fecha: string;
+  tareasPlanificadas: string | null;
+  horaCheckin: string | null;
+  checkinEnviado: boolean;
+  cumplimientoTareas: number | null;
   estadoEnvio: string;
   horaEnvio: string | null;
   puntajeIA: number | null;
@@ -48,6 +52,8 @@ export interface DashboardData {
     porcentajeEnviadas: number;
     empleadosActivos: number;
     bitacorasHoy: number;
+    checkinsHoy: number;
+    porcentajeCheckinHoy: number;
   };
   productividadSemanal: ProductividadDia[];
   rankingTalentos: TalentoRanking[];
@@ -66,6 +72,10 @@ export interface BitacoraItem {
   fecha: string;
   dia: string | null;
   semana: number | null;
+  tareasPlanificadas: string | null;
+  horaCheckin: string | null;
+  checkinEnviado: boolean;
+  cumplimientoTareas: number | null;
   estadoEnvio: string;
   horaEnvio: string | null;
   puntajeIA: number | null;
@@ -113,11 +123,17 @@ export interface EmpleadoResumen {
   puntajeIAPromedio: number | null;
   totalBitacoras: number;
   porcentajeCumplimiento: number | null;
+  cumplimientoTareasPromedio: number | null;
 }
 
 export interface SeriePuntaje {
   fecha: string;
   puntajeIA: number | null;
+}
+
+export interface SerieCumplimientoTareas {
+  fecha: string;
+  cumplimientoTareas: number | null;
 }
 
 export interface HistorialBitacoras {
@@ -133,8 +149,10 @@ export interface EmpleadoDetalle {
     puntajeIAPromedio: number | null;
     totalBitacoras: number;
     porcentajeCumplimiento: number | null;
+    cumplimientoTareasPromedio: number | null;
   };
   serieIA: SeriePuntaje[];
+  serieCumplimiento: SerieCumplimientoTareas[];
   historial: HistorialBitacoras;
 }
 
@@ -171,6 +189,7 @@ export interface KpiEmpleado {
   nombre: string;
   puntajeProm: number | null;
   cumplimiento: number | null;
+  cumplimientoTareasProm: number | null;
   enviadas: number;
   tendencia: Tendencia;
 }
@@ -192,6 +211,7 @@ export interface ReporteDetalleItem {
   rol: string;
   puntajeProm: number | null;
   cumplimiento: number | null;
+  cumplimientoTareasProm: number | null;
   enviadas: number;
   totalBitacoras: number;
 }

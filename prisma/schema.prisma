@@ -43,6 +43,10 @@ model Worklog {
   empresaId             String
   talentoId             String
   fecha                 DateTime
+  tareasPlanificadas    String?
+  horaCheckin           String?
+  checkinEnviado        Boolean  @default(false)
+  cumplimientoTareas    Int?
   actividadesRealizadas String?
   queSeEjecuto          String?
   detallesRelevantes    String?
@@ -60,6 +64,7 @@ model Worklog {
   empresa               Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   talento               Talento  @relation(fields: [talentoId], references: [id], onDelete: Cascade)
 
+  @@unique([talentoId, fecha])
   @@index([empresaId])
   @@index([empresaId, fecha])
 }
