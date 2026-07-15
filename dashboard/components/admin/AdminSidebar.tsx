@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { motion, useReducedMotion } from "framer-motion";
-import { useState } from "react";
-import { Building2, ChevronsLeft, ChevronsRight, LayoutDashboard, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Building2, ChevronsLeft, ChevronsRight, LayoutDashboard, LogOut, Moon, Sun } from "lucide-react";
 import { borrarTokenAdmin } from "@/lib/admin-auth";
 
 const NAV = [
@@ -18,7 +19,15 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const reducir = useReducedMotion();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [montado, setMontado] = useState(false);
   const [col, setCol] = useState(() => typeof window !== "undefined" && sessionStorage.getItem(CLAVE) === "1");
+
+  // Patrón oficial de next-themes: evita el mismatch de hidratación.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMontado(true), []);
+
+  const esOscuro = montado && resolvedTheme === "dark";
 
   function toggle() {
     setCol((p) => {
@@ -95,7 +104,20 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      <div className="border-t border-sidebar-border px-3 py-4">
+      <div className="space-y-1 border-t border-sidebar-border px-3 py-4">
+        <button
+          onClick={() => setTheme(esOscuro ? "light" : "dark")}
+          aria-label={esOscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+          className={`group relative flex w-full items-center gap-2.5 rounded-md py-2 text-left text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-foreground ${col ? "justify-center px-0" : "px-3"}`}
+        >
+          {esOscuro ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
+          {!col && <span className="truncate">{esOscuro ? "Modo claro" : "Modo oscuro"}</span>}
+          {col && (
+            <span className="pointer-events-none absolute left-full z-20 ml-2 -translate-x-1 rounded-md bg-foreground px-2 py-1 text-xs font-medium whitespace-nowrap text-background opacity-0 shadow-elegant transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100">
+              {esOscuro ? "Modo claro" : "Modo oscuro"}
+            </span>
+          )}
+        </button>
         <button
           onClick={logout}
           className={`group relative flex w-full items-center gap-2.5 rounded-md py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-foreground ${col ? "justify-center px-0" : "px-3"}`}

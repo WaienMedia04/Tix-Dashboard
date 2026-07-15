@@ -1,13 +1,18 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import { PolarAngleAxis, RadialBar, RadialBarChart } from "recharts";
-import { COLOR_CHART_1 } from "../kpis/colorTokens";
-
-const COLOR_PISTA = "oklch(0.93 0.022 240)";
+import { COLOR_CHART_1, COLOR_PISTA_DARK, COLOR_PISTA_LIGHT } from "../kpis/colorTokens";
 
 export function GaugeCumplimiento({ porcentaje }: { porcentaje: number | null }) {
   const valor = porcentaje ?? 0;
   const data = [{ value: valor, fill: COLOR_CHART_1 }];
+  const { resolvedTheme } = useTheme();
+  const [montado, setMontado] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMontado(true), []);
+  const colorPista = montado && resolvedTheme === "dark" ? COLOR_PISTA_DARK : COLOR_PISTA_LIGHT;
 
   return (
     <div className="flex h-full select-none flex-col rounded-xl border border-border bg-card p-4 shadow-card">
@@ -34,7 +39,7 @@ export function GaugeCumplimiento({ porcentaje }: { porcentaje: number | null })
               <RadialBar
                 dataKey="value"
                 cornerRadius={8}
-                background={{ fill: COLOR_PISTA }}
+                background={{ fill: colorPista }}
                 isAnimationActive
                 animationDuration={600}
               />
