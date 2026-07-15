@@ -6,7 +6,7 @@ import { KpisQueryDto } from './dto/kpis-query.dto';
 import { ReportesQueryDto } from './dto/reportes-query.dto';
 import { CrearTalentoDto } from './dto/crear-talento.dto';
 import { clasificarEstado } from './estado.util';
-import { rangoMensual, rangoSemanal } from './periodo.util';
+import { rangoMensual, rangoSemanal, type RangoFechas } from './periodo.util';
 import { Actor } from '../auth/actor.types';
 import {
   resolverAlcanceTalentoIds,
@@ -63,8 +63,17 @@ export class EmpresasService {
       talentoIdsVisibles.has(w.talentoId),
     );
 
-    const totalBitacoras = worklogs.length;
-    const enviadas = worklogs.filter(
+    // "Total de bitácoras" del dashboard es del mes en curso, no histórico
+    // — para eso está la página de Bitácoras (que ya soporta rango libre).
+    const ahora = new Date();
+    const mesActual = `${ahora.getUTCFullYear()}-${String(ahora.getUTCMonth() + 1).padStart(2, '0')}`;
+    const rangoMesActual: RangoFechas = rangoMensual(mesActual);
+    const worklogsMesActual = worklogs.filter(
+      (w) => w.fecha >= rangoMesActual.inicio && w.fecha <= rangoMesActual.fin,
+    );
+
+    const totalBitacoras = worklogsMesActual.length;
+    const enviadas = worklogsMesActual.filter(
       (w) => w.estadoEnvio === '✅ Enviada',
     ).length;
     const porcentajeEnviadas =

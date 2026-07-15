@@ -21,6 +21,11 @@ function puntajeIAPromedioGlobal(data: DashboardData): string {
   return `${promedio.toFixed(1)} / 10`;
 }
 
+function mesEnCurso(): string {
+  const texto = new Date().toLocaleDateString("es-DO", { month: "long", year: "numeric" });
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
 export function DashboardResumen() {
   const { dashboardInicial: data } = usePanel();
 
@@ -31,6 +36,7 @@ export function DashboardResumen() {
           <MetricCard
             label="Total de bitácoras"
             value={String(data.metricas.totalBitacoras)}
+            hint={mesEnCurso()}
             icon={ClipboardList}
             variant="primary"
           />

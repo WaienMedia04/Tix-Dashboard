@@ -47,7 +47,7 @@ export function TablaBitacoras({
               <th className="px-4 py-2">Empleado</th>
               <th className="px-4 py-2">Rol</th>
               <th className="px-4 py-2">Check-in</th>
-              <th className="px-4 py-2">Estado</th>
+              <th className="px-4 py-2">Check-out</th>
               <th className="px-4 py-2">Puntaje IA</th>
               <th className="px-4 py-2">Cumpl. tareas</th>
               <th className="px-4 py-2 text-right">Acción</th>

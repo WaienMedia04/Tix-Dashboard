@@ -19,7 +19,7 @@ export function ResumenHoyCard({ bitacorasHoy, totalBitacoras }: { bitacorasHoy:
       <p className="mt-1 text-xs text-accent-dark-foreground/70">
         bitácora{bitacorasHoy === 1 ? "" : "s"} enviada{bitacorasHoy === 1 ? "" : "s"} hoy
       </p>
-      <p className="mt-auto pt-3 text-[11px] text-accent-dark-foreground/50">{totalBitacoras} bitácoras en total</p>
+      <p className="mt-auto pt-3 text-[11px] text-accent-dark-foreground/50">{totalBitacoras} bitácoras este mes</p>
     </div>
   );
 }
