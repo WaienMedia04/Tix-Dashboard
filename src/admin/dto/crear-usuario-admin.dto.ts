@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MinLength,
 } from 'class-validator';
 import { Rol } from '@prisma/client';
 
@@ -21,4 +22,10 @@ export class CrearUsuarioAdminDto {
   @IsString()
   @IsOptional()
   talentoId?: string;
+
+  /** Si se omite, se genera una temporal aleatoria y se devuelve una sola vez. */
+  @IsString()
+  @MinLength(8)
+  @IsOptional()
+  password?: string;
 }

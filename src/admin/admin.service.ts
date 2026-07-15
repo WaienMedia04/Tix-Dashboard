@@ -322,7 +322,8 @@ export class AdminService {
       );
     }
 
-    const passwordTemporal = randomBytes(9).toString('base64url');
+    const passwordTemporal =
+      dto.password ?? randomBytes(9).toString('base64url');
     const passwordHash = await bcrypt.hash(passwordTemporal, 12);
 
     const usuario = await this.prisma.usuario.create({
@@ -333,7 +334,9 @@ export class AdminService {
         rol: dto.rol,
         talentoId: dto.talentoId,
         passwordHash,
-        passwordDebeCambiar: true,
+        // Si el admin fijó una contraseña específica, ya la conoce — no
+        // forzamos cambio. Con temporal aleatoria sí, para que la rote.
+        passwordDebeCambiar: !dto.password,
       },
       select: { id: true, email: true, nombre: true, rol: true },
     });
