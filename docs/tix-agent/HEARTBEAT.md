@@ -20,7 +20,7 @@ En cada heartbeat, revisa esta lista en orden. Ejecuta solo lo que aplique segú
 - [ ] Para cada check-in recibido que aún no esté registrado → registrarlo con `POST /worklogs/checkin`
 - [ ] Responder a cada uno según SOUL.md PASO 6 (una sola línea, éxito o fallo)
 
-*(Horario ajustable por el CEO — si cambia la hora de inicio de jornada, actualizar este bloque.)*
+*(Ventana de check-in: 7:00 AM – 9:30 AM. Ver SOUL.md "Cómo decidir: ¿es Check-in o Check-out?". Horario ajustable por el CEO — si cambia la hora de inicio de jornada, actualizar este bloque y el de SOUL.md.)*
 
 ### 🕗 A las 9:30 AM — Recordatorio de Check-in
 - [ ] Revisar quién NO ha enviado check-in aún
@@ -35,12 +35,14 @@ Aún no hemos recibido tus tareas de hoy:
 Cuéntanos qué vas a hacer hoy. 🙏
 ```
 
-### 🕔 A las 5:00 PM — Hora de Bitácoras (Check-out)
+### 🕓 A las 4:00 PM — Hora de Bitácoras (Check-out)
 - [ ] Verificar si todos los talentos han enviado su bitácora de check-out en el grupo "Bitácoras de CheckOut"
 - [ ] Para cada bitácora recibida que aún no esté registrada (verificar con `GET /empresas/iagil-bots-ia/bitacoras`) → procesarla, calcular `cumplimientoTareas` contra su check-in de hoy (si lo hubo) y registrarla con `POST /worklogs/checkout`
 - [ ] Responder a cada uno según SOUL.md PASO 6 (una sola línea, éxito o fallo)
 
-### 🕔 A las 5:30 PM — Recordatorio de Ausentes (Check-out)
+*(Ventana de check-out: 4:00 PM – 6:30 PM. Ver SOUL.md "Cómo decidir: ¿es Check-in o Check-out?".)*
+
+### 🕕 A las 6:00 PM — Recordatorio de Ausentes (Check-out)
 - [ ] Revisar quién NO ha enviado bitácora aún
 - [ ] Si hay ausentes → enviar recordatorio en el grupo:
 ```
@@ -53,21 +55,21 @@ Aún no hemos recibido bitácora de:
 Por favor envíen su reporte. ⏰
 ```
 
-### 🕔 A las 6:00 PM — Cierre del Día
+### 🕡 A las 6:30 PM — Cierre del Día
 - [ ] Registrar como `❌ No enviada` a todos los talentos que no enviaron bitácora de check-out
-- [ ] Verificar con `GET /empresas/iagil-bots-ia/bitacoras?fechaInicio=HOY&fechaFin=HOY` que existan exactamente 8 registros para la fecha de hoy
+- [ ] Verificar con `GET /empresas/iagil-bots-ia/bitacoras?fechaInicio=HOY&fechaFin=HOY` que exista un registro por cada talento activo (cantidad obtenida de `GET /empleados`, ver TOOLS.md) para la fecha de hoy
 - [ ] Si faltan registros de ausentes → crearlos con `POST /worklogs/checkout` usando `estadoEnvio: "❌ No enviada"` y `puntajeIA: 0`
 
 ### 🕐 En Cualquier Momento — Si llega un Check-in
 - [ ] Detectar el mensaje en el grupo "Bitácoras de CheckOut"
-- [ ] Identificar al talento (verificar que esté en la lista oficial de 8)
+- [ ] Identificar al talento (verificar que esté en la lista de talentos activos, obtenida vía API — ver TOOLS.md)
 - [ ] Guardar el texto completo como `tareasPlanificadas`
 - [ ] Registrar vía `POST https://api.talentix.com.do/worklogs/checkin`
 - [ ] Responder según SOUL.md PASO 6 (una sola línea, éxito o fallo)
 
 ### 🕐 En Cualquier Momento — Si llega una Bitácora de Check-out
 - [ ] Detectar el mensaje en el grupo "Bitácoras de CheckOut"
-- [ ] Identificar al talento (verificar que esté en la lista oficial de 8)
+- [ ] Identificar al talento (verificar que esté en la lista de talentos activos, obtenida vía API — ver TOOLS.md)
 - [ ] Extraer los 6 campos de contenido
 - [ ] Asignar puntaje IA (0-10)
 - [ ] Calcular `cumplimientoTareas` comparando contra el check-in de hoy (si existe)
@@ -122,7 +124,7 @@ El primer heartbeat del lunes genera y envía al CEO:
 
 ## 🔇 Cuándo NO hacer nada (HEARTBEAT_OK)
 
-- Entre 6:00 PM y 8:00 AM (fuera de horario laboral)
+- Entre 6:30 PM y 7:00 AM (fuera de horario laboral)
 - Sábados y domingos
 - Si todos enviaron su bitácora y ya están registradas
 - Si no hay alertas pendientes
@@ -134,8 +136,8 @@ El primer heartbeat del lunes genera y envía al CEO:
 
 ```
 Fecha: [HOY]
-Check-ins registrados hoy: 0/8
-Check-outs (bitácoras) registrados hoy: 0/8
+Check-ins registrados hoy: 0/[total talentos activos, ver GET /empleados en TOOLS.md]
+Check-outs (bitácoras) registrados hoy: 0/[total talentos activos, ver GET /empleados en TOOLS.md]
 Pendientes de registrar: []
 Ausentes confirmados: []
 Última acción: —

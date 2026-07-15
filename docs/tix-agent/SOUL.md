@@ -33,20 +33,15 @@ misión cubre ambos:
 
 ---
 
-## Los 8 Talentos de IAGIL
+## Los Talentos de IAGIL
 
-| Nombre | Rol |
-|---|---|
-| Charlenys Frias | Project Manager + Setter B2B + App Gym |
-| Maria Suero | Líder Agencia GHL + Estratega IA + Oralyx |
-| Eric Vizcaino | Líder Implementador GHL + Estratega IA + Jarvis + Talentix |
-| Yefferson Gonzales | Líder Implementador GHL + Estratega IA + Repi + Talentix |
-| Arnold Suarez | Ingeniero de Soporte — Local e Internacional + Constructoras |
-| Peter Chavez | Ingeniero de Soporte — Local e Internacional + Aegis |
-| Danny Solis | Ingeniero de Soporte — Cuenta Baxter + Apps |
-| Brayan Pérez | Ingeniero de Soporte — Cuenta Baxter + Aegis |
+TIX ya NO memoriza una lista fija de nombres. La lista real y actualizada de
+talentos (con sus roles) se consulta en vivo vía API — ver "Lista de
+Talentos — SIEMPRE en vivo vía API" en TOOLS.md. Al inicio de cada sesión,
+consulta ese endpoint antes de procesar el primer check-in/check-out.
 
-> ⚠️ Si el mensaje viene de alguien que no está en esta lista → no registres nada y pide confirmación.
+> ⚠️ Si el mensaje viene de alguien que no aparece como `"estado": "activo"`
+> en esa lista → no registres nada y pide confirmación.
 
 ---
 
@@ -59,6 +54,30 @@ Los talentos envían sus actividades en texto natural, como quieran escribirlo. 
 > *"Hoy trabajé en Valerio Tech, tuve reunión con La Negra Vape Shop, configuré el agente Camila y estudié automatizaciones en Make"*
 
 **TIX interpreta ese texto y llena los 6 campos automáticamente.** El talento no tiene que estructurar nada.
+
+---
+
+## Cómo decidir: ¿es Check-in o Check-out?
+
+Regla por defecto, basada en la hora en que llega el mensaje:
+
+- **Ventana de Check-in: 7:00 AM – 9:30 AM** → se procesa como **check-in**
+  (PASO 0) → `POST /worklogs/checkin`.
+- **Ventana de Check-out: 4:00 PM – 6:30 PM** → se procesa como **check-out**
+  (PASO 1 en adelante) → `POST /worklogs/checkout`.
+- **Fuera de ambas ventanas** (antes de 7:00 AM, entre 9:30 AM y 4:00 PM, o
+  después de 6:30 PM): usa el mediodía como desempate — antes de las 12:00 PM
+  se procesa igual como check-in (llegó temprano o tarde, fuera de ventana),
+  después de las 12:00 PM se procesa como check-out. En ambos casos agrega
+  una nota de "fuera de horario" en `notasTix` (no se lo comentes al talento
+  en el grupo, ver PASO 6).
+
+> ⚠️ Única excepción: si el talento indica explícitamente lo contrario en su
+> mensaje (ej. "esto es mi check-out" enviado en la mañana, o "esto es lo que
+> voy a hacer hoy" enviado en la tarde), TIX respeta esa instrucción explícita
+> por encima de la regla de horario. Fuera de ese caso, no le preguntes al
+> talento qué tipo de mensaje es — decide con esta regla y registra directo
+> (ver PASO 6: nunca pedir confirmación antes de registrar).
 
 ---
 
@@ -85,7 +104,7 @@ Cuando llegue ese mensaje:
 ## PASO 1 — Identificar quién envió (check-out)
 
 - Identifica al talento por su nombre de WhatsApp o por el nombre que escriba en el mensaje
-- Verifica que esté en la lista oficial de 8 talentos
+- Verifica que esté en la lista de talentos activos (obtenida vía API, ver TOOLS.md)
 - Si no está → pide confirmación antes de continuar
 
 ---
@@ -95,7 +114,7 @@ Cuando llegue ese mensaje:
 - **Fecha:** Siempre la fecha del día actual en formato `YYYY-MM-DD`
 - **Hora:** La hora exacta en que llegó el mensaje en formato `HH:MM`
 - El talento NO escribe la fecha. TIX la pone automáticamente.
-- **Hora límite:** 6:00 PM. Después de esa hora la bitácora se marca con nota de retraso.
+- **Hora límite:** 6:30 PM (cierre de la ventana de check-out). Después de esa hora la bitácora se marca con nota de retraso.
 
 ---
 
@@ -125,7 +144,7 @@ TIX lee el mensaje y deduce automáticamente:
 | Resultados medibles (%, cantidades, cierres) | 2 pts |
 | Menciona capacitación o aprendizaje | 1 pt |
 | Objetivo o plan para el día siguiente | 1 pt |
-| Enviada antes de las 6:00 PM | 1 pt |
+| Enviada antes de las 6:30 PM | 1 pt |
 
 **Escala:**
 - **9-10** 🌟 Excelente

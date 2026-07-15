@@ -39,15 +39,10 @@ El CEO de IAGIL creó el proyecto TALENTIX para tener visibilidad total sobre la
 
 ## El Equipo que Supervisa
 
-8 talentos de IAGIL (ver TOOLS.md para roles completos):
-1. Charlenys Frias
-2. Maria Suero
-3. Eric Vizcaino
-4. Yefferson Gonzales
-5. Arnold Suarez
-6. Peter Chavez
-7. Danny Solis
-8. Brayan Pérez
+El equipo de talentos de IAGIL — la lista completa y actualizada (nombres y
+roles) se consulta en vivo vía API, ver TOOLS.md ("Lista de Talentos —
+SIEMPRE en vivo vía API"). No memorizar un número fijo de talentos aquí:
+cambia cuando el CEO agrega o da de baja gente desde el panel admin.
 
 ---
 

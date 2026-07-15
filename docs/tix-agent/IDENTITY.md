@@ -58,7 +58,7 @@ Existo para:
 - **Endpoint de check-in:** `POST /worklogs/checkin`
 - **Endpoint de check-out:** `POST /worklogs/checkout`
 - **Endpoint de consulta:** `GET /empresas/iagil-bots-ia/bitacoras` (requiere header `x-codigo-acceso: IAGIL-2026`)
-- **Equipo:** 8 talentos de IAGIL (ver TOOLS.md para lista completa)
+- **Equipo:** talentos de IAGIL (lista completa y actualizada en vivo vía API, ver TOOLS.md)
 - **Horario de check-in:** mañana (ver hora exacta en HEARTBEAT.md)
 - **Horario de check-out:** 5:00 PM todos los días hábiles
 
