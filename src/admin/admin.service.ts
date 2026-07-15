@@ -4,11 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import { EditarEmpresaDto } from './dto/editar-empresa.dto';
 import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
 import { CrearTalentoAdminDto } from './dto/crear-talento-admin.dto';
+import { CrearUsuarioAdminDto } from './dto/crear-usuario-admin.dto';
 
 @Injectable()
 export class AdminService {
@@ -74,7 +76,13 @@ export class AdminService {
       );
 
     return this.prisma.empresa.create({
-      data: { nombre: dto.nombre.trim(), slug, plan: dto.plan, codigoAcceso, botToken },
+      data: {
+        nombre: dto.nombre.trim(),
+        slug,
+        plan: dto.plan,
+        codigoAcceso,
+        botToken,
+      },
       select: {
         id: true,
         nombre: true,
@@ -201,8 +209,13 @@ export class AdminService {
         },
       }),
       this.prisma.worklog.count({ where: { talentoId } }),
-      this.prisma.worklog.count({ where: { talentoId, estadoEnvio: 'enviada' } }),
-      this.prisma.worklog.aggregate({ where: { talentoId }, _avg: { puntajeIA: true } }),
+      this.prisma.worklog.count({
+        where: { talentoId, estadoEnvio: 'enviada' },
+      }),
+      this.prisma.worklog.aggregate({
+        where: { talentoId },
+        _avg: { puntajeIA: true },
+      }),
     ]);
 
     const puntajePromedio = agg._avg.puntajeIA
@@ -227,18 +240,26 @@ export class AdminService {
     return this.prisma.talento.update({
       where: { id: talentoId },
       data: {
-        ...(dto.nombreCompleto && { nombreCompleto: dto.nombreCompleto.trim() }),
+        ...(dto.nombreCompleto && {
+          nombreCompleto: dto.nombreCompleto.trim(),
+        }),
         ...(dto.rol && { rol: dto.rol.trim() }),
         ...(dto.cedula !== undefined && { cedula: dto.cedula?.trim() || null }),
         ...(dto.correo !== undefined && { correo: dto.correo?.trim() || null }),
-        ...(dto.telefono !== undefined && { telefono: dto.telefono?.trim() || null }),
+        ...(dto.telefono !== undefined && {
+          telefono: dto.telefono?.trim() || null,
+        }),
         ...(dto.fechaIngreso !== undefined && {
           fechaIngreso: dto.fechaIngreso ? new Date(dto.fechaIngreso) : null,
         }),
         ...(dto.fechaNacimiento !== undefined && {
-          fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
+          fechaNacimiento: dto.fechaNacimiento
+            ? new Date(dto.fechaNacimiento)
+            : null,
         }),
-        ...(dto.direccion !== undefined && { direccion: dto.direccion?.trim() || null }),
+        ...(dto.direccion !== undefined && {
+          direccion: dto.direccion?.trim() || null,
+        }),
         ...(dto.notas !== undefined && { notas: dto.notas?.trim() || null }),
       },
       select: {
@@ -276,6 +297,51 @@ export class AdminService {
     if (!talento) throw new NotFoundException('Empleado no encontrado');
     await this.prisma.talento.delete({ where: { id: talentoId } });
     return { ok: true };
+  }
+
+  /**
+   * Crea el usuario humano de una empresa (bootstrap del CEO al migrar del
+   * código compartido a login individual, o para dar de alta RRHH/managers
+   * más adelante). Genera una contraseña temporal aleatoria y la devuelve
+   * UNA sola vez en la respuesta — no se guarda en texto plano en ningún
+   * lado, hay que entregarla al usuario fuera de banda.
+   */
+  async crearUsuario(empresaId: string, dto: CrearUsuarioAdminDto) {
+    await this.validarEmpresaExiste(empresaId);
+
+    const existente = await this.prisma.usuario.findUnique({
+      where: { email: dto.email.trim().toLowerCase() },
+    });
+    if (existente) {
+      throw new ConflictException('Ya existe un usuario con ese correo');
+    }
+
+    if (dto.rol === 'TALENTO' && !dto.talentoId) {
+      throw new ConflictException(
+        'talentoId es obligatorio para crear un usuario con rol TALENTO',
+      );
+    }
+
+    const passwordTemporal =
+      dto.password ?? randomBytes(9).toString('base64url');
+    const passwordHash = await bcrypt.hash(passwordTemporal, 12);
+
+    const usuario = await this.prisma.usuario.create({
+      data: {
+        empresaId,
+        email: dto.email.trim().toLowerCase(),
+        nombre: dto.nombre.trim(),
+        rol: dto.rol,
+        talentoId: dto.talentoId,
+        passwordHash,
+        // Si el admin fijó una contraseña específica, ya la conoce — no
+        // forzamos cambio. Con temporal aleatoria sí, para que la rote.
+        passwordDebeCambiar: !dto.password,
+      },
+      select: { id: true, email: true, nombre: true, rol: true },
+    });
+
+    return { usuario, passwordTemporal };
   }
 
   private async validarEmpresaExiste(id: string) {

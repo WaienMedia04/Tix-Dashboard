@@ -71,12 +71,10 @@ type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; datos:
 
 function ReporteResultado({
   slug,
-  codigoAcceso,
   periodo,
   valor,
 }: {
   slug: string;
-  codigoAcceso: string;
   periodo: PeriodoReporte;
   valor: string;
 }) {
@@ -84,7 +82,7 @@ function ReporteResultado({
 
   useEffect(() => {
     let cancelado = false;
-    fetchReporte(slug, codigoAcceso, periodo, valor)
+    fetchReporte(slug, periodo, valor)
       .then((datos) => {
         if (!cancelado) setEstado({ tipo: "listo", datos });
       })
@@ -94,7 +92,7 @@ function ReporteResultado({
     return () => {
       cancelado = true;
     };
-  }, [slug, codigoAcceso, periodo, valor]);
+  }, [slug, periodo, valor]);
 
   if (estado.tipo === "cargando") {
     return (
@@ -153,7 +151,7 @@ function ReporteResultado({
 }
 
 export function ReportesView() {
-  const { slug, codigoAcceso } = usePanel();
+  const { slug } = usePanel();
   const [periodo, setPeriodo] = useState<PeriodoReporte>("mensual");
   const [valor, setValor] = useState(mesActual);
 
@@ -171,7 +169,7 @@ export function ReportesView() {
         onCambiarValor={setValor}
       />
 
-      <ReporteResultado key={`${periodo}-${valor}`} slug={slug} codigoAcceso={codigoAcceso} periodo={periodo} valor={valor} />
+      <ReporteResultado key={`${periodo}-${valor}`} slug={slug} periodo={periodo} valor={valor} />
     </div>
   );
 }

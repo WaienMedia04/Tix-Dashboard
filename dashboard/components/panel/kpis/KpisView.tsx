@@ -18,20 +18,12 @@ function periodoActual(): string {
 
 type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; datos: KpisResponse };
 
-function KpisResultado({
-  slug,
-  codigoAcceso,
-  periodo,
-}: {
-  slug: string;
-  codigoAcceso: string;
-  periodo: string;
-}) {
+function KpisResultado({ slug, periodo }: { slug: string; periodo: string }) {
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
 
   useEffect(() => {
     let cancelado = false;
-    fetchKpis(slug, codigoAcceso, periodo)
+    fetchKpis(slug, periodo)
       .then((datos) => {
         if (!cancelado) setEstado({ tipo: "listo", datos });
       })
@@ -41,7 +33,7 @@ function KpisResultado({
     return () => {
       cancelado = true;
     };
-  }, [slug, codigoAcceso, periodo]);
+  }, [slug, periodo]);
 
   if (estado.tipo === "cargando") {
     return (
@@ -83,7 +75,7 @@ function KpisResultado({
 }
 
 export function KpisView() {
-  const { slug, codigoAcceso } = usePanel();
+  const { slug } = usePanel();
   const [periodo, setPeriodo] = useState(periodoActual);
 
   return (
@@ -100,7 +92,7 @@ export function KpisView() {
         </div>
       </div>
 
-      <KpisResultado key={periodo} slug={slug} codigoAcceso={codigoAcceso} periodo={periodo} />
+      <KpisResultado key={periodo} slug={slug} periodo={periodo} />
     </div>
   );
 }

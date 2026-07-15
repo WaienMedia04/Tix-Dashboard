@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
@@ -11,6 +7,11 @@ import { ReportesQueryDto } from './dto/reportes-query.dto';
 import { CrearTalentoDto } from './dto/crear-talento.dto';
 import { clasificarEstado } from './estado.util';
 import { rangoMensual, rangoSemanal } from './periodo.util';
+import { Actor } from '../auth/actor.types';
+import {
+  resolverAlcanceTalentoIds,
+  talentoScopeWhere,
+} from '../auth/talento-scope.util';
 
 const MARCADOR_ESTADO: Record<string, string> = {
   enviada: '✅',
@@ -29,29 +30,38 @@ export class EmpresasService {
     });
   }
 
-  private async validarAcceso(slug: string, codigoAcceso: string | undefined) {
+  /**
+   * La autorización (¿puede este actor tocar esta empresa?) ya la resolvió
+   * CompanyAccessGuard antes de llegar aquí. Esto solo busca la fila de
+   * Empresa por slug — si no coincide con actor.empresaId es un bug de
+   * enrutamiento, no un caso de usuario, por eso NotFoundException seco.
+   */
+  private async resolverEmpresa(slug: string, actor: Actor) {
     const empresa = await this.prisma.empresa.findUnique({ where: { slug } });
-    if (!empresa) {
+    if (!empresa || empresa.id !== actor.empresaId) {
       throw new NotFoundException(`Empresa "${slug}" no encontrada`);
-    }
-    if (!codigoAcceso || codigoAcceso !== empresa.codigoAcceso) {
-      throw new UnauthorizedException('Código de acceso inválido');
     }
     return empresa;
   }
 
-  async dashboard(slug: string, codigoAcceso: string | undefined) {
-    const empresa = await this.validarAcceso(slug, codigoAcceso);
+  async dashboard(slug: string, actor: Actor) {
+    const empresa = await this.resolverEmpresa(slug, actor);
 
     // TODO: filtrar por empresaId es manual porque todavia no hay RLS en Postgres.
-    const [worklogs, talentos] = await Promise.all([
+    // Alcance adicional por rol (MANAGER/TALENTO ven solo su gente) via talentoScopeWhere.
+    const [worklogsTodos, talentos] = await Promise.all([
       this.prisma.worklog.findMany({
         where: { empresaId: empresa.id },
         include: { talento: { select: { nombreCompleto: true } } },
         orderBy: { fecha: 'desc' },
       }),
-      this.prisma.talento.findMany({ where: { empresaId: empresa.id } }),
+      this.prisma.talento.findMany({ where: talentoScopeWhere(actor) }),
     ]);
+
+    const talentoIdsVisibles = new Set(talentos.map((t) => t.id));
+    const worklogs = worklogsTodos.filter((w) =>
+      talentoIdsVisibles.has(w.talentoId),
+    );
 
     const totalBitacoras = worklogs.length;
     const enviadas = worklogs.filter(
@@ -195,12 +205,8 @@ export class EmpresasService {
     };
   }
 
-  async bitacoras(
-    slug: string,
-    codigoAcceso: string | undefined,
-    query: BitacorasQueryDto,
-  ) {
-    const empresa = await this.validarAcceso(slug, codigoAcceso);
+  async bitacoras(slug: string, actor: Actor, query: BitacorasQueryDto) {
+    const empresa = await this.resolverEmpresa(slug, actor);
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
@@ -208,7 +214,25 @@ export class EmpresasService {
     // TODO: filtrar por empresaId es manual porque todavia no hay RLS en Postgres.
     const where: Prisma.WorklogWhereInput = { empresaId: empresa.id };
 
-    if (query.talentoId) {
+    const alcance = await resolverAlcanceTalentoIds(actor, this.prisma);
+    if (alcance !== null) {
+      // MANAGER/TALENTO: si piden un talentoId puntual fuera de su alcance,
+      // no se les revela que existe — mismo resultado que "sin datos".
+      if (query.talentoId && !alcance.includes(query.talentoId)) {
+        return {
+          data: [],
+          total: 0,
+          page,
+          totalPages: 1,
+          resumen: {
+            totalBitacoras: 0,
+            porcentajeEnviadas: 0,
+            puntajeProm: null,
+          },
+        };
+      }
+      where.talentoId = query.talentoId ?? { in: alcance };
+    } else if (query.talentoId) {
       where.talentoId = query.talentoId;
     }
     if (query.estado) {
@@ -258,14 +282,18 @@ export class EmpresasService {
     };
   }
 
-  async empleados(slug: string, codigoAcceso: string | undefined) {
-    const empresa = await this.validarAcceso(slug, codigoAcceso);
+  async empleados(slug: string, actor: Actor) {
+    await this.resolverEmpresa(slug, actor);
 
     const talentos = await this.prisma.talento.findMany({
-      where: { empresaId: empresa.id },
+      where: talentoScopeWhere(actor),
       include: {
         worklogs: {
-          select: { estadoEnvio: true, puntajeIA: true, cumplimientoTareas: true },
+          select: {
+            estadoEnvio: true,
+            puntajeIA: true,
+            cumplimientoTareas: true,
+          },
         },
       },
       orderBy: { nombreCompleto: 'asc' },
@@ -316,17 +344,22 @@ export class EmpresasService {
 
   async empleadoDetalle(
     slug: string,
-    codigoAcceso: string | undefined,
+    actor: Actor,
     talentoId: string,
     page: number,
     limit: number,
   ) {
-    const empresa = await this.validarAcceso(slug, codigoAcceso);
+    const empresa = await this.resolverEmpresa(slug, actor);
 
     const talento = await this.prisma.talento.findUnique({
       where: { id: talentoId },
     });
     if (!talento || talento.empresaId !== empresa.id) {
+      throw new NotFoundException('Empleado no encontrado');
+    }
+
+    const alcance = await resolverAlcanceTalentoIds(actor, this.prisma);
+    if (alcance !== null && !alcance.includes(talento.id)) {
       throw new NotFoundException('Empleado no encontrado');
     }
 
@@ -341,7 +374,10 @@ export class EmpresasService {
 
     const serieCumplimiento = todos
       .filter((w) => w.cumplimientoTareas !== null)
-      .map((w) => ({ fecha: w.fecha, cumplimientoTareas: w.cumplimientoTareas }));
+      .map((w) => ({
+        fecha: w.fecha,
+        cumplimientoTareas: w.cumplimientoTareas,
+      }));
 
     const conPuntaje = serieIA;
     const puntajeIAPromedio =
@@ -424,12 +460,10 @@ export class EmpresasService {
     };
   }
 
-  async kpis(
-    slug: string,
-    codigoAcceso: string | undefined,
-    query: KpisQueryDto,
-  ) {
-    const empresa = await this.validarAcceso(slug, codigoAcceso);
+  async kpis(slug: string, actor: Actor, query: KpisQueryDto) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+    const alcance = await resolverAlcanceTalentoIds(actor, this.prisma);
+    const talentoIdFiltro = alcance !== null ? { in: alcance } : undefined;
 
     const ahora = new Date();
     const periodo =
@@ -496,6 +530,7 @@ export class EmpresasService {
       this.prisma.worklog.findMany({
         where: {
           empresaId: empresa.id,
+          talentoId: talentoIdFiltro,
           fecha: { gte: semanas[0].inicio, lte: semanas[7].fin },
         },
         select: { fecha: true, estadoEnvio: true, puntajeIA: true },
@@ -503,6 +538,7 @@ export class EmpresasService {
       this.prisma.worklog.findMany({
         where: {
           empresaId: empresa.id,
+          talentoId: talentoIdFiltro,
           fecha: { gte: periodoInicio, lte: periodoFin },
         },
         select: {
@@ -515,11 +551,12 @@ export class EmpresasService {
       this.prisma.worklog.findMany({
         where: {
           empresaId: empresa.id,
+          talentoId: talentoIdFiltro,
           fecha: { gte: periodoAnteriorInicio, lte: periodoAnteriorFin },
         },
         select: { talentoId: true, puntajeIA: true },
       }),
-      this.prisma.talento.findMany({ where: { empresaId: empresa.id } }),
+      this.prisma.talento.findMany({ where: talentoScopeWhere(actor) }),
     ]);
 
     const evolucionSemanal = semanas.map(({ inicio, fin }) => {
@@ -670,12 +707,10 @@ export class EmpresasService {
     };
   }
 
-  async reportes(
-    slug: string,
-    codigoAcceso: string | undefined,
-    query: ReportesQueryDto,
-  ) {
-    const empresa = await this.validarAcceso(slug, codigoAcceso);
+  async reportes(slug: string, actor: Actor, query: ReportesQueryDto) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+    const alcance = await resolverAlcanceTalentoIds(actor, this.prisma);
+    const talentoIdFiltro = alcance !== null ? { in: alcance } : undefined;
 
     const { inicio, fin } =
       query.periodo === 'mensual'
@@ -684,7 +719,11 @@ export class EmpresasService {
 
     const [worklogs, talentos] = await Promise.all([
       this.prisma.worklog.findMany({
-        where: { empresaId: empresa.id, fecha: { gte: inicio, lte: fin } },
+        where: {
+          empresaId: empresa.id,
+          talentoId: talentoIdFiltro,
+          fecha: { gte: inicio, lte: fin },
+        },
         select: {
           talentoId: true,
           estadoEnvio: true,
@@ -692,7 +731,7 @@ export class EmpresasService {
           cumplimientoTareas: true,
         },
       }),
-      this.prisma.talento.findMany({ where: { empresaId: empresa.id } }),
+      this.prisma.talento.findMany({ where: talentoScopeWhere(actor) }),
     ]);
 
     const totalBitacoras = worklogs.length;
@@ -808,12 +847,8 @@ export class EmpresasService {
     };
   }
 
-  async crearTalento(
-    slug: string,
-    codigoAcceso: string | undefined,
-    dto: CrearTalentoDto,
-  ) {
-    const empresa = await this.validarAcceso(slug, codigoAcceso);
+  async crearTalento(slug: string, actor: Actor, dto: CrearTalentoDto) {
+    const empresa = await this.resolverEmpresa(slug, actor);
 
     const talento = await this.prisma.talento.create({
       data: {

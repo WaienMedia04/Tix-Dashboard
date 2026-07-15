@@ -11,7 +11,7 @@ const CAMPO_CLASES =
 
 type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; empleados: EmpleadoResumen[] };
 
-export function ListaEmpleados({ slug, codigoAcceso }: { slug: string; codigoAcceso: string }) {
+export function ListaEmpleados({ slug }: { slug: string }) {
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [mostrarForm, setMostrarForm] = useState(false);
   const [nombreCompleto, setNombreCompleto] = useState("");
@@ -21,7 +21,7 @@ export function ListaEmpleados({ slug, codigoAcceso }: { slug: string; codigoAcc
 
   useEffect(() => {
     let cancelado = false;
-    fetchEmpleados(slug, codigoAcceso)
+    fetchEmpleados(slug)
       .then((empleados) => {
         if (!cancelado) setEstado({ tipo: "listo", empleados });
       })
@@ -31,14 +31,14 @@ export function ListaEmpleados({ slug, codigoAcceso }: { slug: string; codigoAcc
     return () => {
       cancelado = true;
     };
-  }, [slug, codigoAcceso]);
+  }, [slug]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!nombreCompleto.trim() || !rol.trim()) return;
     setEnviando(true);
     setErrorForm(null);
-    crearTalento(slug, codigoAcceso, { nombreCompleto: nombreCompleto.trim(), rol: rol.trim() })
+    crearTalento(slug, { nombreCompleto: nombreCompleto.trim(), rol: rol.trim() })
       .then((nuevo) => {
         setEstado((prev) =>
           prev.tipo === "listo" ? { tipo: "listo", empleados: [...prev.empleados, nuevo] } : prev,

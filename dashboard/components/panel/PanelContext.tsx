@@ -1,11 +1,13 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { DashboardData } from "@/lib/api";
+import type { DashboardData, Rol } from "@/lib/api";
 
 export interface PanelContextValue {
   slug: string;
-  codigoAcceso: string;
+  rol: Rol;
+  usuarioId: string;
+  usuarioNombre: string;
   empresa: { nombre: string; slug: string; plan: string };
   dashboardInicial: DashboardData;
 }

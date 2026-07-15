@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import "./globals.css";
 
@@ -7,12 +8,6 @@ const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-});
-
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -26,9 +21,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} ${fraunces.variable} h-full antialiased`}>
+    <html lang="es" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col">
-        <MotionProvider>{children}</MotionProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <MotionProvider>{children}</MotionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

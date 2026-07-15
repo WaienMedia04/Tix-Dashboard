@@ -19,6 +19,7 @@ import { EditarEmpresaDto } from './dto/editar-empresa.dto';
 import { EstadoEmpresaDto } from './dto/estado-empresa.dto';
 import { CrearTalentoAdminDto } from './dto/crear-talento-admin.dto';
 import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
+import { CrearUsuarioAdminDto } from './dto/crear-usuario-admin.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -63,6 +64,12 @@ export class AdminController {
   @UseGuards(AdminGuard)
   borrarEmpresa(@Param('id') id: string) {
     return this.adminService.borrarEmpresa(id);
+  }
+
+  @Post('empresas/:id/usuarios')
+  @UseGuards(AdminGuard)
+  crearUsuario(@Param('id') id: string, @Body() dto: CrearUsuarioAdminDto) {
+    return this.adminService.crearUsuario(id, dto);
   }
 
   // ── Empleados por empresa ─────────────────────────────────────────────────

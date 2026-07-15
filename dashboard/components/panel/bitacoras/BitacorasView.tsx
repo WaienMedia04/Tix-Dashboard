@@ -30,13 +30,11 @@ type EstadoCarga =
 
 function BitacorasResultado({
   slug,
-  codigoAcceso,
   filtros,
   page,
   onPageChange,
 }: {
   slug: string;
-  codigoAcceso: string;
   filtros: FiltrosState;
   page: number;
   onPageChange: (page: number) => void;
@@ -46,7 +44,7 @@ function BitacorasResultado({
 
   useEffect(() => {
     let cancelado = false;
-    fetchBitacoras(slug, codigoAcceso, {
+    fetchBitacoras(slug, {
       fechaInicio: filtros.fechaInicio || undefined,
       fechaFin: filtros.fechaFin || undefined,
       talentoId: filtros.talentoId || undefined,
@@ -63,7 +61,7 @@ function BitacorasResultado({
     return () => {
       cancelado = true;
     };
-  }, [slug, codigoAcceso, filtros, page]);
+  }, [slug, filtros, page]);
 
   const resp = estado.tipo === "listo" ? estado.data : null;
   const cargando = estado.tipo === "cargando";
@@ -101,7 +99,7 @@ function BitacorasResultado({
 }
 
 export function BitacorasView() {
-  const { slug, codigoAcceso, dashboardInicial } = usePanel();
+  const { slug, dashboardInicial } = usePanel();
   const [filtros, setFiltros] = useState<FiltrosState>(filtrosIniciales);
   const [page, setPage] = useState(1);
 
@@ -126,14 +124,7 @@ export function BitacorasView() {
         onLimpiar={() => handleFiltrosChange(filtrosIniciales())}
       />
 
-      <BitacorasResultado
-        key={clave}
-        slug={slug}
-        codigoAcceso={codigoAcceso}
-        filtros={filtros}
-        page={page}
-        onPageChange={setPage}
-      />
+      <BitacorasResultado key={clave} slug={slug} filtros={filtros} page={page} onPageChange={setPage} />
     </div>
   );
 }
