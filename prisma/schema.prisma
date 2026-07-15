@@ -6,6 +6,13 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Rol {
+  CEO
+  RRHH
+  MANAGER
+  TALENTO
+}
+
 model Empresa {
   id           String    @id @default(cuid())
   nombre       String
@@ -17,25 +24,72 @@ model Empresa {
   createdAt    DateTime  @default(now())
   talentos     Talento[]
   worklogs     Worklog[]
+  usuarios     Usuario[]
 }
 
 model Talento {
-  id              String    @id @default(cuid())
-  empresaId       String
-  nombreCompleto  String
-  rol             String
-  estado          String
-  cedula          String?
-  correo          String?
-  telefono        String?
-  fechaIngreso    DateTime?
-  fechaNacimiento DateTime?
-  direccion       String?
-  notas           String?
-  empresa         Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  worklogs        Worklog[]
+  id               String    @id @default(cuid())
+  empresaId        String
+  nombreCompleto   String
+  apellido         String?
+  rol              String
+  departamento     String?
+  estado           String
+  cedula           String?
+  correo           String?
+  telefono         String?
+  fechaIngreso     DateTime?
+  fechaNacimiento  DateTime?
+  direccion        String?
+  notas            String?
+  fotoUrl          String?
+  cvUrl            String?
+  cvDatosExtraidos Json?
+  managerUsuarioId String?
+  empresa          Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  manager          Usuario?  @relation("ManagerEquipo", fields: [managerUsuarioId], references: [id])
+  usuario          Usuario?  @relation("UsuarioTalento")
+  worklogs         Worklog[]
 
   @@index([empresaId])
+  @@index([empresaId, managerUsuarioId])
+}
+
+model Usuario {
+  id                  String    @id @default(cuid())
+  empresaId           String
+  email               String    @unique
+  passwordHash        String
+  nombre              String
+  rol                 Rol
+  talentoId           String?   @unique
+  passwordDebeCambiar Boolean   @default(false)
+  activo              Boolean   @default(true)
+  ultimoLoginAt       DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  empresa          Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento          Talento?  @relation("UsuarioTalento", fields: [talentoId], references: [id])
+  equipoGestionado Talento[] @relation("ManagerEquipo")
+  sesiones         Sesion[]
+
+  @@index([empresaId])
+  @@index([empresaId, rol])
+}
+
+model Sesion {
+  id        String    @id @default(cuid())
+  usuarioId String
+  tokenHash String    @unique
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  userAgent String?
+  revokedAt DateTime?
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
 }
 
 model Worklog {

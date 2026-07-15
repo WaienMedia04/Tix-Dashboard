@@ -6,7 +6,9 @@ import {
   Param,
   Post,
   Query,
+  Req,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { EmpresasService } from './empresas.service';
 import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
@@ -14,6 +16,10 @@ import { EmpleadoDetalleQueryDto } from './dto/empleado-detalle-query.dto';
 import { KpisQueryDto } from './dto/kpis-query.dto';
 import { ReportesQueryDto } from './dto/reportes-query.dto';
 import { CrearTalentoDto } from './dto/crear-talento.dto';
+import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/guards/roles.decorator';
+import type { RequestConActor } from '../auth/actor.types';
 
 @Controller('empresas')
 export class EmpresasController {
@@ -28,54 +34,38 @@ export class EmpresasController {
   }
 
   @Get(':slug/dashboard')
-  dashboard(
-    @Param('slug') slug: string,
-    @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
-    @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
-  ) {
-    return this.empresasService.dashboard(
-      slug,
-      codigoAccesoQuery ?? codigoAccesoHeader,
-    );
+  @UseGuards(CompanyAccessGuard)
+  dashboard(@Param('slug') slug: string, @Req() req: RequestConActor) {
+    return this.empresasService.dashboard(slug, req.actor!);
   }
 
   @Get(':slug/bitacoras')
+  @UseGuards(CompanyAccessGuard)
   bitacoras(
     @Param('slug') slug: string,
     @Query() query: BitacorasQueryDto,
-    @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
-    @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
+    @Req() req: RequestConActor,
   ) {
-    return this.empresasService.bitacoras(
-      slug,
-      codigoAccesoQuery ?? codigoAccesoHeader,
-      query,
-    );
+    return this.empresasService.bitacoras(slug, req.actor!, query);
   }
 
   @Get(':slug/empleados')
-  empleados(
-    @Param('slug') slug: string,
-    @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
-    @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
-  ) {
-    return this.empresasService.empleados(
-      slug,
-      codigoAccesoQuery ?? codigoAccesoHeader,
-    );
+  @UseGuards(CompanyAccessGuard)
+  empleados(@Param('slug') slug: string, @Req() req: RequestConActor) {
+    return this.empresasService.empleados(slug, req.actor!);
   }
 
   @Get(':slug/empleados/:talentoId')
+  @UseGuards(CompanyAccessGuard)
   empleadoDetalle(
     @Param('slug') slug: string,
     @Param('talentoId') talentoId: string,
     @Query() query: EmpleadoDetalleQueryDto,
-    @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
-    @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
+    @Req() req: RequestConActor,
   ) {
     return this.empresasService.empleadoDetalle(
       slug,
-      codigoAccesoQuery ?? codigoAccesoHeader,
+      req.actor!,
       talentoId,
       query.page ?? 1,
       query.limit ?? 20,
@@ -83,44 +73,33 @@ export class EmpresasController {
   }
 
   @Get(':slug/kpis')
+  @UseGuards(CompanyAccessGuard)
   kpis(
     @Param('slug') slug: string,
     @Query() query: KpisQueryDto,
-    @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
-    @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
+    @Req() req: RequestConActor,
   ) {
-    return this.empresasService.kpis(
-      slug,
-      codigoAccesoQuery ?? codigoAccesoHeader,
-      query,
-    );
+    return this.empresasService.kpis(slug, req.actor!, query);
   }
 
   @Get(':slug/reportes')
+  @UseGuards(CompanyAccessGuard)
   reportes(
     @Param('slug') slug: string,
     @Query() query: ReportesQueryDto,
-    @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
-    @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
+    @Req() req: RequestConActor,
   ) {
-    return this.empresasService.reportes(
-      slug,
-      codigoAccesoQuery ?? codigoAccesoHeader,
-      query,
-    );
+    return this.empresasService.reportes(slug, req.actor!, query);
   }
 
   @Post(':slug/talentos')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
   crearTalento(
     @Param('slug') slug: string,
     @Body() dto: CrearTalentoDto,
-    @Query('codigoAcceso') codigoAccesoQuery: string | undefined,
-    @Headers('x-codigo-acceso') codigoAccesoHeader: string | undefined,
+    @Req() req: RequestConActor,
   ) {
-    return this.empresasService.crearTalento(
-      slug,
-      codigoAccesoQuery ?? codigoAccesoHeader,
-      dto,
-    );
+    return this.empresasService.crearTalento(slug, req.actor!, dto);
   }
 }
