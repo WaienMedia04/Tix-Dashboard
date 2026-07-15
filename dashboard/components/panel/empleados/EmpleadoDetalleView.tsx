@@ -35,13 +35,11 @@ function iniciales(nombre: string): string {
 
 function EmpleadoDetalleResultado({
   slug,
-  codigoAcceso,
   talentoId,
   page,
   onPageChange,
 }: {
   slug: string;
-  codigoAcceso: string;
   talentoId: string;
   page: number;
   onPageChange: (page: number) => void;
@@ -52,7 +50,7 @@ function EmpleadoDetalleResultado({
 
   useEffect(() => {
     let cancelado = false;
-    fetchEmpleadoDetalle(slug, codigoAcceso, talentoId, page)
+    fetchEmpleadoDetalle(slug, talentoId, page)
       .then((detalle) => {
         if (!cancelado) setEstado({ tipo: "listo", detalle });
       })
@@ -62,7 +60,7 @@ function EmpleadoDetalleResultado({
     return () => {
       cancelado = true;
     };
-  }, [slug, codigoAcceso, talentoId, page]);
+  }, [slug, talentoId, page]);
 
   if (estado.tipo === "cargando") {
     return (
@@ -90,7 +88,7 @@ function EmpleadoDetalleResultado({
 
   function alternarEstado() {
     setActualizando(true);
-    actualizarEstadoTalento(talentoId, codigoAcceso, activo ? "inactivo" : "activo")
+    actualizarEstadoTalento(talentoId, activo ? "inactivo" : "activo")
       .then((actualizado) => {
         setEstado({
           tipo: "listo",
@@ -199,7 +197,7 @@ function EmpleadoDetalleResultado({
 }
 
 export function EmpleadoDetalleView() {
-  const { slug, codigoAcceso } = usePanel();
+  const { slug } = usePanel();
   const params = useParams<{ talentoId: string }>();
   const [page, setPage] = useState(1);
 
@@ -212,14 +210,7 @@ export function EmpleadoDetalleView() {
         <ArrowLeft className="h-3.5 w-3.5" />
         Volver a Empleados
       </Link>
-      <EmpleadoDetalleResultado
-        key={page}
-        slug={slug}
-        codigoAcceso={codigoAcceso}
-        talentoId={params.talentoId}
-        page={page}
-        onPageChange={setPage}
-      />
+      <EmpleadoDetalleResultado key={page} slug={slug} talentoId={params.talentoId} page={page} onPageChange={setPage} />
     </div>
   );
 }

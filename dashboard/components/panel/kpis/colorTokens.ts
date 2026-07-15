@@ -1,15 +1,20 @@
 import type { EstadoColorKey } from "@/lib/api";
 
+// Recharts no puede leer variables CSS, así que estos valores quedan
+// duplicados como literales — deben reflejar la paleta de marca de
+// globals.css. Elegidos para leerse razonablemente en claro y oscuro
+// (Recharts no es theme-aware todavía; eso llega con el rediseño de
+// gráficas de la fase Dashboard).
 export const COLOR_ESTADO: Record<EstadoColorKey, string> = {
-  success: "oklch(0.6 0.15 155)",       /* verde — enviada (semántico, no de marca) */
-  destructive: "oklch(0.55 0.22 27)",   /* rojo — no enviada */
-  info: "oklch(0.53 0.09 236)",         /* azul acero — permiso autorizado */
-  warning: "oklch(0.75 0.15 70)",       /* ámbar — pendiente */
-  neutral: "oklch(0.55 0.015 240)",     /* gris azulado — estados admin */
-  muted: "oklch(0.50 0.025 240)",       /* gris azulado — sin datos */
+  success: "#22c55e", /* verde — enviada */
+  destructive: "#ef4444", /* rojo — no enviada */
+  info: "#3b82f6", /* azul — permiso autorizado */
+  warning: "#eab308", /* ámbar — pendiente */
+  neutral: "#71717a", /* gris — estados admin */
+  muted: "#a1a1aa", /* gris claro — sin datos */
 };
 
-export const COLOR_CHART_1 = "oklch(0.30 0.10 252)";  /* azul marino #0F3A5F */
-export const COLOR_CHART_2 = "oklch(0.93 0.022 240)"; /* azul muy tenue — label/relleno claro */
-export const COLOR_GRID = "oklch(0.90 0.012 240)";
-export const COLOR_TICK = "oklch(0.50 0.025 240)";
+export const COLOR_CHART_1 = "#a855f7"; /* violeta — acento insignia */
+export const COLOR_CHART_2 = "#22d3ee"; /* cian — acento insignia claro */
+export const COLOR_GRID = "rgba(113, 113, 122, 0.25)";
+export const COLOR_TICK = "#71717a";

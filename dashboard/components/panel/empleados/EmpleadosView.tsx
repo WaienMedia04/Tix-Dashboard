@@ -13,12 +13,12 @@ type Estado =
   | { tipo: "listo"; empleados: EmpleadoResumen[] };
 
 export function EmpleadosView() {
-  const { slug, codigoAcceso } = usePanel();
+  const { slug } = usePanel();
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
 
   useEffect(() => {
     let cancelado = false;
-    fetchEmpleados(slug, codigoAcceso)
+    fetchEmpleados(slug)
       .then((empleados) => {
         if (!cancelado) setEstado({ tipo: "listo", empleados });
       })
@@ -28,7 +28,7 @@ export function EmpleadosView() {
     return () => {
       cancelado = true;
     };
-  }, [slug, codigoAcceso]);
+  }, [slug]);
 
   if (estado.tipo === "cargando") {
     return <SkeletonCardGrid count={8} />;

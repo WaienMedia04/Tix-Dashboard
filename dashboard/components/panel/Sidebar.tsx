@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   BarChart3,
@@ -12,13 +13,23 @@ import {
   FileBarChart,
   LayoutDashboard,
   LogOut,
+  Moon,
   NotebookPen,
   Settings,
+  Sun,
   Users,
 } from "lucide-react";
-import { borrarCodigo } from "@/lib/auth";
+import { logout, type Rol } from "@/lib/api";
 
-const GRUPOS = [
+interface ItemGrupo {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  /** Si se omite, el item es visible para todos los roles. */
+  rolesPermitidos?: Rol[];
+}
+
+const GRUPOS: { titulo: string; items: ItemGrupo[] }[] = [
   {
     titulo: "Operación",
     items: [
@@ -32,7 +43,7 @@ const GRUPOS = [
     items: [
       { href: "kpis", label: "KPIs", icon: BarChart3 },
       { href: "reportes", label: "Reportes", icon: FileBarChart },
-      { href: "configuracion", label: "Configuración", icon: Settings },
+      { href: "configuracion", label: "Configuración", icon: Settings, rolesPermitidos: ["CEO", "RRHH"] },
     ],
   },
 ];
@@ -84,13 +95,29 @@ function ItemNav({
   );
 }
 
-export function Sidebar({ slug, empresaNombre }: { slug: string; empresaNombre: string }) {
+export function Sidebar({
+  slug,
+  empresaNombre,
+  rol,
+}: {
+  slug: string;
+  empresaNombre: string;
+  rol: Rol;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const reducirMovimiento = useReducedMotion();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [montado, setMontado] = useState(false);
   const [colapsado, setColapsado] = useState(
     () => typeof window !== "undefined" && sessionStorage.getItem(CLAVE_SESION) === "1",
   );
+
+  // Evita el mismatch de hidratación: resolvedTheme es undefined en el
+  // primer render del servidor/cliente hasta que next-themes lee la cookie.
+  // Patrón oficial de next-themes para toggles de tema.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMontado(true), []);
 
   function alternarColapso() {
     setColapsado((prev) => {
@@ -100,10 +127,12 @@ export function Sidebar({ slug, empresaNombre }: { slug: string; empresaNombre: 
     });
   }
 
-  function handleLogout() {
-    borrarCodigo(slug);
+  async function handleLogout() {
+    await logout();
     router.push("/");
   }
+
+  const esOscuro = montado && resolvedTheme === "dark";
 
   return (
     <motion.aside
@@ -131,37 +160,58 @@ export function Sidebar({ slug, empresaNombre }: { slug: string; empresaNombre: 
       </div>
 
       <nav className="flex-1 space-y-6 px-3">
-        {GRUPOS.map((grupo, idx) => (
-          <div key={grupo.titulo}>
-            {!colapsado ? (
-              <p className="px-3 text-[11px] font-semibold tracking-wider text-muted-foreground/70 uppercase">
-                {grupo.titulo}
-              </p>
-            ) : (
-              idx > 0 && <div className="mx-2 mb-2 border-t border-sidebar-border" />
-            )}
-            <div className="mt-2 space-y-1">
-              {grupo.items.map((item) => {
-                const href = `/${slug}/${item.href}`;
-                const activo = pathname === href || pathname.startsWith(`${href}/`);
-                return (
-                  <ItemNav
-                    key={item.href}
-                    href={href}
-                    label={item.label}
-                    Icon={item.icon}
-                    activo={activo}
-                    colapsado={colapsado}
-                  />
-                );
-              })}
+        {GRUPOS.map((grupo, idx) => {
+          const items = grupo.items.filter(
+            (item) => !item.rolesPermitidos || item.rolesPermitidos.includes(rol),
+          );
+          if (items.length === 0) return null;
+          return (
+            <div key={grupo.titulo}>
+              {!colapsado ? (
+                <p className="px-3 text-[11px] font-semibold tracking-wider text-muted-foreground/70 uppercase">
+                  {grupo.titulo}
+                </p>
+              ) : (
+                idx > 0 && <div className="mx-2 mb-2 border-t border-sidebar-border" />
+              )}
+              <div className="mt-2 space-y-1">
+                {items.map((item) => {
+                  const href = `/${slug}/${item.href}`;
+                  const activo = pathname === href || pathname.startsWith(`${href}/`);
+                  return (
+                    <ItemNav
+                      key={item.href}
+                      href={href}
+                      label={item.label}
+                      Icon={item.icon}
+                      activo={activo}
+                      colapsado={colapsado}
+                    />
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </nav>
 
       <div className="space-y-1 border-t border-sidebar-border px-3 py-4">
         <ItemNav href="/docs" label="Documentación" Icon={BookOpen} activo={false} colapsado={colapsado} />
+        <button
+          onClick={() => setTheme(esOscuro ? "light" : "dark")}
+          aria-label={esOscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+          className={`group relative flex w-full items-center gap-2.5 rounded-md py-2 text-left text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-foreground ${
+            colapsado ? "justify-center px-0" : "px-3"
+          }`}
+        >
+          {esOscuro ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
+          {!colapsado && <span className="truncate">{esOscuro ? "Modo claro" : "Modo oscuro"}</span>}
+          {colapsado && (
+            <span className="pointer-events-none absolute left-full z-20 ml-2 -translate-x-1 rounded-md bg-foreground px-2 py-1 text-xs font-medium whitespace-nowrap text-background opacity-0 shadow-elegant transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100">
+              {esOscuro ? "Modo claro" : "Modo oscuro"}
+            </span>
+          )}
+        </button>
         <button
           onClick={handleLogout}
           className={`group relative flex w-full items-center gap-2.5 rounded-md py-2 text-left text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-foreground ${

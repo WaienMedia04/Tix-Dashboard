@@ -232,36 +232,69 @@ export interface ReporteResponse {
   detalle: ReporteDetalleItem[];
 }
 
-export class CodigoInvalidoError extends Error {}
+export type Rol = "CEO" | "RRHH" | "MANAGER" | "TALENTO";
+
+export interface SesionUsuario {
+  id: string;
+  nombre: string;
+  rol: Rol;
+  talentoId: string | null;
+}
+
+export interface MeResponse {
+  usuario: SesionUsuario;
+  empresa: { slug: string; nombre: string } | null;
+}
+
+export class SesionInvalidaError extends Error {}
 export class EmpresaNoEncontradaError extends Error {}
 export class DemasiadosIntentosError extends Error {}
 
-export async function validarCodigoAcceso(codigo: string): Promise<{ slug: string; nombre: string }> {
-  const res = await fetch(`${API_URL}/auth/acceso`, {
+export async function login(
+  email: string,
+  password: string,
+): Promise<{ usuario: SesionUsuario & { empresaSlug: string; empresaNombre: string; passwordDebeCambiar: boolean } }> {
+  const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ codigo }),
+    credentials: "include",
+    body: JSON.stringify({ email, password }),
     cache: "no-store",
   });
   if (res.status === 401) {
-    throw new CodigoInvalidoError("Código de acceso inválido");
+    throw new SesionInvalidaError("Correo o contraseña incorrectos");
   }
   if (res.status === 429) {
     throw new DemasiadosIntentosError("Demasiados intentos. Espera un momento antes de volver a intentar.");
   }
   if (!res.ok) {
-    throw new Error("No se pudo validar el código de acceso");
+    throw new Error("No se pudo iniciar sesión");
   }
   return res.json();
 }
 
-export async function fetchDashboard(slug: string, codigoAcceso: string): Promise<DashboardData> {
-  const res = await fetch(
-    `${API_URL}/empresas/${encodeURIComponent(slug)}/dashboard?codigoAcceso=${encodeURIComponent(codigoAcceso)}`,
-    { cache: "no-store" },
-  );
+export async function me(): Promise<MeResponse> {
+  const res = await fetch(`${API_URL}/auth/me`, { credentials: "include", cache: "no-store" });
   if (res.status === 401) {
-    throw new CodigoInvalidoError("Código de acceso inválido");
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo verificar la sesión");
+  }
+  return res.json();
+}
+
+export async function logout(): Promise<void> {
+  await fetch(`${API_URL}/auth/logout`, { method: "POST", credentials: "include" });
+}
+
+export async function fetchDashboard(slug: string): Promise<DashboardData> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/dashboard`, {
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
   }
   if (res.status === 404) {
     throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
@@ -272,13 +305,8 @@ export async function fetchDashboard(slug: string, codigoAcceso: string): Promis
   return res.json();
 }
 
-export async function fetchBitacoras(
-  slug: string,
-  codigoAcceso: string,
-  filtros: BitacorasFiltros,
-): Promise<BitacorasResponse> {
+export async function fetchBitacoras(slug: string, filtros: BitacorasFiltros): Promise<BitacorasResponse> {
   const params = new URLSearchParams();
-  params.set("codigoAcceso", codigoAcceso);
   if (filtros.fechaInicio) params.set("fechaInicio", filtros.fechaInicio);
   if (filtros.fechaFin) params.set("fechaFin", filtros.fechaFin);
   if (filtros.talentoId) params.set("talentoId", filtros.talentoId);
@@ -287,10 +315,11 @@ export async function fetchBitacoras(
   params.set("limit", String(filtros.limit ?? 20));
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/bitacoras?${params.toString()}`, {
+    credentials: "include",
     cache: "no-store",
   });
   if (res.status === 401) {
-    throw new CodigoInvalidoError("Código de acceso inválido");
+    throw new SesionInvalidaError("Sesión inválida o expirada");
   }
   if (res.status === 404) {
     throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
@@ -301,13 +330,13 @@ export async function fetchBitacoras(
   return res.json();
 }
 
-export async function fetchEmpleados(slug: string, codigoAcceso: string): Promise<EmpleadoResumen[]> {
-  const res = await fetch(
-    `${API_URL}/empresas/${encodeURIComponent(slug)}/empleados?codigoAcceso=${encodeURIComponent(codigoAcceso)}`,
-    { cache: "no-store" },
-  );
+export async function fetchEmpleados(slug: string): Promise<EmpleadoResumen[]> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/empleados`, {
+    credentials: "include",
+    cache: "no-store",
+  });
   if (res.status === 401) {
-    throw new CodigoInvalidoError("Código de acceso inválido");
+    throw new SesionInvalidaError("Sesión inválida o expirada");
   }
   if (res.status === 404) {
     throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
@@ -320,21 +349,19 @@ export async function fetchEmpleados(slug: string, codigoAcceso: string): Promis
 
 export async function fetchEmpleadoDetalle(
   slug: string,
-  codigoAcceso: string,
   talentoId: string,
   page: number = 1,
 ): Promise<EmpleadoDetalle> {
   const params = new URLSearchParams();
-  params.set("codigoAcceso", codigoAcceso);
   params.set("page", String(page));
   params.set("limit", "20");
 
   const res = await fetch(
     `${API_URL}/empresas/${encodeURIComponent(slug)}/empleados/${encodeURIComponent(talentoId)}?${params.toString()}`,
-    { cache: "no-store" },
+    { credentials: "include", cache: "no-store" },
   );
   if (res.status === 401) {
-    throw new CodigoInvalidoError("Código de acceso inválido");
+    throw new SesionInvalidaError("Sesión inválida o expirada");
   }
   if (res.status === 404) {
     throw new EmpresaNoEncontradaError("Empleado no encontrado");
@@ -347,19 +374,16 @@ export async function fetchEmpleadoDetalle(
 
 export async function actualizarEstadoTalento(
   talentoId: string,
-  codigoAcceso: string,
   estado: "activo" | "inactivo",
 ): Promise<{ id: string; nombreCompleto: string; rol: string; estado: string }> {
-  const res = await fetch(
-    `${API_URL}/talentos/${encodeURIComponent(talentoId)}?codigoAcceso=${encodeURIComponent(codigoAcceso)}`,
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado }),
-    },
-  );
+  const res = await fetch(`${API_URL}/talentos/${encodeURIComponent(talentoId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ estado }),
+  });
   if (res.status === 401) {
-    throw new CodigoInvalidoError("Código de acceso inválido");
+    throw new SesionInvalidaError("Sesión inválida o expirada");
   }
   if (res.status === 404) {
     throw new EmpresaNoEncontradaError("Empleado no encontrado");
@@ -370,21 +394,16 @@ export async function actualizarEstadoTalento(
   return res.json();
 }
 
-export async function fetchKpis(
-  slug: string,
-  codigoAcceso: string,
-  periodo: string,
-): Promise<KpisResponse> {
+export async function fetchKpis(slug: string, periodo: string): Promise<KpisResponse> {
   const params = new URLSearchParams();
-  params.set("codigoAcceso", codigoAcceso);
   params.set("periodo", periodo);
 
-  const res = await fetch(
-    `${API_URL}/empresas/${encodeURIComponent(slug)}/kpis?${params.toString()}`,
-    { cache: "no-store" },
-  );
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/kpis?${params.toString()}`, {
+    credentials: "include",
+    cache: "no-store",
+  });
   if (res.status === 401) {
-    throw new CodigoInvalidoError("Código de acceso inválido");
+    throw new SesionInvalidaError("Sesión inválida o expirada");
   }
   if (res.status === 404) {
     throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
@@ -397,21 +416,19 @@ export async function fetchKpis(
 
 export async function fetchReporte(
   slug: string,
-  codigoAcceso: string,
   periodo: PeriodoReporte,
   valor: string,
 ): Promise<ReporteResponse> {
   const params = new URLSearchParams();
-  params.set("codigoAcceso", codigoAcceso);
   params.set("periodo", periodo);
   params.set("valor", valor);
 
-  const res = await fetch(
-    `${API_URL}/empresas/${encodeURIComponent(slug)}/reportes?${params.toString()}`,
-    { cache: "no-store" },
-  );
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/reportes?${params.toString()}`, {
+    credentials: "include",
+    cache: "no-store",
+  });
   if (res.status === 401) {
-    throw new CodigoInvalidoError("Código de acceso inválido");
+    throw new SesionInvalidaError("Sesión inválida o expirada");
   }
   if (res.status === 404) {
     throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
@@ -424,25 +441,85 @@ export async function fetchReporte(
 
 export async function crearTalento(
   slug: string,
-  codigoAcceso: string,
   datos: { nombreCompleto: string; rol: string },
 ): Promise<EmpleadoResumen> {
-  const res = await fetch(
-    `${API_URL}/empresas/${encodeURIComponent(slug)}/talentos?codigoAcceso=${encodeURIComponent(codigoAcceso)}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datos),
-    },
-  );
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/talentos`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(datos),
+  });
   if (res.status === 401) {
-    throw new CodigoInvalidoError("Código de acceso inválido");
+    throw new SesionInvalidaError("Sesión inválida o expirada");
   }
   if (res.status === 404) {
     throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
   }
   if (!res.ok) {
     throw new Error("No se pudo crear el empleado");
+  }
+  return res.json();
+}
+
+export async function actualizarFotoTalento(
+  talentoId: string,
+  fotoUrl: string,
+): Promise<{ id: string; nombreCompleto: string; fotoUrl: string | null }> {
+  const res = await fetch(`${API_URL}/talentos/${encodeURIComponent(talentoId)}/foto`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ fotoUrl }),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError("Empleado no encontrado");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo actualizar la foto del empleado");
+  }
+  return res.json();
+}
+
+export interface CvDatosExtraidos {
+  nombre: string | null;
+  contacto: { correo: string | null; telefono: string | null };
+  experienciaLaboral: {
+    empresa: string;
+    puesto: string;
+    periodo: string | null;
+    descripcion: string | null;
+  }[];
+  educacion: { institucion: string; titulo: string; anio: string | null }[];
+  habilidades: string[];
+  resumenParaRRHH: string;
+}
+
+export async function actualizarCvTalento(
+  talentoId: string,
+  cvUrl: string,
+): Promise<{
+  id: string;
+  nombreCompleto: string;
+  cvUrl: string | null;
+  cvDatosExtraidos: CvDatosExtraidos | null;
+}> {
+  const res = await fetch(`${API_URL}/talentos/${encodeURIComponent(talentoId)}/cv`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ cvUrl }),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError("Empleado no encontrado");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo actualizar el CV del empleado");
   }
   return res.json();
 }

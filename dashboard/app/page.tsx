@@ -2,12 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  CodigoInvalidoError,
-  DemasiadosIntentosError,
-  validarCodigoAcceso,
-} from "@/lib/api";
-import { guardarCodigo } from "@/lib/auth";
+import { DemasiadosIntentosError, SesionInvalidaError, login } from "@/lib/api";
 import { BrandMark } from "@/components/BrandMark";
 import { Iridescence } from "@/components/Iridescence";
 import CurvedInput from "@/components/CurvedInput";
@@ -16,32 +11,33 @@ function AccesoInterno() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialError =
-    searchParams.get("error") === "codigo_invalido"
-      ? "Tu código de acceso ya no es válido. Ingrésalo nuevamente."
+    searchParams.get("error") === "sesion_invalida"
+      ? "Tu sesión ya no es válida. Ingresa de nuevo."
       : null;
 
-  const [codigo, setCodigo] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(initialError);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(valor: string) {
-    const codigoLimpio = valor.trim();
-    if (!codigoLimpio || loading) return;
+  async function handleSubmit(valorPassword: string) {
+    const emailLimpio = email.trim();
+    if (!emailLimpio || !valorPassword || loading) return;
     setError(null);
     setLoading(true);
     try {
-      const { slug } = await validarCodigoAcceso(codigoLimpio);
-      guardarCodigo(slug, codigoLimpio);
-      router.push(`/${slug}/dashboard`);
+      const { usuario } = await login(emailLimpio, valorPassword);
+      router.push(
+        usuario.rol === "TALENTO" ? `/${usuario.empresaSlug}/mi-espacio` : `/${usuario.empresaSlug}/dashboard`,
+      );
     } catch (err) {
-      if (err instanceof CodigoInvalidoError) {
-        setError("Código de acceso incorrecto.");
+      if (err instanceof SesionInvalidaError) {
+        setError("Correo o contraseña incorrectos.");
       } else if (err instanceof DemasiadosIntentosError) {
         setError(err.message);
       } else {
         setError("No se pudo conectar con el servidor. Intenta de nuevo.");
       }
-    } finally {
       setLoading(false);
     }
   }
@@ -65,24 +61,35 @@ function AccesoInterno() {
           Acceso al panel
         </h1>
         <p className="mt-2 text-sm text-white/75 drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)]">
-          Ingresa el código de acceso de tu empresa.
+          Ingresa con tu correo y contraseña.
         </p>
 
-        <div className="mt-9 w-full">
+        <div className="mt-9 flex w-full flex-col gap-4">
           <CurvedInput
-            value={codigo}
-            onChange={setCodigo}
+            value={email}
+            onChange={setEmail}
+            type="email"
+            placeholder="Correo electrónico"
+            theme="dark"
+            showButton={false}
+            width="100%"
+            bend={16}
+            height={58}
+          />
+          <CurvedInput
+            value={password}
+            onChange={setPassword}
             onSubmit={handleSubmit}
             type="password"
-            placeholder="Código de acceso"
+            placeholder="Contraseña"
             buttonText={loading ? "Verificando..." : "Ingresar"}
             theme="dark"
             showIcon={false}
             buttonColor="#8B5CF6"
             buttonGradient={["#22D3EE", "#8B5CF6", "#D946EF"]}
             width="100%"
-            bend={28}
-            height={64}
+            bend={16}
+            height={58}
           />
         </div>
 
