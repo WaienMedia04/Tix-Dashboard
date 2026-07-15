@@ -136,7 +136,8 @@ export function Iridescence({
       ctn.removeChild(gl.canvas);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [color, speed, amplitude, mouseReact]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- depend on color's values, not its array identity (a new literal every render would otherwise tear down/rebuild the WebGL canvas on every keystroke upstream)
+  }, [color[0], color[1], color[2], speed, amplitude, mouseReact]);
 
   return <div ref={ctnDom} className={`h-full w-full ${className ?? ""}`} {...rest} />;
 }
