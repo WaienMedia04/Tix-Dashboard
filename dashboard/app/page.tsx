@@ -9,6 +9,7 @@ import {
 } from "@/lib/api";
 import { guardarCodigo } from "@/lib/auth";
 import { BrandMark } from "@/components/BrandMark";
+import { Iridescence } from "@/components/Iridescence";
 
 function AccesoInterno() {
   const router = useRouter();
@@ -45,8 +46,11 @@ function AccesoInterno() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm rounded-lg border border-border bg-card p-8 shadow-card">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+      <div className="absolute inset-0">
+        <Iridescence color={[0.4392156862745098, 0.3176470588235294, 0.6470588235294118]} mouseReact={false} amplitude={0.1} speed={1.0} />
+      </div>
+      <div className="relative z-10 w-full max-w-sm rounded-lg border border-border bg-card p-8 shadow-card">
         <div className="mb-6 text-center">
           <BrandMark />
           <h1 className="mt-4 text-xl font-semibold text-foreground">Acceso al panel</h1>
