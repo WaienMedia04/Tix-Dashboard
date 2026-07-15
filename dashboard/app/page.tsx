@@ -61,7 +61,7 @@ function AccesoInterno() {
       </div>
 
       <div className="relative z-10 flex w-full max-w-sm flex-col items-center text-center">
-        <h1 className="text-3xl font-semibold text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.4)]">
+        <h1 className="font-sans text-3xl font-semibold text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.4)]">
           Acceso al panel
         </h1>
         <p className="mt-2 text-sm text-white/75 drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)]">
