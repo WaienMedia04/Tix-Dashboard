@@ -1,14 +1,6 @@
 import Link from "next/link";
 import type { EmpleadoResumen } from "@/lib/api";
-
-function iniciales(nombre: string): string {
-  return nombre
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((parte) => parte[0]?.toUpperCase())
-    .join("");
-}
+import { Avatar } from "@/components/Avatar";
 
 function colorPuntaje(puntaje: number | null): string {
   if (puntaje === null) return "text-muted-foreground";
@@ -26,9 +18,7 @@ export function EmpleadoCard({ slug, empleado }: { slug: string; empleado: Emple
       className="flex flex-col rounded-lg border border-border bg-card p-4 shadow-card transition-colors hover:border-primary/40"
     >
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-          {iniciales(empleado.nombreCompleto)}
-        </span>
+        <Avatar nombreCompleto={empleado.nombreCompleto} fotoUrl={empleado.fotoUrl} size="lg" />
         <div className="min-w-0 flex-1">
           <p className="font-display truncate text-sm font-semibold text-foreground">
             {empleado.nombreCompleto}
@@ -36,6 +26,9 @@ export function EmpleadoCard({ slug, empleado }: { slug: string; empleado: Emple
           <p className="truncate text-xs text-muted-foreground" title={empleado.rol}>
             {empleado.rol}
           </p>
+          {empleado.departamento && (
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground/80">{empleado.departamento}</p>
+          )}
         </div>
         <span
           className={`inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-medium ${

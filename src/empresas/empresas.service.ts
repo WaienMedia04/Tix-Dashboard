@@ -343,8 +343,11 @@ export class EmpresasService {
       return {
         id: t.id,
         nombreCompleto: t.nombreCompleto,
+        apellido: t.apellido,
         rol: t.rol,
+        departamento: t.departamento,
         estado: t.estado,
+        fotoUrl: t.fotoUrl,
         puntajeIAPromedio,
         totalBitacoras: t.worklogs.length,
         porcentajeCumplimiento,
@@ -426,8 +429,15 @@ export class EmpresasService {
       talento: {
         id: talento.id,
         nombreCompleto: talento.nombreCompleto,
+        apellido: talento.apellido,
         rol: talento.rol,
+        departamento: talento.departamento,
         estado: talento.estado,
+        fotoUrl: talento.fotoUrl,
+        cedula: talento.cedula,
+        correo: talento.correo,
+        telefono: talento.telefono,
+        fechaIngreso: talento.fechaIngreso,
       },
       metricas: {
         puntajeIAPromedio,

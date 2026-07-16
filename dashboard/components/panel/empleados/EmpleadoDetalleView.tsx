@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Sparkles, ClipboardList, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Sparkles, ClipboardList, CheckCircle2, IdCard, Mail, Phone, Calendar, Building2 } from "lucide-react";
 import {
   type BitacoraItem,
   type EmpleadoDetalle,
@@ -16,6 +16,7 @@ import { TablaBitacoras } from "../bitacoras/TablaBitacoras";
 import { BitacoraDrawer } from "../bitacoras/BitacoraDrawer";
 import { PuntajeIAChart } from "./PuntajeIAChart";
 import { CumplimientoTareasChart } from "./CumplimientoTareasChart";
+import { FotoTalento } from "./FotoTalento";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { Skeleton, SkeletonChart, SkeletonStatCards } from "@/components/motion/Skeleton";
 
@@ -24,13 +25,54 @@ type Estado =
   | { tipo: "error" }
   | { tipo: "listo"; detalle: EmpleadoDetalle };
 
-function iniciales(nombre: string): string {
-  return nombre
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((parte) => parte[0]?.toUpperCase())
-    .join("");
+function tiempoEnEmpresa(fechaIngreso: string | null): string | null {
+  if (!fechaIngreso) return null;
+  const inicio = new Date(fechaIngreso);
+  const hoy = new Date();
+  let meses = (hoy.getFullYear() - inicio.getFullYear()) * 12 + (hoy.getMonth() - inicio.getMonth());
+  if (hoy.getDate() < inicio.getDate()) meses -= 1;
+  if (meses < 0) return null;
+  const anios = Math.floor(meses / 12);
+  const mesesRestantes = meses % 12;
+  if (anios === 0) return `${mesesRestantes} mes${mesesRestantes === 1 ? "" : "es"}`;
+  if (mesesRestantes === 0) return `${anios} año${anios === 1 ? "" : "s"}`;
+  return `${anios} año${anios === 1 ? "" : "s"}, ${mesesRestantes} mes${mesesRestantes === 1 ? "" : "es"}`;
+}
+
+function formatearFecha(fecha: string): string {
+  return new Date(fecha).toLocaleDateString("es-DO", { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" });
+}
+
+function InfoRRHH({ talento }: { talento: EmpleadoDetalle["talento"] }) {
+  const filas = [
+    { icon: Building2, label: "Departamento", valor: talento.departamento },
+    { icon: IdCard, label: "Cédula", valor: talento.cedula },
+    { icon: Mail, label: "Correo", valor: talento.correo },
+    { icon: Phone, label: "Teléfono", valor: talento.telefono },
+    {
+      icon: Calendar,
+      label: "Fecha de ingreso",
+      valor: talento.fechaIngreso ? formatearFecha(talento.fechaIngreso) : null,
+    },
+    { icon: Calendar, label: "Tiempo en la empresa", valor: tiempoEnEmpresa(talento.fechaIngreso) },
+  ];
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+      <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Información de RRHH</p>
+      <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {filas.map((fila) => (
+          <div key={fila.label} className="flex items-start gap-2.5">
+            <fila.icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <div className="min-w-0">
+              <dt className="text-[11px] text-muted-foreground">{fila.label}</dt>
+              <dd className="truncate text-sm font-medium text-foreground">{fila.valor ?? "—"}</dd>
+            </div>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
 }
 
 function EmpleadoDetalleResultado({
@@ -44,9 +86,11 @@ function EmpleadoDetalleResultado({
   page: number;
   onPageChange: (page: number) => void;
 }) {
+  const { rol } = usePanel();
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [seleccionada, setSeleccionada] = useState<BitacoraItem | null>(null);
   const [actualizando, setActualizando] = useState(false);
+  const puedeEditar = rol === "CEO" || rol === "RRHH";
 
   useEffect(() => {
     let cancelado = false;
@@ -101,14 +145,22 @@ function EmpleadoDetalleResultado({
       .finally(() => setActualizando(false));
   }
 
+  function handleFotoActualizada(fotoUrl: string) {
+    setEstado({ tipo: "listo", detalle: { ...detalle, talento: { ...detalle.talento, fotoUrl } } });
+  }
+
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-border bg-card p-5 shadow-card">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground">
-              {iniciales(detalle.talento.nombreCompleto)}
-            </span>
+            <FotoTalento
+              talentoId={detalle.talento.id}
+              nombreCompleto={detalle.talento.nombreCompleto}
+              fotoUrl={detalle.talento.fotoUrl}
+              editable={puedeEditar}
+              onActualizada={handleFotoActualizada}
+            />
             <div>
               <h2 className="font-display text-lg font-semibold text-foreground">
                 {detalle.talento.nombreCompleto}
@@ -134,6 +186,8 @@ function EmpleadoDetalleResultado({
           </div>
         </div>
       </div>
+
+      <InfoRRHH talento={detalle.talento} />
 
       <StaggerGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StaggerItem>

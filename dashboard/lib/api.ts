@@ -120,8 +120,11 @@ export interface BitacorasFiltros {
 export interface EmpleadoResumen {
   id: string;
   nombreCompleto: string;
+  apellido: string | null;
   rol: string;
+  departamento: string | null;
   estado: string;
+  fotoUrl: string | null;
   puntajeIAPromedio: number | null;
   totalBitacoras: number;
   porcentajeCumplimiento: number | null;
@@ -146,7 +149,19 @@ export interface HistorialBitacoras {
 }
 
 export interface EmpleadoDetalle {
-  talento: { id: string; nombreCompleto: string; rol: string; estado: string };
+  talento: {
+    id: string;
+    nombreCompleto: string;
+    apellido: string | null;
+    rol: string;
+    departamento: string | null;
+    estado: string;
+    fotoUrl: string | null;
+    cedula: string | null;
+    correo: string | null;
+    telefono: string | null;
+    fechaIngreso: string | null;
+  };
   metricas: {
     puntajeIAPromedio: number | null;
     totalBitacoras: number;
