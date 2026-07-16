@@ -64,7 +64,7 @@ function AccesoInterno() {
           Ingresa con tu correo y contraseña.
         </p>
 
-        <div className="mt-9 flex w-full flex-col gap-4">
+        <div className="mt-8 flex w-full flex-col gap-2.5">
           <CurvedInput
             value={email}
             onChange={setEmail}
@@ -73,8 +73,8 @@ function AccesoInterno() {
             theme="dark"
             showButton={false}
             width="100%"
-            bend={16}
-            height={58}
+            bend={6}
+            height={56}
           />
           <CurvedInput
             value={password}
@@ -88,8 +88,8 @@ function AccesoInterno() {
             buttonColor="#8B5CF6"
             buttonGradient={["#22D3EE", "#8B5CF6", "#D946EF"]}
             width="100%"
-            bend={16}
-            height={58}
+            bend={6}
+            height={56}
           />
         </div>
 
