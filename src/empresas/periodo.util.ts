@@ -25,6 +25,20 @@ export function rangoMensual(valor: string): RangoFechas {
   };
 }
 
+export function rangoAnual(valor: string): RangoFechas {
+  const match = /^(\d{4})$/.exec(valor);
+  if (!match) {
+    throw new BadRequestException(
+      'valor debe tener el formato YYYY para periodo anual',
+    );
+  }
+  const anio = Number(match[1]);
+  return {
+    inicio: new Date(Date.UTC(anio, 0, 1, 0, 0, 0, 0)),
+    fin: new Date(Date.UTC(anio, 11, 31, 23, 59, 59, 999)),
+  };
+}
+
 export function rangoSemanal(valor: string): RangoFechas {
   const match = /^(\d{4})-W(\d{2})$/.exec(valor);
   if (!match) {

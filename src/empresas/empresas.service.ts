@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
@@ -6,7 +10,12 @@ import { KpisQueryDto } from './dto/kpis-query.dto';
 import { ReportesQueryDto } from './dto/reportes-query.dto';
 import { CrearTalentoDto } from './dto/crear-talento.dto';
 import { clasificarEstado } from './estado.util';
-import { rangoMensual, rangoSemanal, type RangoFechas } from './periodo.util';
+import {
+  rangoAnual,
+  rangoMensual,
+  rangoSemanal,
+  type RangoFechas,
+} from './periodo.util';
 import { Actor } from '../auth/actor.types';
 import {
   resolverAlcanceTalentoIds,
@@ -779,10 +788,32 @@ export class EmpresasService {
     const alcance = await resolverAlcanceTalentoIds(actor, this.prisma);
     const talentoIdFiltro = alcance !== null ? { in: alcance } : undefined;
 
-    const { inicio, fin } =
-      query.periodo === 'mensual'
-        ? rangoMensual(query.valor)
-        : rangoSemanal(query.valor);
+    let inicio: Date;
+    let fin: Date;
+    let valor: string;
+    if (query.periodo === 'personalizado') {
+      if (!query.fechaInicio || !query.fechaFin) {
+        throw new BadRequestException(
+          'fechaInicio y fechaFin son requeridos para periodo personalizado',
+        );
+      }
+      inicio = new Date(`${query.fechaInicio}T00:00:00.000Z`);
+      fin = new Date(`${query.fechaFin}T23:59:59.999Z`);
+      valor = `${query.fechaInicio}_${query.fechaFin}`;
+    } else {
+      if (!query.valor) {
+        throw new BadRequestException(
+          'valor es requerido para este tipo de periodo',
+        );
+      }
+      valor = query.valor;
+      ({ inicio, fin } =
+        query.periodo === 'mensual'
+          ? rangoMensual(query.valor)
+          : query.periodo === 'semanal'
+            ? rangoSemanal(query.valor)
+            : rangoAnual(query.valor));
+    }
 
     const [worklogs, talentos] = await Promise.all([
       this.prisma.worklog.findMany({
@@ -889,7 +920,7 @@ export class EmpresasService {
 
     return {
       periodo: query.periodo,
-      valor: query.valor,
+      valor,
       rangoInicio: inicio,
       rangoFin: fin,
       empresa: { nombre: empresa.nombre, slug: empresa.slug },

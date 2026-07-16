@@ -231,7 +231,7 @@ export interface KpisResponse {
   kpisPorEmpleado: KpiEmpleado[];
 }
 
-export type PeriodoReporte = "mensual" | "semanal";
+export type PeriodoReporte = "mensual" | "semanal" | "anual" | "personalizado";
 
 export interface ReporteDetalleItem {
   talentoId: string;
@@ -445,11 +445,13 @@ export async function fetchKpis(slug: string, periodo: string): Promise<KpisResp
 export async function fetchReporte(
   slug: string,
   periodo: PeriodoReporte,
-  valor: string,
+  opciones: { valor?: string; fechaInicio?: string; fechaFin?: string },
 ): Promise<ReporteResponse> {
   const params = new URLSearchParams();
   params.set("periodo", periodo);
-  params.set("valor", valor);
+  if (opciones.valor) params.set("valor", opciones.valor);
+  if (opciones.fechaInicio) params.set("fechaInicio", opciones.fechaInicio);
+  if (opciones.fechaFin) params.set("fechaFin", opciones.fechaFin);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/reportes?${params.toString()}`, {
     credentials: "include",
