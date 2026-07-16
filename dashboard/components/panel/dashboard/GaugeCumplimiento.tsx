@@ -1,18 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useTheme } from "next-themes";
 import { PolarAngleAxis, RadialBar, RadialBarChart } from "recharts";
-import { COLOR_CHART_1, COLOR_PISTA_DARK, COLOR_PISTA_LIGHT } from "../kpis/colorTokens";
+import { COLOR_PISTA_DARK, COLOR_PISTA_LIGHT, useColorPorTema } from "../kpis/colorTokens";
 
 export function GaugeCumplimiento({ porcentaje }: { porcentaje: number | null }) {
-  const valor = porcentaje ?? 0;
-  const data = [{ value: valor, fill: COLOR_CHART_1 }];
-  const { resolvedTheme } = useTheme();
-  const [montado, setMontado] = useState(false);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setMontado(true), []);
-  const colorPista = montado && resolvedTheme === "dark" ? COLOR_PISTA_DARK : COLOR_PISTA_LIGHT;
+  const colorPista = useColorPorTema(COLOR_PISTA_LIGHT, COLOR_PISTA_DARK);
+  const data = [{ value: porcentaje ?? 0, fill: "url(#gaugeGradientCumplimiento)" }];
 
   return (
     <div className="flex h-full select-none flex-col rounded-xl border border-border bg-card p-4 shadow-card">
@@ -35,6 +28,12 @@ export function GaugeCumplimiento({ porcentaje }: { porcentaje: number | null })
               endAngle={0}
               data={data}
             >
+              <defs>
+                <linearGradient id="gaugeGradientCumplimiento" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#00F2FF" />
+                  <stop offset="100%" stopColor="#BC00FF" />
+                </linearGradient>
+              </defs>
               <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
               <RadialBar
                 dataKey="value"

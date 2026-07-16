@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import type { EstadoColorKey } from "@/lib/api";
 
 // Recharts no puede leer variables CSS, así que estos valores quedan
@@ -25,3 +29,24 @@ export const COLOR_TICK = "#71717a";
 // dos valores porque Recharts no puede leer variables CSS.
 export const COLOR_PISTA_LIGHT = "oklch(0.93 0.022 240)";
 export const COLOR_PISTA_DARK = "oklch(1 0 0 / 0.1)";
+
+// Anillo de "hueco de superficie" alrededor de puntos de gráficas — debe ser
+// un color sólido (no la tarjeta translúcida en modo oscuro) para que el
+// punto se separe visiblemente de la línea/área debajo. Aproximación sólida
+// de --card compuesta sobre --background en cada tema.
+export const COLOR_SUPERFICIE_LIGHT = "#ffffff";
+export const COLOR_SUPERFICIE_DARK = "#141417";
+
+/**
+ * Recharts no puede leer variables CSS, así que cualquier color que deba
+ * adaptarse a modo claro/oscuro necesita resolverse a mano por tema. Mismo
+ * patrón de mount-gate que el toggle de tema del Sidebar (evita el mismatch
+ * de hidratación de next-themes).
+ */
+export function useColorPorTema(claro: string, oscuro: string): string {
+  const { resolvedTheme } = useTheme();
+  const [montado, setMontado] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMontado(true), []);
+  return montado && resolvedTheme === "dark" ? oscuro : claro;
+}

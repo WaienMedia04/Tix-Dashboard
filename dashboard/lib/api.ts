@@ -4,6 +4,7 @@ export interface TalentoRanking {
   talentoId: string;
   nombreCompleto: string;
   rol: string;
+  fotoUrl: string | null;
   puntajeIAPromedio: number | null;
   bitacorasEnviadas: number;
   totalBitacoras: number;
@@ -39,6 +40,7 @@ export interface ActividadEmpleado {
   talentoId: string;
   nombreCompleto: string;
   rol: string;
+  fotoUrl: string | null;
   fecha: string | null;
   estadoEnvio: string | null;
   puntajeIA: number | null;

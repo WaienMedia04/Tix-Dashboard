@@ -57,6 +57,12 @@ export function DashboardResumen() {
         </StaggerItem>
       </div>
 
+      <StaggerItem>
+        <div className="min-h-[24rem]">
+          <RankingTalentos talentos={data.rankingTalentos} />
+        </div>
+      </StaggerItem>
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           <StaggerItem>
@@ -70,11 +76,6 @@ export function DashboardResumen() {
         </div>
 
         <div className="space-y-4">
-          <StaggerItem>
-            <div className="h-72">
-              <RankingTalentos talentos={data.rankingTalentos} />
-            </div>
-          </StaggerItem>
           <div className="grid grid-cols-2 gap-4">
             <StaggerItem>
               <div className="h-44">

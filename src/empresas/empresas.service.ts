@@ -97,6 +97,7 @@ export class EmpresasService {
           talentoId: t.id,
           nombreCompleto: t.nombreCompleto,
           rol: t.rol,
+          fotoUrl: t.fotoUrl,
           puntajeIAPromedio: promedio,
           bitacorasEnviadas: propios.filter(
             (w) => w.estadoEnvio === '✅ Enviada',
@@ -180,6 +181,7 @@ export class EmpresasService {
           talentoId: t.id,
           nombreCompleto: t.nombreCompleto,
           rol: t.rol,
+          fotoUrl: t.fotoUrl,
           fecha: ultimo?.fecha ?? null,
           estadoEnvio: ultimo?.estadoEnvio ?? null,
           puntajeIA: ultimo?.puntajeIA ?? null,
