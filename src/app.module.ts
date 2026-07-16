@@ -9,6 +9,7 @@ import { WorklogsModule } from './worklogs/worklogs.module';
 import { TalentosModule } from './talentos/talentos.module';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
+import { NovedadesModule } from './novedades/novedades.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AdminModule } from './admin/admin.module';
     TalentosModule,
     AuthModule,
     AdminModule,
+    NovedadesModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

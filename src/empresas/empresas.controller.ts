@@ -16,6 +16,7 @@ import { EmpleadoDetalleQueryDto } from './dto/empleado-detalle-query.dto';
 import { KpisQueryDto } from './dto/kpis-query.dto';
 import { ReportesQueryDto } from './dto/reportes-query.dto';
 import { CrearTalentoDto } from './dto/crear-talento.dto';
+import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/guards/roles.decorator';
@@ -90,6 +91,35 @@ export class EmpresasController {
     @Req() req: RequestConActor,
   ) {
     return this.empresasService.reportes(slug, req.actor!, query);
+  }
+
+  @Get(':slug/rankings')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH', 'MANAGER')
+  rankings(
+    @Param('slug') slug: string,
+    @Query() query: RankingsQueryDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.rankings(slug, req.actor!, query);
+  }
+
+  @Get(':slug/reportes-ejecutivos')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  reportesEjecutivos(
+    @Param('slug') slug: string,
+    @Query() query: ReportesQueryDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.reportesEjecutivos(slug, req.actor!, query);
+  }
+
+  @Get(':slug/alertas')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH', 'MANAGER')
+  alertas(@Param('slug') slug: string, @Req() req: RequestConActor) {
+    return this.empresasService.alertas(slug, req.actor!);
   }
 
   @Post(':slug/talentos')

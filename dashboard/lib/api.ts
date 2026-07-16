@@ -46,6 +46,16 @@ export interface ActividadEmpleado {
   puntajeIA: number | null;
 }
 
+export type PeriodoRanking = "mensual" | "anual" | "historico";
+
+export interface RankingsResponse {
+  periodo: PeriodoRanking;
+  valor: string | null;
+  general: TalentoRanking[];
+  porDepartamento: { departamento: string; talentos: TalentoRanking[] }[];
+  sinDepartamento: TalentoRanking[] | null;
+}
+
 export interface DashboardData {
   empresa: { nombre: string; slug: string; plan: string };
   metricas: {
@@ -262,6 +272,44 @@ export interface ReporteResponse {
   detalle: ReporteDetalleItem[];
 }
 
+export interface AnalisisEjecutivo {
+  resumenEjecutivo: string;
+  fortalezas: string[];
+  riesgos: string[];
+  recomendaciones: string[];
+}
+
+export interface ReporteEjecutivoResponse extends ReporteResponse {
+  analisis: AnalisisEjecutivo | null;
+}
+
+export async function fetchReporteEjecutivo(
+  slug: string,
+  periodo: PeriodoReporte,
+  opciones: { valor?: string; fechaInicio?: string; fechaFin?: string },
+): Promise<ReporteEjecutivoResponse> {
+  const params = new URLSearchParams();
+  params.set("periodo", periodo);
+  if (opciones.valor) params.set("valor", opciones.valor);
+  if (opciones.fechaInicio) params.set("fechaInicio", opciones.fechaInicio);
+  if (opciones.fechaFin) params.set("fechaFin", opciones.fechaFin);
+
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/reportes-ejecutivos?${params.toString()}`, {
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el reporte ejecutivo");
+  }
+  return res.json();
+}
+
 export type Rol = "CEO" | "RRHH" | "MANAGER" | "TALENTO";
 
 export interface SesionUsuario {
@@ -472,6 +520,123 @@ export async function fetchKpis(slug: string, periodo: string): Promise<KpisResp
   }
   if (!res.ok) {
     throw new Error("No se pudo cargar los KPIs");
+  }
+  return res.json();
+}
+
+export type SeveridadAlerta = "critica" | "advertencia" | "positiva";
+
+export interface AlertaItem {
+  id: string;
+  talentoId: string;
+  nombreCompleto: string;
+  fotoUrl: string | null;
+  severidad: SeveridadAlerta;
+  tipo: string;
+  mensaje: string;
+  fecha: string;
+}
+
+export interface AlertasResponse {
+  resumen: { criticas: number; advertencias: number; positivas: number };
+  alertas: AlertaItem[];
+}
+
+export async function fetchAlertas(slug: string): Promise<AlertasResponse> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/alertas`, {
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar las alertas");
+  }
+  return res.json();
+}
+
+export type TipoNovedad = "LOGRO" | "BUENA_ACCION" | "AUSENCIA" | "ERROR" | "SITUACION";
+
+export interface NovedadItem {
+  id: string;
+  talentoId: string;
+  nombreCompleto: string;
+  fotoUrl: string | null;
+  tipo: TipoNovedad;
+  fecha: string;
+  descripcion: string;
+  creadoPorNombre: string;
+  createdAt: string;
+}
+
+export async function fetchNovedades(slug: string, filtros: { talentoId?: string; tipo?: TipoNovedad } = {}): Promise<NovedadItem[]> {
+  const params = new URLSearchParams();
+  if (filtros.talentoId) params.set("talentoId", filtros.talentoId);
+  if (filtros.tipo) params.set("tipo", filtros.tipo);
+
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/novedades?${params.toString()}`, {
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar las novedades");
+  }
+  return res.json();
+}
+
+export async function crearNovedad(
+  slug: string,
+  datos: { talentoId: string; tipo: TipoNovedad; fecha: string; descripcion: string },
+): Promise<NovedadItem> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/novedades`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo registrar la novedad");
+  }
+  return res.json();
+}
+
+export async function fetchRankings(
+  slug: string,
+  periodo: PeriodoRanking,
+  valor?: string,
+): Promise<RankingsResponse> {
+  const params = new URLSearchParams();
+  params.set("periodo", periodo);
+  if (valor) params.set("valor", valor);
+
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/rankings?${params.toString()}`, {
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el ranking");
   }
   return res.json();
 }

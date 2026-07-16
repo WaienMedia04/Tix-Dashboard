@@ -13,6 +13,14 @@ enum Rol {
   TALENTO
 }
 
+enum TipoNovedad {
+  LOGRO
+  BUENA_ACCION
+  AUSENCIA
+  ERROR
+  SITUACION
+}
+
 model Empresa {
   id           String    @id @default(cuid())
   nombre       String
@@ -25,6 +33,7 @@ model Empresa {
   talentos     Talento[]
   worklogs     Worklog[]
   usuarios     Usuario[]
+  novedades    Novedad[]
 }
 
 model Talento {
@@ -50,6 +59,7 @@ model Talento {
   manager          Usuario?  @relation("ManagerEquipo", fields: [managerUsuarioId], references: [id])
   usuario          Usuario?  @relation("UsuarioTalento")
   worklogs         Worklog[]
+  novedades        Novedad[]
 
   @@index([empresaId])
   @@index([empresaId, managerUsuarioId])
@@ -69,10 +79,11 @@ model Usuario {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  empresa          Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  talento          Talento?  @relation("UsuarioTalento", fields: [talentoId], references: [id])
-  equipoGestionado Talento[] @relation("ManagerEquipo")
-  sesiones         Sesion[]
+  empresa            Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento            Talento?  @relation("UsuarioTalento", fields: [talentoId], references: [id])
+  equipoGestionado   Talento[] @relation("ManagerEquipo")
+  sesiones           Sesion[]
+  novedadesCreadas   Novedad[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
@@ -121,4 +132,22 @@ model Worklog {
   @@unique([talentoId, fecha])
   @@index([empresaId])
   @@index([empresaId, fecha])
+}
+
+model Novedad {
+  id                 String      @id @default(cuid())
+  empresaId          String
+  talentoId          String
+  tipo               TipoNovedad
+  fecha              DateTime
+  descripcion        String
+  creadoPorUsuarioId String
+  createdAt          DateTime    @default(now())
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento   Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+  creadoPor Usuario @relation(fields: [creadoPorUsuarioId], references: [id])
+
+  @@index([empresaId])
+  @@index([empresaId, talentoId])
 }

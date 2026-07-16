@@ -6,17 +6,21 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { motion, useReducedMotion } from "framer-motion";
 import {
+  AlertTriangle,
   BarChart3,
   BookOpen,
+  BrainCircuit,
   ChevronsLeft,
   ChevronsRight,
   FileBarChart,
   LayoutDashboard,
   LogOut,
+  Megaphone,
   Moon,
   NotebookPen,
   Settings,
   Sun,
+  Trophy,
   Users,
 } from "lucide-react";
 import { logout, type Rol } from "@/lib/api";
@@ -44,6 +48,20 @@ const GRUPOS: { titulo: string; items: ItemGrupo[] }[] = [
       { href: "kpis", label: "KPIs", icon: BarChart3 },
       { href: "reportes", label: "Reportes", icon: FileBarChart },
       { href: "configuracion", label: "Configuración", icon: Settings, rolesPermitidos: ["CEO", "RRHH"] },
+    ],
+  },
+  {
+    titulo: "Inteligencia",
+    items: [
+      { href: "rankings", label: "Rankings", icon: Trophy, rolesPermitidos: ["CEO", "RRHH", "MANAGER"] },
+      { href: "alertas", label: "Alertas", icon: AlertTriangle, rolesPermitidos: ["CEO", "RRHH", "MANAGER"] },
+      { href: "novedades", label: "Novedades", icon: Megaphone, rolesPermitidos: ["CEO", "RRHH"] },
+      {
+        href: "reportes-ejecutivos",
+        label: "Reportes Ejecutivos",
+        icon: BrainCircuit,
+        rolesPermitidos: ["CEO", "RRHH"],
+      },
     ],
   },
 ];

@@ -9,6 +9,8 @@ import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
 import { KpisQueryDto } from './dto/kpis-query.dto';
 import { ReportesQueryDto } from './dto/reportes-query.dto';
 import { CrearTalentoDto } from './dto/crear-talento.dto';
+import { RankingsQueryDto } from './dto/rankings-query.dto';
+import { AnalisisEjecutivoService } from './analisis-ejecutivo.service';
 import { clasificarEstado } from './estado.util';
 import {
   rangoAnual,
@@ -28,9 +30,23 @@ const MARCADOR_ESTADO: Record<string, string> = {
   permiso: '📋',
 };
 
+export interface Alerta {
+  id: string;
+  talentoId: string;
+  nombreCompleto: string;
+  fotoUrl: string | null;
+  severidad: 'critica' | 'advertencia' | 'positiva';
+  tipo: string;
+  mensaje: string;
+  fecha: string;
+}
+
 @Injectable()
 export class EmpresasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly analisisEjecutivo: AnalisisEjecutivoService,
+  ) {}
 
   listar() {
     return this.prisma.empresa.findMany({
@@ -978,5 +994,281 @@ export class EmpresasService {
       porcentajeCumplimiento: null,
       cumplimientoTareasPromedio: null,
     };
+  }
+
+  async rankings(slug: string, actor: Actor, query: RankingsQueryDto) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+
+    const periodo = query.periodo ?? 'mensual';
+    let rango: RangoFechas | null = null;
+    let valor: string | null = null;
+    const ahora = new Date();
+    if (periodo === 'mensual') {
+      valor =
+        query.valor ??
+        `${ahora.getUTCFullYear()}-${String(ahora.getUTCMonth() + 1).padStart(2, '0')}`;
+      rango = rangoMensual(valor);
+    } else if (periodo === 'anual') {
+      valor = query.valor ?? String(ahora.getUTCFullYear());
+      rango = rangoAnual(valor);
+    }
+
+    const [talentos, worklogs] = await Promise.all([
+      this.prisma.talento.findMany({ where: talentoScopeWhere(actor) }),
+      this.prisma.worklog.findMany({
+        where: {
+          empresaId: empresa.id,
+          ...(rango && { fecha: { gte: rango.inicio, lte: rango.fin } }),
+        },
+        select: { talentoId: true, estadoEnvio: true, puntajeIA: true },
+      }),
+    ]);
+
+    function construirRanking(lista: typeof talentos) {
+      return lista
+        .map((t) => {
+          const propios = worklogs.filter((w) => w.talentoId === t.id);
+          const conPuntaje = propios.filter((w) => w.puntajeIA !== null);
+          const puntajeIAPromedio =
+            conPuntaje.length === 0
+              ? null
+              : Math.round(
+                  (conPuntaje.reduce((sum, w) => sum + (w.puntajeIA ?? 0), 0) /
+                    conPuntaje.length) *
+                    10,
+                ) / 10;
+          return {
+            talentoId: t.id,
+            nombreCompleto: t.nombreCompleto,
+            rol: t.rol,
+            fotoUrl: t.fotoUrl,
+            puntajeIAPromedio,
+            bitacorasEnviadas: propios.filter((w) =>
+              w.estadoEnvio.includes('✅'),
+            ).length,
+            totalBitacoras: propios.length,
+          };
+        })
+        .sort(
+          (a, b) => (b.puntajeIAPromedio ?? -1) - (a.puntajeIAPromedio ?? -1),
+        );
+    }
+
+    const general = construirRanking(talentos);
+
+    const departamentos = Array.from(
+      new Set(
+        talentos
+          .map((t) => t.departamento)
+          .filter((d): d is string => Boolean(d)),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
+
+    const porDepartamento = departamentos.map((departamento) => ({
+      departamento,
+      talentos: construirRanking(
+        talentos.filter((t) => t.departamento === departamento),
+      ),
+    }));
+
+    const sinDepartamentoLista = construirRanking(
+      talentos.filter((t) => !t.departamento),
+    );
+
+    return {
+      periodo,
+      valor,
+      general,
+      porDepartamento,
+      sinDepartamento:
+        sinDepartamentoLista.length > 0 ? sinDepartamentoLista : null,
+    };
+  }
+
+  /**
+   * Detección automática de riesgos y reconocimientos — no hay tabla de
+   * alertas ni un job periódico: se calcula al vuelo sobre las bitácoras
+   * del mes en curso (más la última actividad de cada talento, sin límite
+   * de mes, para detectar inactividad). Siempre refleja el estado real,
+   * nunca queda desactualizada.
+   */
+  async alertas(slug: string, actor: Actor) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+
+    const [talentos, worklogsDesc] = await Promise.all([
+      this.prisma.talento.findMany({ where: talentoScopeWhere(actor) }),
+      this.prisma.worklog.findMany({
+        where: { empresaId: empresa.id },
+        select: {
+          talentoId: true,
+          fecha: true,
+          estadoEnvio: true,
+          puntajeIA: true,
+        },
+        orderBy: { fecha: 'desc' },
+      }),
+    ]);
+
+    const talentoIdsVisibles = new Set(talentos.map((t) => t.id));
+    const worklogs = worklogsDesc.filter((w) =>
+      talentoIdsVisibles.has(w.talentoId),
+    );
+
+    const ahora = new Date();
+    const mesActual = `${ahora.getUTCFullYear()}-${String(ahora.getUTCMonth() + 1).padStart(2, '0')}`;
+    const rangoMes = rangoMensual(mesActual);
+    const hoyUtc = new Date(
+      Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth(), ahora.getUTCDate()),
+    );
+
+    const alertas: Alerta[] = [];
+
+    for (const t of talentos) {
+      if (t.estado !== 'activo') continue;
+      // worklogs ya viene ordenado desc por fecha; filter() preserva ese orden.
+      const propios = worklogs.filter((w) => w.talentoId === t.id);
+      const ultimo = propios[0] ?? null;
+      const diasSinActividad = ultimo
+        ? Math.floor(
+            (hoyUtc.getTime() -
+              Date.UTC(
+                ultimo.fecha.getUTCFullYear(),
+                ultimo.fecha.getUTCMonth(),
+                ultimo.fecha.getUTCDate(),
+              )) /
+              86400000,
+          )
+        : null;
+
+      if (diasSinActividad === null || diasSinActividad >= 3) {
+        alertas.push({
+          id: `${t.id}-inactividad`,
+          talentoId: t.id,
+          nombreCompleto: t.nombreCompleto,
+          fotoUrl: t.fotoUrl,
+          severidad: 'critica',
+          tipo: 'inactividad',
+          mensaje:
+            diasSinActividad === null
+              ? 'Nunca ha enviado una bitácora.'
+              : `${diasSinActividad} días sin enviar una bitácora.`,
+          fecha: (ultimo?.fecha ?? ahora).toISOString(),
+        });
+      }
+
+      const delMes = propios.filter(
+        (w) => w.fecha >= rangoMes.inicio && w.fecha <= rangoMes.fin,
+      );
+      if (delMes.length === 0) continue;
+
+      const enviadas = delMes.filter((w) =>
+        w.estadoEnvio.includes('✅'),
+      ).length;
+      const cumplimiento = Math.round((enviadas / delMes.length) * 1000) / 10;
+      const conPuntaje = delMes.filter((w) => w.puntajeIA !== null);
+      const puntajeProm =
+        conPuntaje.length === 0
+          ? null
+          : Math.round(
+              (conPuntaje.reduce((sum, w) => sum + (w.puntajeIA ?? 0), 0) /
+                conPuntaje.length) *
+                10,
+            ) / 10;
+      const fechaMasReciente = delMes[0].fecha.toISOString();
+
+      if (cumplimiento < 40) {
+        alertas.push({
+          id: `${t.id}-cumplimiento`,
+          talentoId: t.id,
+          nombreCompleto: t.nombreCompleto,
+          fotoUrl: t.fotoUrl,
+          severidad: 'critica',
+          tipo: 'cumplimiento',
+          mensaje: `Cumplimiento del ${cumplimiento}% este mes.`,
+          fecha: fechaMasReciente,
+        });
+      } else if (cumplimiento < 70) {
+        alertas.push({
+          id: `${t.id}-cumplimiento`,
+          talentoId: t.id,
+          nombreCompleto: t.nombreCompleto,
+          fotoUrl: t.fotoUrl,
+          severidad: 'advertencia',
+          tipo: 'cumplimiento',
+          mensaje: `Cumplimiento del ${cumplimiento}% este mes.`,
+          fecha: fechaMasReciente,
+        });
+      }
+
+      if (puntajeProm !== null && puntajeProm < 5) {
+        alertas.push({
+          id: `${t.id}-puntaje`,
+          talentoId: t.id,
+          nombreCompleto: t.nombreCompleto,
+          fotoUrl: t.fotoUrl,
+          severidad: 'advertencia',
+          tipo: 'puntaje',
+          mensaje: `Puntaje IA promedio de ${puntajeProm.toFixed(1)} este mes.`,
+          fecha: fechaMasReciente,
+        });
+      }
+
+      if (cumplimiento === 100 && puntajeProm !== null && puntajeProm >= 8) {
+        alertas.push({
+          id: `${t.id}-reconocimiento`,
+          talentoId: t.id,
+          nombreCompleto: t.nombreCompleto,
+          fotoUrl: t.fotoUrl,
+          severidad: 'positiva',
+          tipo: 'reconocimiento',
+          mensaje: `100% de cumplimiento con puntaje IA de ${puntajeProm.toFixed(1)} este mes.`,
+          fecha: fechaMasReciente,
+        });
+      }
+    }
+
+    const ordenSeveridad: Record<Alerta['severidad'], number> = {
+      critica: 0,
+      advertencia: 1,
+      positiva: 2,
+    };
+    alertas.sort(
+      (a, b) =>
+        ordenSeveridad[a.severidad] - ordenSeveridad[b.severidad] ||
+        (a.fecha < b.fecha ? 1 : -1),
+    );
+
+    return {
+      resumen: {
+        criticas: alertas.filter((a) => a.severidad === 'critica').length,
+        advertencias: alertas.filter((a) => a.severidad === 'advertencia')
+          .length,
+        positivas: alertas.filter((a) => a.severidad === 'positiva').length,
+      },
+      alertas,
+    };
+  }
+
+  /**
+   * Reutiliza exactamente el mismo cálculo que reportes() — el análisis
+   * ejecutivo es una capa de narrativa sobre los mismos números, no un
+   * cálculo aparte. Si la IA falla o no está disponible, analisis queda
+   * en null y el frontend muestra los datos igual, solo sin el resumen.
+   */
+  async reportesEjecutivos(
+    slug: string,
+    actor: Actor,
+    query: ReportesQueryDto,
+  ) {
+    const datosReporte = await this.reportes(slug, actor, query);
+
+    const analisis = await this.analisisEjecutivo.generar({
+      periodo: datosReporte.periodo,
+      rango: { desde: datosReporte.rangoInicio, hasta: datosReporte.rangoFin },
+      resumen: datosReporte.resumen,
+      porEmpleado: datosReporte.detalle,
+    });
+
+    return { ...datosReporte, analisis };
   }
 }

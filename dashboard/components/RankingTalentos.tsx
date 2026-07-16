@@ -88,14 +88,22 @@ function PodioSecundario({ talento, posicion }: { talento: TalentoRanking; posic
   );
 }
 
-export function RankingTalentos({ talentos }: { talentos: TalentoRanking[] }) {
+export function RankingTalentos({
+  talentos,
+  titulo = "Ranking de talentos",
+  subtitulo = "Ordenado por puntaje IA promedio",
+}: {
+  talentos: TalentoRanking[];
+  titulo?: string;
+  subtitulo?: string;
+}) {
   const [primero, segundo, tercero, ...resto] = talentos;
 
   return (
     <div className="flex h-full select-none flex-col rounded-xl border border-border bg-card shadow-card">
       <div className="border-b border-border px-4 py-3">
-        <h2 className="font-display text-base font-semibold text-foreground">Ranking de talentos</h2>
-        <p className="text-xs text-muted-foreground">Ordenado por puntaje IA promedio</p>
+        <h2 className="font-display text-base font-semibold text-foreground">{titulo}</h2>
+        <p className="text-xs text-muted-foreground">{subtitulo}</p>
       </div>
 
       {talentos.length === 0 ? (
