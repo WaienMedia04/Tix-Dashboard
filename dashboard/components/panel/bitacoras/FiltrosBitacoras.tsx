@@ -97,7 +97,7 @@ function BuscadorEmpleado({
         />
       </div>
       {abierto && (
-        <ul className="absolute top-full left-0 z-20 mt-1 max-h-56 w-48 overflow-y-auto rounded-md border border-border bg-card py-1 shadow-elegant">
+        <ul className="absolute top-full left-0 z-20 mt-1 max-h-56 w-48 overflow-y-auto rounded-md border border-border bg-popover py-1 shadow-elegant">
           <li>
             <button
               type="button"

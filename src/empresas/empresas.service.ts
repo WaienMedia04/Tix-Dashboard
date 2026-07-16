@@ -207,6 +207,7 @@ export class EmpresasService {
           nombreCompleto: t.nombreCompleto,
           rol: t.rol,
           fotoUrl: t.fotoUrl,
+          estado: t.estado,
           fecha: ultimo?.fecha ?? null,
           estadoEnvio: ultimo?.estadoEnvio ?? null,
           puntajeIA: ultimo?.puntajeIA ?? null,

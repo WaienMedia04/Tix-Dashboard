@@ -15,9 +15,20 @@ function resumenDe(w: WorklogReciente): string {
   return w.informeAvances || w.actividadesRealizadas || w.notasTix || "Sin información registrada.";
 }
 
-export function BitacoraDestacada({ worklog }: { worklog: WorklogReciente | undefined }) {
+export function BitacoraDestacada({
+  worklog,
+  onClick,
+}: {
+  worklog: WorklogReciente | undefined;
+  onClick?: () => void;
+}) {
   return (
-    <div className="flex h-full flex-col rounded-xl border border-border bg-card p-4 shadow-card">
+    <div
+      onClick={worklog ? onClick : undefined}
+      className={`flex h-full flex-col rounded-xl border border-border bg-card p-4 shadow-card ${
+        worklog && onClick ? "cursor-pointer transition-shadow hover:shadow-elegant" : ""
+      }`}
+    >
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Bitácora más reciente</p>
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">

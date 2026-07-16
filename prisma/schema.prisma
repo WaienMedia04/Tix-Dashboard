@@ -21,6 +21,12 @@ enum TipoNovedad {
   SITUACION
 }
 
+enum TipoAusencia {
+  PERMISO
+  LICENCIA_MEDICA
+  VACACIONES
+}
+
 model Empresa {
   id           String    @id @default(cuid())
   nombre       String
@@ -34,6 +40,7 @@ model Empresa {
   worklogs     Worklog[]
   usuarios     Usuario[]
   novedades    Novedad[]
+  ausencias    Ausencia[]
 }
 
 model Talento {
@@ -60,6 +67,7 @@ model Talento {
   usuario          Usuario?  @relation("UsuarioTalento")
   worklogs         Worklog[]
   novedades        Novedad[]
+  ausencias        Ausencia[]
 
   @@index([empresaId])
   @@index([empresaId, managerUsuarioId])
@@ -84,6 +92,7 @@ model Usuario {
   equipoGestionado   Talento[] @relation("ManagerEquipo")
   sesiones           Sesion[]
   novedadesCreadas   Novedad[]
+  ausenciasCreadas   Ausencia[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
@@ -143,6 +152,25 @@ model Novedad {
   descripcion        String
   creadoPorUsuarioId String
   createdAt          DateTime    @default(now())
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento   Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+  creadoPor Usuario @relation(fields: [creadoPorUsuarioId], references: [id])
+
+  @@index([empresaId])
+  @@index([empresaId, talentoId])
+}
+
+model Ausencia {
+  id                 String       @id @default(cuid())
+  empresaId          String
+  talentoId          String
+  tipo               TipoAusencia
+  fechaInicio        DateTime
+  fechaFin           DateTime
+  motivo             String?
+  creadoPorUsuarioId String
+  createdAt          DateTime     @default(now())
 
   empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   talento   Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)

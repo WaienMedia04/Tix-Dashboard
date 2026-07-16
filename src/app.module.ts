@@ -10,6 +10,7 @@ import { TalentosModule } from './talentos/talentos.module';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { NovedadesModule } from './novedades/novedades.module';
+import { AusenciasModule } from './ausencias/ausencias.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { NovedadesModule } from './novedades/novedades.module';
     AuthModule,
     AdminModule,
     NovedadesModule,
+    AusenciasModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

@@ -25,11 +25,12 @@ import {
 import { usePanel } from "../PanelContext";
 import { MetricCard } from "@/components/MetricCard";
 import { TablaBitacoras } from "../bitacoras/TablaBitacoras";
-import { BitacoraDrawer } from "../bitacoras/BitacoraDrawer";
+import { WorklogDetalleModal, bitacoraItemADetalle } from "../bitacoras/WorklogDetalleModal";
 import { PuntajeIAChart } from "./PuntajeIAChart";
 import { CumplimientoTareasChart } from "./CumplimientoTareasChart";
 import { FotoTalento } from "./FotoTalento";
 import { CvTalento } from "./CvTalento";
+import { AusenciaForm } from "./AusenciaForm";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { Skeleton, SkeletonChart, SkeletonStatCards } from "@/components/motion/Skeleton";
 
@@ -334,6 +335,8 @@ function EmpleadoDetalleResultado({
 
       <InfoRRHH talento={detalle.talento} editable={puedeEditar} onActualizada={handleInfoActualizada} />
 
+      {puedeEditar && <AusenciaForm slug={slug} talentoId={detalle.talento.id} />}
+
       <CvTalento
         talentoId={detalle.talento.id}
         cvUrl={detalle.talento.cvUrl}
@@ -398,7 +401,10 @@ function EmpleadoDetalleResultado({
         onVer={setSeleccionada}
       />
 
-      <BitacoraDrawer bitacora={seleccionada} onClose={() => setSeleccionada(null)} />
+      <WorklogDetalleModal
+        detalle={seleccionada ? bitacoraItemADetalle(seleccionada) : null}
+        onClose={() => setSeleccionada(null)}
+      />
     </div>
   );
 }

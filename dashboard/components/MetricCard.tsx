@@ -16,6 +16,8 @@ export function MetricCard({
   icon: Icon,
   delta,
   variant = "default",
+  bordered = true,
+  onClick,
 }: {
   label: string;
   value: string;
@@ -23,18 +25,17 @@ export function MetricCard({
   icon: LucideIcon;
   delta?: MetricDelta;
   variant?: "default" | "primary";
+  bordered?: boolean;
+  onClick?: () => void;
 }) {
   const valorAnimado = useCountUp(value);
   const primario = variant === "primary";
+  const className = `w-full select-none rounded-xl p-4 text-left shadow-card transition-shadow hover:shadow-elegant ${
+    onClick ? "cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" : ""
+  } ${primario ? "bg-primary-dark text-primary-dark-foreground" : bordered ? "border border-border bg-card" : "bg-card"}`;
 
-  return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.15, ease: "easeOut" }}
-      className={`select-none rounded-xl p-4 shadow-card transition-shadow hover:shadow-elegant ${
-        primario ? "bg-primary-dark text-primary-dark-foreground" : "border border-border bg-card"
-      }`}
-    >
+  const contenido = (
+    <>
       <div className="flex items-start justify-between">
         <p
           className={`text-xs font-semibold tracking-wide uppercase ${
@@ -74,6 +75,26 @@ export function MetricCard({
           {delta.valor}
         </span>
       )}
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <motion.button
+        type="button"
+        onClick={onClick}
+        whileHover={{ y: -2 }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
+        className={className}
+      >
+        {contenido}
+      </motion.button>
+    );
+  }
+
+  return (
+    <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.15, ease: "easeOut" }} className={className}>
+      {contenido}
     </motion.div>
   );
 }

@@ -41,6 +41,7 @@ export interface ActividadEmpleado {
   nombreCompleto: string;
   rol: string;
   fotoUrl: string | null;
+  estado: string;
   fecha: string | null;
   estadoEnvio: string | null;
   puntajeIA: number | null;
@@ -196,7 +197,7 @@ export interface BitacorasSemanal {
   esperadas: number;
 }
 
-export type EstadoColorKey = "success" | "destructive" | "info" | "warning" | "neutral" | "muted";
+export type EstadoColorKey = "success" | "destructive" | "info" | "warning" | "neutral" | "muted" | "gold";
 
 export interface DistribucionEstado {
   estado: string;
@@ -612,6 +613,63 @@ export async function crearNovedad(
   }
   if (!res.ok) {
     throw new Error("No se pudo registrar la novedad");
+  }
+  return res.json();
+}
+
+export type TipoAusencia = "PERMISO" | "LICENCIA_MEDICA" | "VACACIONES";
+
+export interface AusenciaItem {
+  id: string;
+  talentoId: string;
+  nombreCompleto: string;
+  fotoUrl: string | null;
+  tipo: TipoAusencia;
+  fechaInicio: string;
+  fechaFin: string;
+  motivo: string | null;
+  creadoPorNombre: string;
+  createdAt: string;
+}
+
+export async function fetchAusencias(slug: string, filtros: { talentoId?: string } = {}): Promise<AusenciaItem[]> {
+  const params = new URLSearchParams();
+  if (filtros.talentoId) params.set("talentoId", filtros.talentoId);
+
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/ausencias?${params.toString()}`, {
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar las ausencias");
+  }
+  return res.json();
+}
+
+export async function crearAusencia(
+  slug: string,
+  datos: { talentoId: string; tipo: TipoAusencia; fechaInicio: string; fechaFin: string; motivo?: string },
+): Promise<{ ausencia: AusenciaItem; fechasOmitidas: string[] }> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/ausencias`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo registrar la ausencia");
   }
   return res.json();
 }

@@ -8,6 +8,7 @@ import { FiltroPeriodoReporte, type FiltroReporteState } from "./FiltroPeriodoRe
 import { ResumenEjecutivoReporte } from "./ResumenEjecutivoReporte";
 import { TablaReporte } from "./TablaReporte";
 import { SkeletonStatCards, SkeletonTableRows } from "@/components/motion/Skeleton";
+import { descargarCsv } from "@/lib/csv";
 
 const ETIQUETA_PERIODO: Record<PeriodoReporte, string> = {
   mensual: "mensual",
@@ -77,18 +78,6 @@ function generarCsv(reporte: ReporteResponse): string {
     ]),
   ];
   return filas.map((fila) => fila.map((celda) => `"${celda.replace(/"/g, '""')}"`).join(",")).join("\r\n");
-}
-
-function descargarCsv(nombreArchivo: string, contenido: string) {
-  const blob = new Blob([`﻿${contenido}`], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const enlace = document.createElement("a");
-  enlace.href = url;
-  enlace.download = nombreArchivo;
-  document.body.appendChild(enlace);
-  enlace.click();
-  document.body.removeChild(enlace);
-  URL.revokeObjectURL(url);
 }
 
 type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; datos: ReporteResponse };

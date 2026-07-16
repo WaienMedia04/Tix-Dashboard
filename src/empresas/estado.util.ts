@@ -4,7 +4,8 @@ export type EstadoColorKey =
   | 'info'
   | 'warning'
   | 'neutral'
-  | 'muted';
+  | 'muted'
+  | 'gold';
 
 export interface EstadoClasificado {
   label: string;
@@ -16,6 +17,9 @@ export function clasificarEstado(raw: string): EstadoClasificado {
   if (raw.includes('✅')) return { label: 'Enviada', colorKey: 'success' };
   if (raw.includes('❌'))
     return { label: 'No enviada', colorKey: 'destructive' };
+  if (texto.includes('vacacion')) {
+    return { label: 'Vacaciones', colorKey: 'gold' };
+  }
   if (raw.includes('📋') || texto.includes('permiso')) {
     return { label: 'Permiso autorizado', colorKey: 'info' };
   }

@@ -3,12 +3,17 @@
 import { PolarAngleAxis, RadialBar, RadialBarChart } from "recharts";
 import { COLOR_PISTA_DARK, COLOR_PISTA_LIGHT, useColorPorTema } from "../kpis/colorTokens";
 
-export function GaugeCumplimiento({ porcentaje }: { porcentaje: number | null }) {
+export function GaugeCumplimiento({ porcentaje, onClick }: { porcentaje: number | null; onClick?: () => void }) {
   const colorPista = useColorPorTema(COLOR_PISTA_LIGHT, COLOR_PISTA_DARK);
   const data = [{ value: porcentaje ?? 0, fill: "url(#gaugeGradientCumplimiento)" }];
 
   return (
-    <div className="flex h-full select-none flex-col rounded-xl border border-border bg-card p-4 shadow-card">
+    <div
+      onClick={onClick}
+      className={`flex h-full select-none flex-col rounded-xl border border-border bg-card p-4 shadow-card ${
+        onClick ? "cursor-pointer transition-shadow hover:shadow-elegant" : ""
+      }`}
+    >
       <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Cumplimiento del equipo</p>
       <p className="mt-0.5 text-[11px] text-muted-foreground">% de bitácoras enviadas</p>
       <div className="relative mt-1 flex flex-1 items-end justify-center">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { CheckCircle2, ClipboardList, Sparkles, Users } from "lucide-react";
 import type { DashboardData } from "@/lib/api";
 import { usePanel } from "./PanelContext";
@@ -12,6 +13,8 @@ import { GaugeCheckin } from "./dashboard/GaugeCheckin";
 import { BitacoraDestacada } from "./dashboard/BitacoraDestacada";
 import { ResumenHoyCard } from "./dashboard/ResumenHoyCard";
 import { ActividadEquipo } from "./dashboard/ActividadEquipo";
+import { DashboardDetalleModal, type DashboardDetalleKey } from "./DashboardDetalleModal";
+import { WorklogDetalleModal, worklogRecienteADetalle } from "./bitacoras/WorklogDetalleModal";
 
 function puntajeIAPromedioGlobal(data: DashboardData): string {
   const conPuntaje = data.rankingTalentos.filter((t) => t.puntajeIAPromedio !== null);
@@ -28,6 +31,9 @@ function mesEnCurso(): string {
 
 export function DashboardResumen() {
   const { dashboardInicial: data } = usePanel();
+  const [detalleKey, setDetalleKey] = useState<DashboardDetalleKey | null>(null);
+  const bitacoraReciente = data.worklogsRecientes[0];
+  const [verBitacoraReciente, setVerBitacoraReciente] = useState(false);
 
   return (
     <StaggerGroup className="space-y-4">
@@ -39,6 +45,7 @@ export function DashboardResumen() {
             hint={mesEnCurso()}
             icon={ClipboardList}
             variant="primary"
+            onClick={() => setDetalleKey("total-bitacoras")}
           />
         </StaggerItem>
         <StaggerItem>
@@ -47,13 +54,24 @@ export function DashboardResumen() {
             value={`${data.metricas.porcentajeEnviadas}%`}
             hint={`${data.metricas.enviadas} de ${data.metricas.totalBitacoras} enviadas`}
             icon={CheckCircle2}
+            onClick={() => setDetalleKey("cumplimiento")}
           />
         </StaggerItem>
         <StaggerItem>
-          <MetricCard label="Puntaje IA promedio" value={puntajeIAPromedioGlobal(data)} icon={Sparkles} />
+          <MetricCard
+            label="Puntaje IA promedio"
+            value={puntajeIAPromedioGlobal(data)}
+            icon={Sparkles}
+            onClick={() => setDetalleKey("puntaje-ia")}
+          />
         </StaggerItem>
         <StaggerItem>
-          <MetricCard label="Empleados activos" value={String(data.metricas.empleadosActivos)} icon={Users} />
+          <MetricCard
+            label="Empleados activos"
+            value={String(data.metricas.empleadosActivos)}
+            icon={Users}
+            onClick={() => setDetalleKey("empleados-activos")}
+          />
         </StaggerItem>
       </div>
 
@@ -79,25 +97,41 @@ export function DashboardResumen() {
           <div className="grid grid-cols-2 gap-4">
             <StaggerItem>
               <div className="h-44">
-                <GaugeCumplimiento porcentaje={data.metricas.totalBitacoras === 0 ? null : data.metricas.porcentajeEnviadas} />
+                <GaugeCumplimiento
+                  porcentaje={data.metricas.totalBitacoras === 0 ? null : data.metricas.porcentajeEnviadas}
+                  onClick={() => setDetalleKey("cumplimiento-equipo")}
+                />
               </div>
             </StaggerItem>
             <StaggerItem>
               <div className="h-44">
-                <GaugeCheckin porcentaje={data.metricas.empleadosActivos === 0 ? null : data.metricas.porcentajeCheckinHoy} />
+                <GaugeCheckin
+                  porcentaje={data.metricas.empleadosActivos === 0 ? null : data.metricas.porcentajeCheckinHoy}
+                  onClick={() => setDetalleKey("checkin-equipo")}
+                />
               </div>
             </StaggerItem>
           </div>
           <StaggerItem>
             <div className="h-44">
-              <ResumenHoyCard bitacorasHoy={data.metricas.bitacorasHoy} totalBitacoras={data.metricas.totalBitacoras} />
+              <ResumenHoyCard
+                bitacorasHoy={data.metricas.bitacorasHoy}
+                totalBitacoras={data.metricas.totalBitacoras}
+                onClick={() => setDetalleKey("bitacoras-hoy")}
+              />
             </div>
           </StaggerItem>
           <StaggerItem>
-            <BitacoraDestacada worklog={data.worklogsRecientes[0]} />
+            <BitacoraDestacada worklog={bitacoraReciente} onClick={() => setVerBitacoraReciente(true)} />
           </StaggerItem>
         </div>
       </div>
+
+      <DashboardDetalleModal detalleKey={detalleKey} data={data} onClose={() => setDetalleKey(null)} />
+      <WorklogDetalleModal
+        detalle={verBitacoraReciente && bitacoraReciente ? worklogRecienteADetalle(bitacoraReciente) : null}
+        onClose={() => setVerBitacoraReciente(false)}
+      />
     </StaggerGroup>
   );
 }

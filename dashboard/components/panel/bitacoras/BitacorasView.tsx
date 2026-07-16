@@ -7,7 +7,7 @@ import { usePanel } from "../PanelContext";
 import { MetricCard } from "@/components/MetricCard";
 import { FiltrosBitacoras, type FiltrosState } from "./FiltrosBitacoras";
 import { TablaBitacoras } from "./TablaBitacoras";
-import { BitacoraDrawer } from "./BitacoraDrawer";
+import { WorklogDetalleModal, bitacoraItemADetalle } from "./WorklogDetalleModal";
 
 function primerDiaMes(): string {
   const hoy = new Date();
@@ -74,12 +74,19 @@ function BitacorasResultado({
           label="Total de bitácoras"
           value={resp ? String(resp.resumen.totalBitacoras) : "—"}
           icon={ClipboardList}
+          bordered={false}
         />
-        <MetricCard label="% enviadas" value={resp ? `${resp.resumen.porcentajeEnviadas}%` : "—"} icon={CheckCircle2} />
+        <MetricCard
+          label="% enviadas"
+          value={resp ? `${resp.resumen.porcentajeEnviadas}%` : "—"}
+          icon={CheckCircle2}
+          bordered={false}
+        />
         <MetricCard
           label="Puntaje IA promedio"
           value={resp?.resumen.puntajeProm == null ? "—" : `${resp.resumen.puntajeProm.toFixed(1)} / 10`}
           icon={Sparkles}
+          bordered={false}
         />
       </div>
 
@@ -93,7 +100,10 @@ function BitacorasResultado({
         onVer={setSeleccionada}
       />
 
-      <BitacoraDrawer bitacora={seleccionada} onClose={() => setSeleccionada(null)} />
+      <WorklogDetalleModal
+        detalle={seleccionada ? bitacoraItemADetalle(seleccionada) : null}
+        onClose={() => setSeleccionada(null)}
+      />
     </>
   );
 }

@@ -34,12 +34,14 @@ export function StaggerItem({
 export function StaggerRow({
   children,
   className,
+  onClick,
 }: {
   children: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 }) {
   return (
-    <motion.tr className={className} variants={fadeUp}>
+    <motion.tr className={className} variants={fadeUp} onClick={onClick}>
       {children}
     </motion.tr>
   );

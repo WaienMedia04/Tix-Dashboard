@@ -10,6 +10,7 @@ import { BitacorasSemanalChart } from "./BitacorasSemanalChart";
 import { DistribucionEstadoChart } from "./DistribucionEstadoChart";
 import { DistribucionProductividadChart } from "./DistribucionProductividadChart";
 import { TablaKpisEmpleado } from "./TablaKpisEmpleado";
+import { KpisDetalleModal, type KpisDetalleKey } from "./KpisDetalleModal";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { SkeletonChart, SkeletonStatCards } from "@/components/motion/Skeleton";
 
@@ -22,6 +23,7 @@ type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; datos:
 
 function KpisResultado({ slug, periodo }: { slug: string; periodo: string }) {
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
+  const [detalleKey, setDetalleKey] = useState<KpisDetalleKey | null>(null);
 
   useEffect(() => {
     let cancelado = false;
@@ -74,6 +76,7 @@ function KpisResultado({ slug, periodo }: { slug: string; periodo: string }) {
                     direccion: resumen.variacion > 0 ? "subida" : "bajada",
                   }
             }
+            onClick={() => setDetalleKey("puntaje-ia")}
           />
         </StaggerItem>
         <StaggerItem>
@@ -81,6 +84,7 @@ function KpisResultado({ slug, periodo }: { slug: string; periodo: string }) {
             label="% de cumplimiento"
             value={resumen.porcentajeCumplimientoPromedio === null ? "—" : `${resumen.porcentajeCumplimientoPromedio}%`}
             icon={CheckCircle2}
+            onClick={() => setDetalleKey("cumplimiento")}
           />
         </StaggerItem>
         <StaggerItem>
@@ -89,6 +93,7 @@ function KpisResultado({ slug, periodo }: { slug: string; periodo: string }) {
             value={resumen.empleadoDestacado?.nombre ?? "—"}
             hint={resumen.empleadoDestacado ? `${resumen.empleadoDestacado.puntajeProm.toFixed(1)} / 10` : undefined}
             icon={Award}
+            onClick={() => setDetalleKey("empleado-destacado")}
           />
         </StaggerItem>
         <StaggerItem>
@@ -97,6 +102,7 @@ function KpisResultado({ slug, periodo }: { slug: string; periodo: string }) {
             value={String(resumen.empleadosEnRiesgo)}
             hint="Puntaje IA promedio < 5"
             icon={AlertTriangle}
+            onClick={() => setDetalleKey("empleados-en-riesgo")}
           />
         </StaggerItem>
       </StaggerGroup>
@@ -116,6 +122,12 @@ function KpisResultado({ slug, periodo }: { slug: string; periodo: string }) {
         </StaggerItem>
       </StaggerGroup>
       <TablaKpisEmpleado datos={datos.kpisPorEmpleado} />
+
+      <KpisDetalleModal
+        detalleKey={detalleKey}
+        kpisPorEmpleado={datos.kpisPorEmpleado}
+        onClose={() => setDetalleKey(null)}
+      />
     </div>
   );
 }

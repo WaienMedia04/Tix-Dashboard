@@ -5,9 +5,22 @@ function fechaHoy(): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
-export function ResumenHoyCard({ bitacorasHoy, totalBitacoras }: { bitacorasHoy: number; totalBitacoras: number }) {
+export function ResumenHoyCard({
+  bitacorasHoy,
+  totalBitacoras,
+  onClick,
+}: {
+  bitacorasHoy: number;
+  totalBitacoras: number;
+  onClick?: () => void;
+}) {
   return (
-    <div className="bg-gradient-mesh-dark relative flex h-full select-none flex-col overflow-hidden rounded-xl bg-accent-dark p-4 text-accent-dark-foreground shadow-elegant">
+    <div
+      onClick={onClick}
+      className={`bg-gradient-mesh-dark relative flex h-full select-none flex-col overflow-hidden rounded-xl bg-accent-dark p-4 text-accent-dark-foreground shadow-elegant ${
+        onClick ? "cursor-pointer" : ""
+      }`}
+    >
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold tracking-wide text-accent-dark-foreground/60 uppercase">Hoy</p>
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/10">

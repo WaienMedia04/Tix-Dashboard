@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BrainCircuit, CircleCheck, Lightbulb, TriangleAlert } from "lucide-react";
+import { BrainCircuit, CircleCheck, Download, FileText, Lightbulb, TriangleAlert } from "lucide-react";
 import { type PeriodoReporte, type ReporteEjecutivoResponse, fetchReporteEjecutivo } from "@/lib/api";
 import { usePanel } from "../PanelContext";
 import { FiltroPeriodoReporte, type FiltroReporteState } from "../reportes/FiltroPeriodoReporte";
-import { ResumenEjecutivoReporte } from "../reportes/ResumenEjecutivoReporte";
-import { TablaReporte } from "../reportes/TablaReporte";
-import { SkeletonStatCards, SkeletonTableRows } from "@/components/motion/Skeleton";
+import { Skeleton } from "@/components/motion/Skeleton";
+import { descargarCsv } from "@/lib/csv";
 
 function mesActual(): string {
   const hoy = new Date();
@@ -39,6 +38,22 @@ function semanaActualIso(): string {
 
 function anioActual(): string {
   return String(new Date().getFullYear());
+}
+
+function formatearRango(inicio: string, fin: string): string {
+  const opciones: Intl.DateTimeFormatOptions = { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" };
+  const desde = new Date(inicio).toLocaleDateString("es-DO", opciones);
+  const hasta = new Date(fin).toLocaleDateString("es-DO", opciones);
+  return desde === hasta ? desde : `${desde} — ${hasta}`;
+}
+
+function generarCsvEjecutivo(datos: ReporteEjecutivoResponse): string {
+  const filas = [["Sección", "Contenido"]];
+  filas.push(["Resumen ejecutivo", datos.analisis?.resumenEjecutivo ?? "—"]);
+  for (const item of datos.analisis?.fortalezas ?? []) filas.push(["Fortaleza", item]);
+  for (const item of datos.analisis?.riesgos ?? []) filas.push(["Riesgo", item]);
+  for (const item of datos.analisis?.recomendaciones ?? []) filas.push(["Recomendación", item]);
+  return filas.map((fila) => fila.map((celda) => `"${celda.replace(/"/g, '""')}"`).join(",")).join("\r\n");
 }
 
 function ListaAnalisis({
@@ -112,14 +127,12 @@ function ReporteEjecutivoResultado({ slug, filtro }: { slug: string; filtro: Fil
           <BrainCircuit className="h-4 w-4 animate-pulse text-primary" />
           Generando análisis ejecutivo con IA...
         </div>
-        <SkeletonStatCards count={3} />
-        <section className="rounded-lg border border-border bg-card shadow-card">
-          <table className="w-full text-left text-sm">
-            <tbody>
-              <SkeletonTableRows rows={5} cols={6} />
-            </tbody>
-          </table>
-        </section>
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <Skeleton className="h-40 w-full rounded-lg" />
+          <Skeleton className="h-40 w-full rounded-lg" />
+          <Skeleton className="h-40 w-full rounded-lg" />
+        </div>
       </div>
     );
   }
@@ -131,6 +144,38 @@ function ReporteEjecutivoResultado({ slug, filtro }: { slug: string; filtro: Fil
 
   return (
     <div className="space-y-4">
+      <div className="hidden print:block">
+        <h1 className="font-display text-xl font-semibold text-foreground">TalentiX RD — {datos.empresa.nombre}</h1>
+        <p className="text-sm text-muted-foreground">
+          Reporte ejecutivo · {formatearRango(datos.rangoInicio, datos.rangoFin)}
+        </p>
+        <div className="my-3 border-t border-border" />
+      </div>
+
+      {datos.analisis && (
+        <div className="print:hidden flex justify-end gap-2">
+          <button
+            onClick={() =>
+              descargarCsv(
+                `reporte-ejecutivo-${datos.empresa.slug}-${datos.periodo}-${datos.valor}.csv`,
+                generarCsvEjecutivo(datos),
+              )
+            }
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            <Download className="h-4 w-4" />
+            Exportar Excel
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            <FileText className="h-4 w-4" />
+            Exportar PDF
+          </button>
+        </div>
+      )}
+
       {datos.analisis ? (
         <>
           <div className="bg-gradient-primary rounded-xl p-5 text-white shadow-elegant">
@@ -149,12 +194,9 @@ function ReporteEjecutivoResultado({ slug, filtro }: { slug: string; filtro: Fil
         </>
       ) : (
         <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground shadow-card">
-          No se pudo generar el análisis narrativo para este período — los datos agregados siguen disponibles abajo.
+          No se pudo generar el análisis narrativo para este período.
         </div>
       )}
-
-      <ResumenEjecutivoReporte resumen={datos.resumen} />
-      <TablaReporte datos={datos.detalle} />
     </div>
   );
 }

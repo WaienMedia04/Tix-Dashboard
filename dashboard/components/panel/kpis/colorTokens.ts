@@ -16,6 +16,7 @@ export const COLOR_ESTADO: Record<EstadoColorKey, string> = {
   warning: "#eab308", /* ámbar — pendiente */
   neutral: "#71717a", /* gris — estados admin */
   muted: "#a1a1aa", /* gris claro — sin datos */
+  gold: "#ca8a04", /* dorado — vacaciones */
 };
 
 export const COLOR_CHART_1 = "#a855f7"; /* violeta — acento insignia */
