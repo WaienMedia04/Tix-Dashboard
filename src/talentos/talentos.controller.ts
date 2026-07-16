@@ -3,6 +3,7 @@ import {
   Controller,
   Param,
   Patch,
+  Post,
   Put,
   Req,
   UseGuards,
@@ -11,7 +12,9 @@ import { TalentosService } from './talentos.service';
 import { ActualizarTalentoDto } from './dto/actualizar-talento.dto';
 import { ActualizarFotoDto } from './dto/actualizar-foto.dto';
 import { ActualizarCvDto } from './dto/actualizar-cv.dto';
+import { RegistrarWorklogPropioDto } from './dto/registrar-worklog-propio.dto';
 import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
+import { SessionGuard } from '../auth/guards/session.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/guards/roles.decorator';
 import type { RequestConActor } from '../auth/actor.types';
@@ -19,6 +22,16 @@ import type { RequestConActor } from '../auth/actor.types';
 @Controller('talentos')
 export class TalentosController {
   constructor(private readonly talentosService: TalentosService) {}
+
+  @Post('me/worklogs')
+  @UseGuards(SessionGuard, RolesGuard)
+  @Roles('TALENTO')
+  registrarWorklogPropio(
+    @Body() dto: RegistrarWorklogPropioDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.talentosService.registrarWorklogPropio(req.actor!, dto);
+  }
 
   @Put(':talentoId')
   @UseGuards(CompanyAccessGuard, RolesGuard)

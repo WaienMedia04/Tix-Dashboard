@@ -5,5 +5,6 @@ import { WorklogsService } from './worklogs.service';
 @Module({
   controllers: [WorklogsController],
   providers: [WorklogsService],
+  exports: [WorklogsService],
 })
 export class WorklogsModule {}

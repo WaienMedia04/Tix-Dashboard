@@ -1,11 +1,22 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ActualizarTalentoDto } from './dto/actualizar-talento.dto';
 import { ActualizarFotoDto } from './dto/actualizar-foto.dto';
 import { ActualizarCvDto } from './dto/actualizar-cv.dto';
+import {
+  RegistrarWorklogPropioDto,
+  TipoRegistroWorklog,
+} from './dto/registrar-worklog-propio.dto';
 import { Actor } from '../auth/actor.types';
 import { CvExtractionService } from './cv-extraction.service';
+import { WorklogsService } from '../worklogs/worklogs.service';
 
 @Injectable()
 export class TalentosService {
@@ -14,6 +25,7 @@ export class TalentosService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cvExtraction: CvExtractionService,
+    private readonly worklogs: WorklogsService,
   ) {}
 
   private async resolverTalento(talentoId: string, actor: Actor) {
@@ -83,5 +95,34 @@ export class TalentosService {
         cvDatosExtraidos: true,
       },
     });
+  }
+
+  /**
+   * Autoservicio: un usuario con rol TALENTO registra su propia bitácora
+   * de hoy. RolesGuard ya garantiza el rol; aquí solo falta el talentoId
+   * (siempre debería existir para un TALENTO, pero se valida por si acaso).
+   */
+  async registrarWorklogPropio(actor: Actor, dto: RegistrarWorklogPropioDto) {
+    if (actor.type !== 'usuario' || !actor.usuario.talentoId) {
+      throw new ForbiddenException(
+        'Esta acción requiere una cuenta de talento',
+      );
+    }
+    if (
+      dto.tipo === TipoRegistroWorklog.CHECKIN &&
+      !dto.tareasPlanificadas?.trim()
+    ) {
+      throw new BadRequestException(
+        'tareasPlanificadas es requerido para el check-in',
+      );
+    }
+
+    const { empresaId } = actor;
+    const talentoId = actor.usuario.talentoId;
+
+    if (dto.tipo === TipoRegistroWorklog.CHECKIN) {
+      return this.worklogs.checkinPropio(empresaId, talentoId, dto);
+    }
+    return this.worklogs.checkoutPropio(empresaId, talentoId, dto);
   }
 }

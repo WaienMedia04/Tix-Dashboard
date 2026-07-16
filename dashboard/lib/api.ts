@@ -497,6 +497,36 @@ export interface CvDatosExtraidos {
   resumenParaRRHH: string;
 }
 
+export type TipoRegistroWorklog = "checkin" | "checkout";
+
+export interface RegistrarWorklogPropioInput {
+  tipo: TipoRegistroWorklog;
+  tareasPlanificadas?: string;
+  actividadesRealizadas?: string;
+  detallesRelevantes?: string;
+  informeAvances?: string;
+  objetivoDia?: string;
+}
+
+/** Autoservicio: el propio talento registra su bitácora de hoy. */
+export async function registrarWorklogPropio(
+  input: RegistrarWorklogPropioInput,
+): Promise<{ id: string; estadoEnvio: string; checkinEnviado: boolean }> {
+  const res = await fetch(`${API_URL}/talentos/me/worklogs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(input),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo registrar la bitácora");
+  }
+  return res.json();
+}
+
 export async function actualizarCvTalento(
   talentoId: string,
   cvUrl: string,
