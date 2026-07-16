@@ -46,6 +46,7 @@ En **Variables**, agrega:
 | `DATABASE_URL` | connection string de Neon, **host con `-pooler`** | la misma que usas en local, en `.env` |
 | `CORS_ORIGIN` | `https://panel.talentix.com.do` | dominio exacto del dashboard en producción (sin slash final) |
 | `ADMIN_TOKEN` | un valor aleatorio largo | genera uno con `openssl rand -hex 32`. Protege `GET /empresas` |
+| `MISTRAL_API_KEY` | tu API key de [console.mistral.ai](https://console.mistral.ai) | extracción de datos de CVs por IA. Sin esta variable, la subida de CV se guarda igual pero `cvDatosExtraidos` queda en `null` |
 
 `PORT` no hace falta configurarlo: Railway lo inyecta automáticamente y el código ya
 usa `process.env.PORT ?? 3000`.
