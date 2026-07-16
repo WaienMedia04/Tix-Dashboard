@@ -162,6 +162,19 @@ export function crearEmpleadoAdmin(
   });
 }
 
+export type RolAdmin = "CEO" | "RRHH" | "MANAGER" | "TALENTO";
+
+export function crearUsuarioAdmin(
+  token: string,
+  empresaId: string,
+  data: { email: string; nombre: string; rol: RolAdmin; talentoId?: string; password?: string },
+): Promise<{ usuario: { id: string; email: string; nombre: string; rol: RolAdmin }; passwordTemporal: string }> {
+  return adminFetch(`/admin/empresas/${empresaId}/usuarios`, token, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 export function fichaEmpleadoAdmin(token: string, talentoId: string): Promise<FichaTalentoAdmin> {
   return adminFetch<FichaTalentoAdmin>(`/admin/talentos/${talentoId}`, token);
 }

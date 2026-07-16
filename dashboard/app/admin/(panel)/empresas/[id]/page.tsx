@@ -7,6 +7,7 @@ import { Bot, ChevronLeft, Copy, Eye, EyeOff, Plus, Trash2, X } from "lucide-rea
 import {
   type EmpresaAdmin,
   type EmpleadoAdmin,
+  type RolAdmin,
   AdminNoAutorizadoError,
   AdminConflictoError,
   fetchAdminDashboard,
@@ -15,6 +16,7 @@ import {
   borrarEmpresaAdmin,
   fetchEmpleadosAdmin,
   crearEmpleadoAdmin,
+  crearUsuarioAdmin,
   cambiarEstadoEmpleadoAdmin,
   borrarEmpleadoAdmin,
 } from "@/lib/admin-api";
@@ -23,6 +25,13 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import { API_URL } from "@/lib/api";
 
 const PLANES = ["starter", "pro", "enterprise"] as const;
+
+const ROLES_LOGIN: { value: RolAdmin; label: string }[] = [
+  { value: "CEO", label: "CEO" },
+  { value: "RRHH", label: "RRHH" },
+  { value: "MANAGER", label: "Gerente" },
+  { value: "TALENTO", label: "Empleado" },
+];
 
 // ── Conectar Bot Modal ────────────────────────────────────────────────────────
 
@@ -303,6 +312,13 @@ export default function AdminEmpresaDetallePage() {
   const [empleadoError, setEmpleadoError] = useState<string | null>(null);
   const [mostrarFormEmpleado, setMostrarFormEmpleado] = useState(false);
 
+  const [crearAcceso, setCrearAcceso] = useState(false);
+  const [nuevoAcceso, setNuevoAcceso] = useState({ email: "", nombreLogin: "", rolLogin: "TALENTO" as RolAdmin, password: "" });
+  const [resultadoAcceso, setResultadoAcceso] = useState<
+    { tipo: "ok"; passwordTemporal: string | null } | { tipo: "error"; mensaje: string } | null
+  >(null);
+  const [passwordCopiada, setPasswordCopiada] = useState(false);
+
   const [toggling, setToggling] = useState<string | null>(null);
   const [confirmandoEliminarId, setConfirmandoEliminarId] = useState<string | null>(null);
   const [eliminandoEmpleadoId, setEliminandoEmpleadoId] = useState<string | null>(null);
@@ -358,12 +374,34 @@ export default function AdminEmpresaDetallePage() {
     const token = leerTokenAdmin();
     if (!token) return;
     setEmpleadoError(null);
+    setResultadoAcceso(null);
     setGuardandoEmpleado(true);
     try {
       const nuevo = await crearEmpleadoAdmin(token, id, nuevoEmpleado);
       setEmpleados((prev) => [...prev, { ...nuevo, _count: { worklogs: 0 } }]);
       setNuevoEmpleado({ nombreCompleto: "", rol: "" });
-      setMostrarFormEmpleado(false);
+
+      if (crearAcceso) {
+        try {
+          const { passwordTemporal } = await crearUsuarioAdmin(token, id, {
+            email: nuevoAcceso.email,
+            nombre: nuevoAcceso.nombreLogin || nuevo.nombreCompleto,
+            rol: nuevoAcceso.rolLogin,
+            talentoId: nuevo.id,
+            password: nuevoAcceso.password || undefined,
+          });
+          setResultadoAcceso({ tipo: "ok", passwordTemporal: nuevoAcceso.password ? null : passwordTemporal });
+          setNuevoAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO", password: "" });
+          setCrearAcceso(false);
+        } catch (err) {
+          setResultadoAcceso({
+            tipo: "error",
+            mensaje: `Empleado creado. No se pudo crear el acceso: ${err instanceof Error ? err.message : "error desconocido"}`,
+          });
+        }
+      } else {
+        setMostrarFormEmpleado(false);
+      }
     } catch (err) {
       setEmpleadoError(err instanceof Error ? err.message : "Error al crear empleado");
     } finally {
@@ -545,7 +583,98 @@ export default function AdminEmpresaDetallePage() {
                   />
                 </div>
               </div>
+
+              <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+                <input
+                  type="checkbox"
+                  checked={crearAcceso}
+                  onChange={(e) => setCrearAcceso(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-border"
+                />
+                Crear también su acceso de login
+              </label>
+
+              {crearAcceso && (
+                <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-background/50 p-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Correo *</label>
+                    <input
+                      required={crearAcceso}
+                      type="email"
+                      value={nuevoAcceso.email}
+                      onChange={(e) => setNuevoAcceso((f) => ({ ...f, email: e.target.value }))}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Nombre de acceso</label>
+                    <input
+                      placeholder={nuevoEmpleado.nombreCompleto || "Igual al del empleado"}
+                      value={nuevoAcceso.nombreLogin}
+                      onChange={(e) => setNuevoAcceso((f) => ({ ...f, nombreLogin: e.target.value }))}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Rol de acceso</label>
+                    <select
+                      value={nuevoAcceso.rolLogin}
+                      onChange={(e) => setNuevoAcceso((f) => ({ ...f, rolLogin: e.target.value as RolAdmin }))}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                    >
+                      {ROLES_LOGIN.map((r) => (
+                        <option key={r.value} value={r.value}>
+                          {r.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      Contraseña (vacío = temporal automática)
+                    </label>
+                    <input
+                      type="text"
+                      value={nuevoAcceso.password}
+                      onChange={(e) => setNuevoAcceso((f) => ({ ...f, password: e.target.value }))}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                  </div>
+                </div>
+              )}
+
               {empleadoError && <p className="text-sm text-destructive">{empleadoError}</p>}
+
+              {resultadoAcceso?.tipo === "error" && <p className="text-sm text-destructive">{resultadoAcceso.mensaje}</p>}
+
+              {resultadoAcceso?.tipo === "ok" && (
+                <div className="rounded-md border border-success/30 bg-success/5 p-3">
+                  <p className="text-sm text-success">Empleado y acceso creados correctamente.</p>
+                  {resultadoAcceso.passwordTemporal && (
+                    <div className="mt-2 flex items-center justify-between gap-2 rounded-md bg-zinc-950 px-3 py-2">
+                      <code className="font-mono text-xs text-emerald-400 break-all">
+                        {resultadoAcceso.passwordTemporal}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(resultadoAcceso.passwordTemporal ?? "");
+                          setPasswordCopiada(true);
+                          setTimeout(() => setPasswordCopiada(false), 2000);
+                        }}
+                        className="flex shrink-0 items-center gap-1 rounded px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/10"
+                      >
+                        <Copy className="h-3 w-3" />
+                        {passwordCopiada ? "¡Copiado!" : "Copiar"}
+                      </button>
+                    </div>
+                  )}
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Contraseña temporal — guárdala ahora, no se vuelve a mostrar.
+                  </p>
+                </div>
+              )}
+
               <div className="flex gap-2">
                 <button
                   type="submit"
@@ -556,10 +685,15 @@ export default function AdminEmpresaDetallePage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setMostrarFormEmpleado(false); setEmpleadoError(null); }}
+                  onClick={() => {
+                    setMostrarFormEmpleado(false);
+                    setEmpleadoError(null);
+                    setResultadoAcceso(null);
+                    setCrearAcceso(false);
+                  }}
                   className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent"
                 >
-                  Cancelar
+                  {resultadoAcceso ? "Cerrar" : "Cancelar"}
                 </button>
               </div>
             </form>
