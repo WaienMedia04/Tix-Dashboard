@@ -161,6 +161,8 @@ export interface EmpleadoDetalle {
     correo: string | null;
     telefono: string | null;
     fechaIngreso: string | null;
+    cvUrl: string | null;
+    cvDatosExtraidos: CvDatosExtraidos | null;
   };
   metricas: {
     puntajeIAPromedio: number | null;
@@ -422,6 +424,38 @@ export async function actualizarEstadoTalento(
   return res.json();
 }
 
+export interface DatosTalentoEditable {
+  rol?: string;
+  apellido?: string;
+  departamento?: string;
+  cedula?: string;
+  correo?: string;
+  telefono?: string;
+  fechaIngreso?: string;
+}
+
+export async function actualizarTalento(
+  talentoId: string,
+  datos: DatosTalentoEditable,
+): Promise<Omit<EmpleadoDetalle["talento"], "cvUrl" | "cvDatosExtraidos">> {
+  const res = await fetch(`${API_URL}/talentos/${encodeURIComponent(talentoId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError("Empleado no encontrado");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo actualizar el empleado");
+  }
+  return res.json();
+}
+
 export async function fetchKpis(slug: string, periodo: string): Promise<KpisResponse> {
   const params = new URLSearchParams();
   params.set("periodo", periodo);
@@ -469,9 +503,14 @@ export async function fetchReporte(
   return res.json();
 }
 
+export interface DatosNuevoTalento extends DatosTalentoEditable {
+  nombreCompleto: string;
+  rol: string;
+}
+
 export async function crearTalento(
   slug: string,
-  datos: { nombreCompleto: string; rol: string },
+  datos: DatosNuevoTalento,
 ): Promise<EmpleadoResumen> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/talentos`, {
     method: "POST",
@@ -580,6 +619,41 @@ export async function actualizarCvTalento(
   }
   if (!res.ok) {
     throw new Error("No se pudo actualizar el CV del empleado");
+  }
+  return res.json();
+}
+
+export interface DatosCvEditable {
+  resumenParaRRHH?: string;
+  habilidades?: string[];
+  correo?: string;
+  telefono?: string;
+}
+
+/** Corrige a mano los datos ya extraídos, sin volver a leer el PDF. */
+export async function actualizarCvDatosTalento(
+  talentoId: string,
+  datos: DatosCvEditable,
+): Promise<{
+  id: string;
+  nombreCompleto: string;
+  cvUrl: string | null;
+  cvDatosExtraidos: CvDatosExtraidos | null;
+}> {
+  const res = await fetch(`${API_URL}/talentos/${encodeURIComponent(talentoId)}/cv-datos`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError("Empleado no encontrado o sin datos de CV");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo actualizar los datos del CV");
   }
   return res.json();
 }

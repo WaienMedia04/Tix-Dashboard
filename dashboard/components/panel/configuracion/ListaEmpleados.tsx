@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Users } from "lucide-react";
-import { type EmpleadoResumen, crearTalento, fetchEmpleados } from "@/lib/api";
+import { type DatosNuevoTalento, type EmpleadoResumen, crearTalento, fetchEmpleados } from "@/lib/api";
+import { Avatar } from "@/components/Avatar";
 import { StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 import { SkeletonTableRows } from "@/components/motion/Skeleton";
 
@@ -11,11 +12,35 @@ const CAMPO_CLASES =
 
 type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; empleados: EmpleadoResumen[] };
 
+function formularioVacio(): DatosNuevoTalento {
+  return {
+    nombreCompleto: "",
+    rol: "",
+    apellido: "",
+    departamento: "",
+    cedula: "",
+    correo: "",
+    telefono: "",
+    fechaIngreso: "",
+  };
+}
+
+/** Quita las cadenas vacías antes de mandar al backend — un campo vacío no es lo mismo que "bórralo". */
+function limpiarOpcionales(datos: DatosNuevoTalento): DatosNuevoTalento {
+  const limpio: DatosNuevoTalento = { nombreCompleto: datos.nombreCompleto.trim(), rol: datos.rol.trim() };
+  if (datos.apellido?.trim()) limpio.apellido = datos.apellido.trim();
+  if (datos.departamento?.trim()) limpio.departamento = datos.departamento.trim();
+  if (datos.cedula?.trim()) limpio.cedula = datos.cedula.trim();
+  if (datos.correo?.trim()) limpio.correo = datos.correo.trim();
+  if (datos.telefono?.trim()) limpio.telefono = datos.telefono.trim();
+  if (datos.fechaIngreso?.trim()) limpio.fechaIngreso = datos.fechaIngreso.trim();
+  return limpio;
+}
+
 export function ListaEmpleados({ slug }: { slug: string }) {
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [mostrarForm, setMostrarForm] = useState(false);
-  const [nombreCompleto, setNombreCompleto] = useState("");
-  const [rol, setRol] = useState("");
+  const [form, setForm] = useState<DatosNuevoTalento>(formularioVacio);
   const [enviando, setEnviando] = useState(false);
   const [errorForm, setErrorForm] = useState<string | null>(null);
 
@@ -33,18 +58,21 @@ export function ListaEmpleados({ slug }: { slug: string }) {
     };
   }, [slug]);
 
+  function campo<K extends keyof DatosNuevoTalento>(clave: K, valor: DatosNuevoTalento[K]) {
+    setForm((prev) => ({ ...prev, [clave]: valor }));
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!nombreCompleto.trim() || !rol.trim()) return;
+    if (!form.nombreCompleto.trim() || !form.rol.trim()) return;
     setEnviando(true);
     setErrorForm(null);
-    crearTalento(slug, { nombreCompleto: nombreCompleto.trim(), rol: rol.trim() })
+    crearTalento(slug, limpiarOpcionales(form))
       .then((nuevo) => {
         setEstado((prev) =>
           prev.tipo === "listo" ? { tipo: "listo", empleados: [...prev.empleados, nuevo] } : prev,
         );
-        setNombreCompleto("");
-        setRol("");
+        setForm(formularioVacio());
         setMostrarForm(false);
       })
       .catch(() => setErrorForm("No se pudo agregar el empleado."))
@@ -72,37 +100,102 @@ export function ListaEmpleados({ slug }: { slug: string }) {
       </div>
 
       {mostrarForm && (
-        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3 border-b border-border bg-muted/30 px-4 py-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-              Nombre completo
-            </label>
-            <input
-              value={nombreCompleto}
-              onChange={(e) => setNombreCompleto(e.target.value)}
-              className={CAMPO_CLASES}
-              placeholder="Nombre y apellido"
-              required
-            />
+        <form onSubmit={handleSubmit} className="space-y-3 border-b border-border bg-muted/30 px-4 py-3">
+          <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Nombre completo
+              </label>
+              <input
+                value={form.nombreCompleto}
+                onChange={(e) => campo("nombreCompleto", e.target.value)}
+                className={CAMPO_CLASES}
+                placeholder="Nombre y apellido"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Apellido</label>
+              <input
+                value={form.apellido}
+                onChange={(e) => campo("apellido", e.target.value)}
+                className={CAMPO_CLASES}
+                placeholder="Opcional"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Rol</label>
+              <input
+                value={form.rol}
+                onChange={(e) => campo("rol", e.target.value)}
+                className={CAMPO_CLASES}
+                placeholder="Cargo o rol"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Departamento
+              </label>
+              <input
+                value={form.departamento}
+                onChange={(e) => campo("departamento", e.target.value)}
+                className={CAMPO_CLASES}
+                placeholder="Opcional"
+              />
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Rol</label>
-            <input
-              value={rol}
-              onChange={(e) => setRol(e.target.value)}
-              className={CAMPO_CLASES}
-              placeholder="Cargo o rol"
-              required
-            />
+          <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Cédula</label>
+              <input
+                value={form.cedula}
+                onChange={(e) => campo("cedula", e.target.value)}
+                className={CAMPO_CLASES}
+                placeholder="Opcional"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Correo</label>
+              <input
+                type="email"
+                value={form.correo}
+                onChange={(e) => campo("correo", e.target.value)}
+                className={CAMPO_CLASES}
+                placeholder="Opcional"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Teléfono</label>
+              <input
+                value={form.telefono}
+                onChange={(e) => campo("telefono", e.target.value)}
+                className={CAMPO_CLASES}
+                placeholder="Opcional"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Fecha de ingreso
+              </label>
+              <input
+                type="date"
+                value={form.fechaIngreso}
+                onChange={(e) => campo("fechaIngreso", e.target.value)}
+                className={CAMPO_CLASES}
+              />
+            </div>
           </div>
-          <button
-            type="submit"
-            disabled={enviando}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {enviando ? "Guardando..." : "Guardar"}
-          </button>
-          {errorForm && <p className="text-xs text-destructive">{errorForm}</p>}
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={enviando}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {enviando ? "Guardando..." : "Guardar"}
+            </button>
+            {errorForm && <p className="text-xs text-destructive">{errorForm}</p>}
+          </div>
         </form>
       )}
 
@@ -112,14 +205,15 @@ export function ListaEmpleados({ slug }: { slug: string }) {
             <tr className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               <th className="px-4 py-2">Nombre</th>
               <th className="px-4 py-2">Rol</th>
+              <th className="px-4 py-2">Departamento</th>
               <th className="px-4 py-2">Estado</th>
             </tr>
           </thead>
           <tbody>
-            {estado.tipo === "cargando" && <SkeletonTableRows rows={4} cols={3} />}
+            {estado.tipo === "cargando" && <SkeletonTableRows rows={4} cols={4} />}
             {estado.tipo === "error" && (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-sm text-destructive">
+                <td colSpan={4} className="px-4 py-8 text-center text-sm text-destructive">
                   No se pudo cargar el listado de empleados.
                 </td>
               </tr>
@@ -129,9 +223,17 @@ export function ListaEmpleados({ slug }: { slug: string }) {
             <StaggerTableBody>
               {estado.empleados.map((e) => (
                 <StaggerRow key={e.id} className="border-t border-border transition-colors hover:bg-muted/50">
-                  <td className="px-4 py-2.5 font-medium text-foreground">{e.nombreCompleto}</td>
-                  <td className="max-w-[260px] truncate px-4 py-2.5 text-muted-foreground" title={e.rol}>
+                  <td className="px-4 py-2.5 font-medium text-foreground">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar nombreCompleto={e.nombreCompleto} fotoUrl={e.fotoUrl} size="sm" />
+                      {e.nombreCompleto}
+                    </div>
+                  </td>
+                  <td className="max-w-[220px] truncate px-4 py-2.5 text-muted-foreground" title={e.rol}>
                     {e.rol}
+                  </td>
+                  <td className="max-w-[180px] truncate px-4 py-2.5 text-muted-foreground">
+                    {e.departamento ?? "—"}
                   </td>
                   <td className="px-4 py-2.5">
                     <span

@@ -12,6 +12,7 @@ import { TalentosService } from './talentos.service';
 import { ActualizarTalentoDto } from './dto/actualizar-talento.dto';
 import { ActualizarFotoDto } from './dto/actualizar-foto.dto';
 import { ActualizarCvDto } from './dto/actualizar-cv.dto';
+import { ActualizarCvDatosDto } from './dto/actualizar-cv-datos.dto';
 import { RegistrarWorklogPropioDto } from './dto/registrar-worklog-propio.dto';
 import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 import { SessionGuard } from '../auth/guards/session.guard';
@@ -57,9 +58,7 @@ export class TalentosController {
 
   /**
    * Persiste la URL del CV (ya subido a Vercel Blob por el frontend) y
-   * dispara la extracción de datos con IA. La UI que consume esto
-   * (revisión de campos extraídos) llega en la fase de Configuración —
-   * este endpoint es el pipeline de datos, no tiene UI todavía.
+   * dispara la extracción de datos con IA.
    */
   @Patch(':talentoId/cv')
   @UseGuards(CompanyAccessGuard, RolesGuard)
@@ -70,5 +69,17 @@ export class TalentosController {
     @Req() req: RequestConActor,
   ) {
     return this.talentosService.actualizarCv(talentoId, req.actor!, dto);
+  }
+
+  /** Corrección manual de los datos ya extraídos, sin releer el PDF. */
+  @Patch(':talentoId/cv-datos')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  actualizarCvDatos(
+    @Param('talentoId') talentoId: string,
+    @Body() dto: ActualizarCvDatosDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.talentosService.actualizarCvDatos(talentoId, req.actor!, dto);
   }
 }

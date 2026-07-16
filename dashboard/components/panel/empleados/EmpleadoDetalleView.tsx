@@ -3,11 +3,23 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Sparkles, ClipboardList, CheckCircle2, IdCard, Mail, Phone, Calendar, Building2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Sparkles,
+  ClipboardList,
+  CheckCircle2,
+  IdCard,
+  Mail,
+  Phone,
+  Calendar,
+  Building2,
+  Pencil,
+} from "lucide-react";
 import {
   type BitacoraItem,
   type EmpleadoDetalle,
   actualizarEstadoTalento,
+  actualizarTalento,
   fetchEmpleadoDetalle,
 } from "@/lib/api";
 import { usePanel } from "../PanelContext";
@@ -17,6 +29,7 @@ import { BitacoraDrawer } from "../bitacoras/BitacoraDrawer";
 import { PuntajeIAChart } from "./PuntajeIAChart";
 import { CumplimientoTareasChart } from "./CumplimientoTareasChart";
 import { FotoTalento } from "./FotoTalento";
+import { CvTalento } from "./CvTalento";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { Skeleton, SkeletonChart, SkeletonStatCards } from "@/components/motion/Skeleton";
 
@@ -43,7 +56,120 @@ function formatearFecha(fecha: string): string {
   return new Date(fecha).toLocaleDateString("es-DO", { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" });
 }
 
-function InfoRRHH({ talento }: { talento: EmpleadoDetalle["talento"] }) {
+const CAMPO_CLASES =
+  "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring";
+
+function CampoEditable({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (valor: string) => void;
+  type?: string;
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[11px] text-muted-foreground">{label}</span>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className={CAMPO_CLASES} />
+    </label>
+  );
+}
+
+interface FormRRHH {
+  departamento: string;
+  cedula: string;
+  correo: string;
+  telefono: string;
+  fechaIngreso: string;
+}
+
+function formularioDesde(talento: EmpleadoDetalle["talento"]): FormRRHH {
+  return {
+    departamento: talento.departamento ?? "",
+    cedula: talento.cedula ?? "",
+    correo: talento.correo ?? "",
+    telefono: talento.telefono ?? "",
+    fechaIngreso: talento.fechaIngreso ? talento.fechaIngreso.slice(0, 10) : "",
+  };
+}
+
+function InfoRRHH({
+  talento,
+  editable,
+  onActualizada,
+}: {
+  talento: EmpleadoDetalle["talento"];
+  editable: boolean;
+  onActualizada: (campos: Partial<EmpleadoDetalle["talento"]>) => void;
+}) {
+  const [editando, setEditando] = useState(false);
+  const [form, setForm] = useState<FormRRHH>(() => formularioDesde(talento));
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function iniciarEdicion() {
+    setForm(formularioDesde(talento));
+    setError(null);
+    setEditando(true);
+  }
+
+  function campo<K extends keyof FormRRHH>(clave: K, valor: FormRRHH[K]) {
+    setForm((prev) => ({ ...prev, [clave]: valor }));
+  }
+
+  function guardar() {
+    setGuardando(true);
+    setError(null);
+    actualizarTalento(talento.id, { ...form })
+      .then((actualizado) => {
+        onActualizada(actualizado);
+        setEditando(false);
+      })
+      .catch(() => setError("No se pudo guardar. Intenta de nuevo."))
+      .finally(() => setGuardando(false));
+  }
+
+  if (editando) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Información de RRHH</p>
+          <div className="flex items-center gap-3">
+            {error && <p className="text-xs text-destructive">{error}</p>}
+            <button
+              onClick={() => setEditando(false)}
+              className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={guardar}
+              disabled={guardando}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity disabled:opacity-50"
+            >
+              {guardando ? "Guardando..." : "Guardar"}
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <CampoEditable label="Departamento" value={form.departamento} onChange={(v) => campo("departamento", v)} />
+          <CampoEditable label="Cédula" value={form.cedula} onChange={(v) => campo("cedula", v)} />
+          <CampoEditable label="Correo" type="email" value={form.correo} onChange={(v) => campo("correo", v)} />
+          <CampoEditable label="Teléfono" value={form.telefono} onChange={(v) => campo("telefono", v)} />
+          <CampoEditable
+            label="Fecha de ingreso"
+            type="date"
+            value={form.fechaIngreso}
+            onChange={(v) => campo("fechaIngreso", v)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   const filas = [
     { icon: Building2, label: "Departamento", valor: talento.departamento },
     { icon: IdCard, label: "Cédula", valor: talento.cedula },
@@ -59,7 +185,18 @@ function InfoRRHH({ talento }: { talento: EmpleadoDetalle["talento"] }) {
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 shadow-card">
-      <p className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Información de RRHH</p>
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Información de RRHH</p>
+        {editable && (
+          <button
+            onClick={iniciarEdicion}
+            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+          >
+            <Pencil className="h-3 w-3" />
+            Editar
+          </button>
+        )}
+      </div>
       <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {filas.map((fila) => (
           <div key={fila.label} className="flex items-start gap-2.5">
@@ -149,6 +286,14 @@ function EmpleadoDetalleResultado({
     setEstado({ tipo: "listo", detalle: { ...detalle, talento: { ...detalle.talento, fotoUrl } } });
   }
 
+  function handleInfoActualizada(campos: Partial<EmpleadoDetalle["talento"]>) {
+    setEstado({ tipo: "listo", detalle: { ...detalle, talento: { ...detalle.talento, ...campos } } });
+  }
+
+  function handleCvActualizado(campos: { cvUrl: string | null; cvDatosExtraidos: EmpleadoDetalle["talento"]["cvDatosExtraidos"] }) {
+    setEstado({ tipo: "listo", detalle: { ...detalle, talento: { ...detalle.talento, ...campos } } });
+  }
+
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-border bg-card p-5 shadow-card">
@@ -187,7 +332,15 @@ function EmpleadoDetalleResultado({
         </div>
       </div>
 
-      <InfoRRHH talento={detalle.talento} />
+      <InfoRRHH talento={detalle.talento} editable={puedeEditar} onActualizada={handleInfoActualizada} />
+
+      <CvTalento
+        talentoId={detalle.talento.id}
+        cvUrl={detalle.talento.cvUrl}
+        cvDatosExtraidos={detalle.talento.cvDatosExtraidos}
+        editable={puedeEditar}
+        onActualizado={handleCvActualizado}
+      />
 
       <StaggerGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StaggerItem>

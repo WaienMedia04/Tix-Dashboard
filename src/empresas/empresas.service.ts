@@ -447,6 +447,8 @@ export class EmpresasService {
         correo: talento.correo,
         telefono: talento.telefono,
         fechaIngreso: talento.fechaIngreso,
+        cvUrl: talento.cvUrl,
+        cvDatosExtraidos: talento.cvDatosExtraidos,
       },
       metricas: {
         puntajeIAPromedio,
@@ -954,14 +956,23 @@ export class EmpresasService {
         nombreCompleto: dto.nombreCompleto.trim(),
         rol: dto.rol.trim(),
         estado: 'activo',
+        apellido: dto.apellido?.trim() || null,
+        departamento: dto.departamento?.trim() || null,
+        cedula: dto.cedula?.trim() || null,
+        correo: dto.correo?.trim() || null,
+        telefono: dto.telefono?.trim() || null,
+        fechaIngreso: dto.fechaIngreso ? new Date(dto.fechaIngreso) : null,
       },
     });
 
     return {
       id: talento.id,
       nombreCompleto: talento.nombreCompleto,
+      apellido: talento.apellido,
       rol: talento.rol,
+      departamento: talento.departamento,
       estado: talento.estado,
+      fotoUrl: talento.fotoUrl,
       puntajeIAPromedio: null,
       totalBitacoras: 0,
       porcentajeCumplimiento: null,

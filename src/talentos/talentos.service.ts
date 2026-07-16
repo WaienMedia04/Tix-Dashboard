@@ -10,12 +10,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ActualizarTalentoDto } from './dto/actualizar-talento.dto';
 import { ActualizarFotoDto } from './dto/actualizar-foto.dto';
 import { ActualizarCvDto } from './dto/actualizar-cv.dto';
+import { ActualizarCvDatosDto } from './dto/actualizar-cv-datos.dto';
 import {
   RegistrarWorklogPropioDto,
   TipoRegistroWorklog,
 } from './dto/registrar-worklog-propio.dto';
 import { Actor } from '../auth/actor.types';
-import { CvExtractionService } from './cv-extraction.service';
+import { CvExtractionService, type CvExtraido } from './cv-extraction.service';
 import { WorklogsService } from '../worklogs/worklogs.service';
 
 @Injectable()
@@ -40,6 +41,7 @@ export class TalentosService {
     return talento;
   }
 
+  /** Actualiza cualquier subconjunto de los campos editables del talento. */
   async actualizarEstado(
     talentoId: string,
     actor: Actor,
@@ -49,8 +51,37 @@ export class TalentosService {
 
     return this.prisma.talento.update({
       where: { id: talentoId },
-      data: { estado: dto.estado },
-      select: { id: true, nombreCompleto: true, rol: true, estado: true },
+      data: {
+        ...(dto.estado !== undefined && { estado: dto.estado }),
+        ...(dto.rol !== undefined && { rol: dto.rol.trim() }),
+        ...(dto.apellido !== undefined && {
+          apellido: dto.apellido.trim() || null,
+        }),
+        ...(dto.departamento !== undefined && {
+          departamento: dto.departamento.trim() || null,
+        }),
+        ...(dto.cedula !== undefined && { cedula: dto.cedula.trim() || null }),
+        ...(dto.correo !== undefined && { correo: dto.correo.trim() || null }),
+        ...(dto.telefono !== undefined && {
+          telefono: dto.telefono.trim() || null,
+        }),
+        ...(dto.fechaIngreso !== undefined && {
+          fechaIngreso: dto.fechaIngreso ? new Date(dto.fechaIngreso) : null,
+        }),
+      },
+      select: {
+        id: true,
+        nombreCompleto: true,
+        apellido: true,
+        rol: true,
+        departamento: true,
+        estado: true,
+        cedula: true,
+        correo: true,
+        telefono: true,
+        fechaIngreso: true,
+        fotoUrl: true,
+      },
     });
   }
 
@@ -88,6 +119,46 @@ export class TalentosService {
     return this.prisma.talento.update({
       where: { id: talentoId },
       data: { cvUrl: dto.cvUrl, cvDatosExtraidos: extraido ?? Prisma.JsonNull },
+      select: {
+        id: true,
+        nombreCompleto: true,
+        cvUrl: true,
+        cvDatosExtraidos: true,
+      },
+    });
+  }
+
+  /**
+   * Corrección manual de los datos ya extraídos — no vuelve a leer el PDF
+   * ni a llamar a la IA, solo aplica los campos que RRHH decidió corregir
+   * sobre el cvDatosExtraidos existente.
+   */
+  async actualizarCvDatos(
+    talentoId: string,
+    actor: Actor,
+    dto: ActualizarCvDatosDto,
+  ) {
+    const talento = await this.resolverTalento(talentoId, actor);
+    const actual = talento.cvDatosExtraidos as CvExtraido | null;
+    if (!actual) {
+      throw new NotFoundException(
+        'Este talento todavía no tiene datos de CV extraídos',
+      );
+    }
+
+    const actualizado: CvExtraido = {
+      ...actual,
+      resumenParaRRHH: dto.resumenParaRRHH ?? actual.resumenParaRRHH,
+      habilidades: dto.habilidades ?? actual.habilidades,
+      contacto: {
+        correo: dto.correo ?? actual.contacto.correo,
+        telefono: dto.telefono ?? actual.contacto.telefono,
+      },
+    };
+
+    return this.prisma.talento.update({
+      where: { id: talentoId },
+      data: { cvDatosExtraidos: actualizado },
       select: {
         id: true,
         nombreCompleto: true,
