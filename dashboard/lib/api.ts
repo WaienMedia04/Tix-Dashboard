@@ -204,6 +204,7 @@ export type Tendencia = "subio" | "bajo" | "igual" | null;
 export interface KpiEmpleado {
   talentoId: string;
   nombre: string;
+  fotoUrl: string | null;
   puntajeProm: number | null;
   cumplimiento: number | null;
   cumplimientoTareasProm: number | null;
@@ -211,8 +212,18 @@ export interface KpiEmpleado {
   tendencia: Tendencia;
 }
 
+export interface KpisResumen {
+  puntajeProm: number | null;
+  puntajePromAnterior: number | null;
+  variacion: number | null;
+  porcentajeCumplimientoPromedio: number | null;
+  empleadosEnRiesgo: number;
+  empleadoDestacado: { nombre: string; puntajeProm: number } | null;
+}
+
 export interface KpisResponse {
   periodo: string;
+  resumen: KpisResumen;
   evolucionSemanal: EvolucionSemanal[];
   bitacorasSemanal: BitacorasSemanal[];
   distribucionEstado: DistribucionEstado[];

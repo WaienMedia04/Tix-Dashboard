@@ -2,13 +2,14 @@
 
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { EvolucionSemanal } from "@/lib/api";
-import { COLOR_CHART_1, COLOR_GRID, COLOR_TICK } from "./colorTokens";
+import { COLOR_CHART_1, COLOR_GRID, COLOR_SUPERFICIE_DARK, COLOR_SUPERFICIE_LIGHT, COLOR_TICK, useColorPorTema } from "./colorTokens";
 
 function formatearSemana(fecha: string): string {
   return new Date(fecha).toLocaleDateString("es-DO", { day: "2-digit", month: "short", timeZone: "UTC" });
 }
 
 export function EvolucionPuntajeChart({ datos }: { datos: EvolucionSemanal[] }) {
+  const colorSuperficie = useColorPorTema(COLOR_SUPERFICIE_LIGHT, COLOR_SUPERFICIE_DARK);
   const hayDatos = datos.some((d) => d.puntajeProm !== null);
 
   return (
@@ -60,7 +61,8 @@ export function EvolucionPuntajeChart({ datos }: { datos: EvolucionSemanal[] }) 
                 connectNulls
                 isAnimationActive
                 animationDuration={600}
-                dot={{ r: 3 }}
+                dot={{ r: 4, fill: COLOR_CHART_1, stroke: colorSuperficie, strokeWidth: 2 }}
+                activeDot={{ r: 5, fill: COLOR_CHART_1, stroke: colorSuperficie, strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>

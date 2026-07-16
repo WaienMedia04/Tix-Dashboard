@@ -709,6 +709,7 @@ export class EmpresasService {
         return {
           talentoId: t.id,
           nombre: t.nombreCompleto,
+          fotoUrl: t.fotoUrl,
           puntajeProm,
           cumplimiento,
           cumplimientoTareasProm,
@@ -718,8 +719,53 @@ export class EmpresasService {
       })
       .sort((a, b) => (b.puntajeProm ?? -1) - (a.puntajeProm ?? -1));
 
+    function promedioDeMapa(mapa: Map<string, number | null>): number | null {
+      const valores = Array.from(mapa.values()).filter(
+        (v): v is number => v !== null,
+      );
+      if (valores.length === 0) return null;
+      return (
+        Math.round(
+          (valores.reduce((sum, v) => sum + v, 0) / valores.length) * 10,
+        ) / 10
+      );
+    }
+
+    const puntajeProm = promedioDeMapa(promedioActual);
+    const puntajePromAnterior = promedioDeMapa(promedioAnterior);
+    const variacion =
+      puntajeProm !== null && puntajePromAnterior !== null
+        ? Math.round((puntajeProm - puntajePromAnterior) * 10) / 10
+        : null;
+
+    const enviadasPeriodo = worklogsPeriodo.filter((w) =>
+      w.estadoEnvio.includes('✅'),
+    ).length;
+    const porcentajeCumplimientoPromedio =
+      worklogsPeriodo.length === 0
+        ? null
+        : Math.round((enviadasPeriodo / worklogsPeriodo.length) * 1000) / 10;
+
+    const empleadoDestacado =
+      kpisPorEmpleado.length > 0 && kpisPorEmpleado[0].puntajeProm !== null
+        ? {
+            nombre: kpisPorEmpleado[0].nombre,
+            puntajeProm: kpisPorEmpleado[0].puntajeProm,
+          }
+        : null;
+
+    const resumen = {
+      puntajeProm,
+      puntajePromAnterior,
+      variacion,
+      porcentajeCumplimientoPromedio,
+      empleadosEnRiesgo: distribucionProductividad.baja,
+      empleadoDestacado,
+    };
+
     return {
       periodo,
+      resumen,
       evolucionSemanal,
       bitacorasSemanal,
       distribucionEstado,

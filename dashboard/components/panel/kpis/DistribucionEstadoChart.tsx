@@ -18,7 +18,7 @@ export function DistribucionEstadoChart({ datos }: { datos: DistribucionEstado[]
         </div>
       ) : (
         <div className="flex items-center gap-4">
-          <div className="h-44 w-44 shrink-0">
+          <div className="relative h-44 w-44 shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -45,6 +45,10 @@ export function DistribucionEstadoChart({ datos }: { datos: DistribucionEstado[]
                 />
               </PieChart>
             </ResponsiveContainer>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <p className="font-display text-2xl font-bold text-foreground tabular-nums">{total}</p>
+              <p className="text-[10px] text-muted-foreground uppercase">Total</p>
+            </div>
           </div>
           <ul className="flex-1 space-y-2">
             {datos.map((d) => (

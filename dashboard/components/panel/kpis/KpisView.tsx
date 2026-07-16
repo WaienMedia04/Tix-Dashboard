@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AlertTriangle, Award, CheckCircle2, Sparkles } from "lucide-react";
 import { type KpisResponse, fetchKpis } from "@/lib/api";
 import { usePanel } from "../PanelContext";
+import { MetricCard } from "@/components/MetricCard";
 import { EvolucionPuntajeChart } from "./EvolucionPuntajeChart";
 import { BitacorasSemanalChart } from "./BitacorasSemanalChart";
 import { DistribucionEstadoChart } from "./DistribucionEstadoChart";
 import { DistribucionProductividadChart } from "./DistribucionProductividadChart";
 import { TablaKpisEmpleado } from "./TablaKpisEmpleado";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
-import { SkeletonChart } from "@/components/motion/Skeleton";
+import { SkeletonChart, SkeletonStatCards } from "@/components/motion/Skeleton";
 
 function periodoActual(): string {
   const hoy = new Date();
@@ -38,6 +40,7 @@ function KpisResultado({ slug, periodo }: { slug: string; periodo: string }) {
   if (estado.tipo === "cargando") {
     return (
       <div className="space-y-4">
+        <SkeletonStatCards count={4} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <SkeletonChart />
           <SkeletonChart />
@@ -52,9 +55,52 @@ function KpisResultado({ slug, periodo }: { slug: string; periodo: string }) {
   }
 
   const { datos } = estado;
+  const { resumen } = datos;
 
   return (
     <div className="space-y-4">
+      <StaggerGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StaggerItem>
+          <MetricCard
+            label="Puntaje IA promedio"
+            value={resumen.puntajeProm === null ? "—" : resumen.puntajeProm.toFixed(1)}
+            icon={Sparkles}
+            variant="primary"
+            delta={
+              resumen.variacion === null || resumen.variacion === 0
+                ? undefined
+                : {
+                    valor: `${resumen.variacion > 0 ? "+" : ""}${resumen.variacion.toFixed(1)} vs mes anterior`,
+                    direccion: resumen.variacion > 0 ? "subida" : "bajada",
+                  }
+            }
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <MetricCard
+            label="% de cumplimiento"
+            value={resumen.porcentajeCumplimientoPromedio === null ? "—" : `${resumen.porcentajeCumplimientoPromedio}%`}
+            icon={CheckCircle2}
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <MetricCard
+            label="Empleado destacado"
+            value={resumen.empleadoDestacado?.nombre ?? "—"}
+            hint={resumen.empleadoDestacado ? `${resumen.empleadoDestacado.puntajeProm.toFixed(1)} / 10` : undefined}
+            icon={Award}
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <MetricCard
+            label="Empleados en riesgo"
+            value={String(resumen.empleadosEnRiesgo)}
+            hint="Puntaje IA promedio < 5"
+            icon={AlertTriangle}
+          />
+        </StaggerItem>
+      </StaggerGroup>
+
       <StaggerGroup className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <StaggerItem>
           <EvolucionPuntajeChart datos={datos.evolucionSemanal} />

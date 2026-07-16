@@ -1,5 +1,6 @@
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import type { KpiEmpleado, Tendencia } from "@/lib/api";
+import { Avatar } from "@/components/Avatar";
 import { StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 
 function colorPuntaje(puntaje: number | null): string {
@@ -44,7 +45,12 @@ export function TablaKpisEmpleado({ datos }: { datos: KpiEmpleado[] }) {
             <StaggerTableBody>
               {datos.map((d) => (
                 <StaggerRow key={d.talentoId} className="border-t border-border transition-colors hover:bg-muted/50">
-                  <td className="px-4 py-2.5 font-medium text-foreground">{d.nombre}</td>
+                  <td className="px-4 py-2.5 font-medium text-foreground">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar nombreCompleto={d.nombre} fotoUrl={d.fotoUrl} size="sm" />
+                      {d.nombre}
+                    </div>
+                  </td>
                   <td className={`px-4 py-2.5 font-semibold tabular-nums ${colorPuntaje(d.puntajeProm)}`}>
                     {d.puntajeProm === null ? "—" : d.puntajeProm.toFixed(1)}
                   </td>
