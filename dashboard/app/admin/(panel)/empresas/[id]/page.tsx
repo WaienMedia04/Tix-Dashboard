@@ -315,7 +315,7 @@ export default function AdminEmpresaDetallePage() {
   const [crearAcceso, setCrearAcceso] = useState(false);
   const [nuevoAcceso, setNuevoAcceso] = useState({ email: "", nombreLogin: "", rolLogin: "TALENTO" as RolAdmin });
   const [resultadoAcceso, setResultadoAcceso] = useState<
-    { tipo: "ok"; correo: string } | { tipo: "error"; mensaje: string } | null
+    { tipo: "ok"; correo: string; sinTalento: boolean } | { tipo: "error"; mensaje: string } | null
   >(null);
 
   const [toggling, setToggling] = useState<string | null>(null);
@@ -368,6 +368,8 @@ export default function AdminEmpresaDetallePage() {
     }
   }
 
+  const esAccesoSinTalento = crearAcceso && (nuevoAcceso.rolLogin === "CEO" || nuevoAcceso.rolLogin === "RRHH");
+
   async function handleCrearEmpleado(e: React.FormEvent) {
     e.preventDefault();
     const token = leerTokenAdmin();
@@ -376,6 +378,21 @@ export default function AdminEmpresaDetallePage() {
     setResultadoAcceso(null);
     setGuardandoEmpleado(true);
     try {
+      // CEO/RRHH monitorean la plataforma, no son talento en seguimiento —
+      // se les invita directo, sin crear un Talento para ellos.
+      if (esAccesoSinTalento) {
+        await crearUsuarioAdmin(token, id, {
+          email: nuevoAcceso.email,
+          nombre: nuevoAcceso.nombreLogin || nuevoEmpleado.nombreCompleto,
+          rol: nuevoAcceso.rolLogin,
+        });
+        setResultadoAcceso({ tipo: "ok", correo: nuevoAcceso.email, sinTalento: true });
+        setNuevoEmpleado({ nombreCompleto: "", rol: "" });
+        setNuevoAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO" });
+        setCrearAcceso(false);
+        return;
+      }
+
       const nuevo = await crearEmpleadoAdmin(token, id, nuevoEmpleado);
       setEmpleados((prev) => [...prev, { ...nuevo, _count: { worklogs: 0 } }]);
       setNuevoEmpleado({ nombreCompleto: "", rol: "" });
@@ -388,7 +405,7 @@ export default function AdminEmpresaDetallePage() {
             rol: nuevoAcceso.rolLogin,
             talentoId: nuevo.id,
           });
-          setResultadoAcceso({ tipo: "ok", correo: nuevoAcceso.email });
+          setResultadoAcceso({ tipo: "ok", correo: nuevoAcceso.email, sinTalento: false });
           setNuevoAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO" });
           setCrearAcceso(false);
         } catch (err) {
@@ -571,15 +588,17 @@ export default function AdminEmpresaDetallePage() {
                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Rol *</label>
-                  <input
-                    required
-                    value={nuevoEmpleado.rol}
-                    onChange={(e) => setNuevoEmpleado((f) => ({ ...f, rol: e.target.value }))}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
-                  />
-                </div>
+                {!esAccesoSinTalento && (
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Rol *</label>
+                    <input
+                      required={!esAccesoSinTalento}
+                      value={nuevoEmpleado.rol}
+                      onChange={(e) => setNuevoEmpleado((f) => ({ ...f, rol: e.target.value }))}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                  </div>
+                )}
               </div>
 
               <label className="flex items-center gap-2 text-xs font-medium text-foreground">
@@ -627,6 +646,11 @@ export default function AdminEmpresaDetallePage() {
                       ))}
                     </select>
                   </div>
+                  {esAccesoSinTalento && (
+                    <p className="col-span-2 text-xs text-muted-foreground">
+                      CEO/RRHH monitorean la plataforma — no se crea un talento en seguimiento para esta persona.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -636,7 +660,10 @@ export default function AdminEmpresaDetallePage() {
 
               {resultadoAcceso?.tipo === "ok" && (
                 <div className="rounded-md border border-success/30 bg-success/5 p-3">
-                  <p className="text-sm text-success">Empleado creado. Invitación enviada a {resultadoAcceso.correo}.</p>
+                  <p className="text-sm text-success">
+                    {resultadoAcceso.sinTalento ? "Invitación enviada" : "Empleado creado. Invitación enviada"} a{" "}
+                    {resultadoAcceso.correo}.
+                  </p>
                   <p className="mt-1.5 text-xs text-muted-foreground">
                     Recibirá un correo para crear su propia contraseña y activar su cuenta.
                   </p>

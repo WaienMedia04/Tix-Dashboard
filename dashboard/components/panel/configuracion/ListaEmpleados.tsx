@@ -2,13 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Users } from "lucide-react";
-import { type DatosNuevoTalento, type EmpleadoResumen, crearTalento, fetchEmpleados } from "@/lib/api";
+import {
+  type DatosNuevoTalento,
+  type EmpleadoResumen,
+  type RolInvitable,
+  crearTalento,
+  crearUsuarioTalento,
+  fetchEmpleados,
+} from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
 import { StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 import { SkeletonTableRows } from "@/components/motion/Skeleton";
 
 const CAMPO_CLASES =
   "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring";
+
+const ROLES_INVITABLES: { value: RolInvitable; label: string }[] = [
+  { value: "TALENTO", label: "Empleado" },
+  { value: "MANAGER", label: "Gerente" },
+];
 
 type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; empleados: EmpleadoResumen[] };
 
@@ -44,6 +56,12 @@ export function ListaEmpleados({ slug }: { slug: string }) {
   const [enviando, setEnviando] = useState(false);
   const [errorForm, setErrorForm] = useState<string | null>(null);
 
+  const [crearAcceso, setCrearAcceso] = useState(false);
+  const [nuevoAcceso, setNuevoAcceso] = useState({ email: "", nombreLogin: "", rolLogin: "TALENTO" as RolInvitable });
+  const [resultadoAcceso, setResultadoAcceso] = useState<
+    { tipo: "ok"; correo: string } | { tipo: "error"; mensaje: string } | null
+  >(null);
+
   useEffect(() => {
     let cancelado = false;
     fetchEmpleados(slug)
@@ -62,21 +80,44 @@ export function ListaEmpleados({ slug }: { slug: string }) {
     setForm((prev) => ({ ...prev, [clave]: valor }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.nombreCompleto.trim() || !form.rol.trim()) return;
     setEnviando(true);
     setErrorForm(null);
-    crearTalento(slug, limpiarOpcionales(form))
-      .then((nuevo) => {
-        setEstado((prev) =>
-          prev.tipo === "listo" ? { tipo: "listo", empleados: [...prev.empleados, nuevo] } : prev,
-        );
-        setForm(formularioVacio());
+    setResultadoAcceso(null);
+    try {
+      const nuevo = await crearTalento(slug, limpiarOpcionales(form));
+      setEstado((prev) =>
+        prev.tipo === "listo" ? { tipo: "listo", empleados: [...prev.empleados, nuevo] } : prev,
+      );
+      setForm(formularioVacio());
+
+      if (crearAcceso) {
+        try {
+          await crearUsuarioTalento(slug, {
+            email: nuevoAcceso.email,
+            nombre: nuevoAcceso.nombreLogin || nuevo.nombreCompleto,
+            rol: nuevoAcceso.rolLogin,
+            talentoId: nuevo.id,
+          });
+          setResultadoAcceso({ tipo: "ok", correo: nuevoAcceso.email });
+          setNuevoAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO" });
+          setCrearAcceso(false);
+        } catch (err) {
+          setResultadoAcceso({
+            tipo: "error",
+            mensaje: `Empleado creado. No se pudo crear el acceso: ${err instanceof Error ? err.message : "error desconocido"}`,
+          });
+        }
+      } else {
         setMostrarForm(false);
-      })
-      .catch(() => setErrorForm("No se pudo agregar el empleado."))
-      .finally(() => setEnviando(false));
+      }
+    } catch {
+      setErrorForm("No se pudo agregar el empleado.");
+    } finally {
+      setEnviando(false);
+    }
   }
 
   return (
@@ -186,6 +227,69 @@ export function ListaEmpleados({ slug }: { slug: string }) {
               />
             </div>
           </div>
+          <label className="flex items-center gap-2 text-xs font-medium text-foreground">
+            <input
+              type="checkbox"
+              checked={crearAcceso}
+              onChange={(e) => setCrearAcceso(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-border"
+            />
+            Crear también su acceso de login
+          </label>
+
+          {crearAcceso && (
+            <div className="flex flex-wrap items-end gap-3 rounded-md border border-border bg-background/50 p-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Correo *</label>
+                <input
+                  required={crearAcceso}
+                  type="email"
+                  value={nuevoAcceso.email}
+                  onChange={(e) => setNuevoAcceso((f) => ({ ...f, email: e.target.value }))}
+                  className={CAMPO_CLASES}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  Nombre de acceso
+                </label>
+                <input
+                  placeholder={form.nombreCompleto || "Igual al del empleado"}
+                  value={nuevoAcceso.nombreLogin}
+                  onChange={(e) => setNuevoAcceso((f) => ({ ...f, nombreLogin: e.target.value }))}
+                  className={CAMPO_CLASES}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  Rol de acceso
+                </label>
+                <select
+                  value={nuevoAcceso.rolLogin}
+                  onChange={(e) => setNuevoAcceso((f) => ({ ...f, rolLogin: e.target.value as RolInvitable }))}
+                  className={CAMPO_CLASES}
+                >
+                  {ROLES_INVITABLES.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {resultadoAcceso?.tipo === "error" && <p className="text-xs text-destructive">{resultadoAcceso.mensaje}</p>}
+
+          {resultadoAcceso?.tipo === "ok" && (
+            <div className="rounded-md border border-success/30 bg-success/5 p-3">
+              <p className="text-sm text-success">Empleado creado. Invitación enviada a {resultadoAcceso.correo}.</p>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Recibirá un correo para crear su propia contraseña y activar su cuenta.
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center gap-3">
             <button
               type="submit"
@@ -194,6 +298,19 @@ export function ListaEmpleados({ slug }: { slug: string }) {
             >
               {enviando ? "Guardando..." : "Guardar"}
             </button>
+            {resultadoAcceso && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMostrarForm(false);
+                  setResultadoAcceso(null);
+                  setCrearAcceso(false);
+                }}
+                className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+              >
+                Cerrar
+              </button>
+            )}
             {errorForm && <p className="text-xs text-destructive">{errorForm}</p>}
           </div>
         </form>

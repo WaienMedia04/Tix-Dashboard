@@ -7,9 +7,16 @@ import { Actor } from './actor.types';
  *  - CEO, RRHH y tráfico de servicio (ClawLink) → toda la empresa.
  *  - MANAGER → solo los talentos que le reportan.
  *  - TALENTO → solo a sí mismo.
+ *
+ * En todos los casos se excluyen los talentos vinculados a un Usuario
+ * CEO/RRHH — esos usuarios son quienes monitorean, nunca deben figurar
+ * ellos mismos como talento en seguimiento ni contar en las métricas.
  */
 export function talentoScopeWhere(actor: Actor): Prisma.TalentoWhereInput {
-  const base: Prisma.TalentoWhereInput = { empresaId: actor.empresaId };
+  const base: Prisma.TalentoWhereInput = {
+    empresaId: actor.empresaId,
+    OR: [{ usuario: null }, { usuario: { rol: { notIn: ['CEO', 'RRHH'] } } }],
+  };
   if (actor.type !== 'usuario') return base;
 
   if (actor.usuario.rol === 'MANAGER') {

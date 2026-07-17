@@ -747,6 +747,31 @@ export async function crearTalento(
   return res.json();
 }
 
+export type RolInvitable = "TALENTO" | "MANAGER";
+
+/** CEO/RRHH invitan a su propio talento a entrar a la plataforma, igual que hace un admin. */
+export async function crearUsuarioTalento(
+  slug: string,
+  datos: { email: string; nombre: string; rol: RolInvitable; talentoId?: string },
+): Promise<{ usuario: { id: string; email: string; nombre: string; rol: RolInvitable }; invitacionEnviada: true }> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/usuarios`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    const cuerpo = await res.json().catch(() => null);
+    throw new Error(cuerpo?.message ?? "No se pudo enviar la invitación");
+  }
+  return res.json();
+}
+
 export async function actualizarFotoTalento(
   talentoId: string,
   fotoUrl: string,

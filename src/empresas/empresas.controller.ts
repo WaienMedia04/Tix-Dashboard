@@ -16,6 +16,7 @@ import { EmpleadoDetalleQueryDto } from './dto/empleado-detalle-query.dto';
 import { KpisQueryDto } from './dto/kpis-query.dto';
 import { ReportesQueryDto } from './dto/reportes-query.dto';
 import { CrearTalentoDto } from './dto/crear-talento.dto';
+import { CrearUsuarioEmpresaDto } from './dto/crear-usuario-empresa.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -131,5 +132,17 @@ export class EmpresasController {
     @Req() req: RequestConActor,
   ) {
     return this.empresasService.crearTalento(slug, req.actor!, dto);
+  }
+
+  /** CEO/RRHH invitan a su propio talento a entrar a la plataforma. */
+  @Post(':slug/usuarios')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  crearUsuario(
+    @Param('slug') slug: string,
+    @Body() dto: CrearUsuarioEmpresaDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.crearUsuario(slug, req.actor!, dto);
   }
 }

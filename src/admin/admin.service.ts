@@ -1,12 +1,7 @@
-import {
-  ConflictException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
-import { obtenerClienteServiceRole } from '../auth/supabase-auth.util';
+import { invitarUsuario } from '../auth/invitar-usuario.util';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import { EditarEmpresaDto } from './dto/editar-empresa.dto';
 import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
@@ -305,56 +300,30 @@ export class AdminService {
    * correo vía Supabase Auth: la persona fija su propia contraseña desde
    * el link recibido, nunca la conocemos en texto plano. El Usuario en
    * Neon queda con passwordEstablecida: false hasta que complete ese paso.
+   *
+   * CEO/RRHH nunca llevan talentoId — no son empleados en seguimiento, y
+   * talentoScopeWhere() los excluye de las métricas justamente por eso.
    */
   async crearUsuario(empresaId: string, dto: CrearUsuarioAdminDto) {
     await this.validarEmpresaExiste(empresaId);
-
-    const email = dto.email.trim().toLowerCase();
-    const existente = await this.prisma.usuario.findUnique({
-      where: { email },
-    });
-    if (existente) {
-      throw new ConflictException('Ya existe un usuario con ese correo');
-    }
 
     if (dto.rol === 'TALENTO' && !dto.talentoId) {
       throw new ConflictException(
         'talentoId es obligatorio para crear un usuario con rol TALENTO',
       );
     }
-
-    const origenDashboard = (process.env.CORS_ORIGIN ?? '')
-      .split(',')[0]
-      ?.trim();
-    if (!origenDashboard) {
-      throw new InternalServerErrorException(
-        'CORS_ORIGIN no está configurado; no se puede armar el link de invitación',
-      );
-    }
-
-    const { data, error } = await obtenerClienteServiceRole().auth.admin.inviteUserByEmail(
-      email,
-      {
-        redirectTo: `${origenDashboard}/auth/confirm`,
-        data: { nombre: dto.nombre.trim(), rol: dto.rol },
-      },
-    );
-    if (error || !data?.user) {
+    if ((dto.rol === 'CEO' || dto.rol === 'RRHH') && dto.talentoId) {
       throw new ConflictException(
-        `No se pudo enviar la invitación: ${error?.message ?? 'error desconocido'}`,
+        'Un usuario CEO o RRHH no puede estar vinculado a un talento',
       );
     }
 
-    const usuario = await this.prisma.usuario.create({
-      data: {
-        empresaId,
-        email,
-        nombre: dto.nombre.trim(),
-        rol: dto.rol,
-        talentoId: dto.talentoId,
-        supabaseUserId: data.user.id,
-      },
-      select: { id: true, email: true, nombre: true, rol: true },
+    const usuario = await invitarUsuario(this.prisma, {
+      empresaId,
+      email: dto.email,
+      nombre: dto.nombre,
+      rol: dto.rol,
+      talentoId: dto.talentoId,
     });
 
     return { usuario, invitacionEnviada: true };

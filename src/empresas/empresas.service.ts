@@ -9,9 +9,11 @@ import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
 import { KpisQueryDto } from './dto/kpis-query.dto';
 import { ReportesQueryDto } from './dto/reportes-query.dto';
 import { CrearTalentoDto } from './dto/crear-talento.dto';
+import { CrearUsuarioEmpresaDto } from './dto/crear-usuario-empresa.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { AnalisisEjecutivoService } from './analisis-ejecutivo.service';
 import { clasificarEstado } from './estado.util';
+import { invitarUsuario } from '../auth/invitar-usuario.util';
 import {
   rangoAnual,
   rangoMensual,
@@ -995,6 +997,34 @@ export class EmpresasService {
       porcentajeCumplimiento: null,
       cumplimientoTareasPromedio: null,
     };
+  }
+
+  /**
+   * CEO/RRHH invitan a su propio talento a entrar a la plataforma, igual
+   * que el panel admin — pero acotado a TALENTO/MANAGER (dar de alta otro
+   * CEO/RRHH sigue siendo exclusivo del panel admin).
+   */
+  async crearUsuario(slug: string, actor: Actor, dto: CrearUsuarioEmpresaDto) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+
+    if (dto.talentoId) {
+      const talento = await this.prisma.talento.findUnique({
+        where: { id: dto.talentoId },
+      });
+      if (!talento || talento.empresaId !== empresa.id) {
+        throw new NotFoundException('Empleado no encontrado');
+      }
+    }
+
+    const usuario = await invitarUsuario(this.prisma, {
+      empresaId: empresa.id,
+      email: dto.email,
+      nombre: dto.nombre,
+      rol: dto.rol,
+      talentoId: dto.talentoId,
+    });
+
+    return { usuario, invitacionEnviada: true };
   }
 
   async rankings(slug: string, actor: Actor, query: RankingsQueryDto) {
