@@ -47,6 +47,7 @@ En **Variables**, agrega:
 | `CORS_ORIGIN` | `https://panel.talentix.com.do` | dominio exacto del dashboard en producción (sin slash final) |
 | `ADMIN_TOKEN` | un valor aleatorio largo | genera uno con `openssl rand -hex 32`. Protege `GET /empresas` |
 | `MISTRAL_API_KEY` | tu API key de [console.mistral.ai](https://console.mistral.ai) | extracción de datos de CVs por IA. Sin esta variable, la subida de CV se guarda igual pero `cvDatosExtraidos` queda en `null` |
+| `CLERK_SECRET_KEY` | tu Secret Key de [Clerk Dashboard → API Keys](https://dashboard.clerk.com) | autenticación de usuarios (login, MFA). El backend la usa para verificar el JWT de sesión de cada request (`verifyToken`) y para crear usuarios/invitaciones desde el panel admin |
 
 `PORT` no hace falta configurarlo: Railway lo inyecta automáticamente y el código ya
 usa `process.env.PORT ?? 3000`.
@@ -91,10 +92,12 @@ código de acceso siga siendo el correcto en la base de producción.
 | Variable | Valor |
 |---|---|
 | `NEXT_PUBLIC_API_URL` | `https://api.talentix.com.do` (la URL final de Railway del paso 1.3) |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | tu Publishable Key de Clerk Dashboard → API Keys (misma cuenta que `CLERK_SECRET_KEY` en Railway) |
+| `CLERK_SECRET_KEY` | la misma Secret Key que en Railway — la usan las rutas server-side de Next.js (`proxy.ts`, componentes server) |
 
-Agrégala para los entornos **Production** y **Preview**. Sin esta variable el
+Agrégalas para los entornos **Production** y **Preview**. Sin `NEXT_PUBLIC_API_URL` el
 dashboard intentará hablar con `http://localhost:3000` y todo fallará en
-producción.
+producción; sin las variables de Clerk, el login no carga en absoluto.
 
 ### 2.3 Dominio personalizado del dashboard
 
@@ -147,7 +150,61 @@ existe, y permite probar todo el flujo antes de tocar el DNS real.
 
 ---
 
-## 5. Antes de anunciar el lanzamiento — checklist
+## 5. Migración de autenticación a Clerk (usuarios existentes)
+
+El login ahora lo maneja [Clerk](https://clerk.com) en vez de contraseñas propias
+(`bcrypt`/`Sesion`). Si ya hay usuarios reales creados con el sistema anterior,
+sigue este orden — **no lo saltes ni lo comprimas en un solo deploy**, o el login
+se interrumpe para todo el mundo a mitad de camino:
+
+1. Configura el proyecto de Clerk (si no lo has hecho) — **estos 4 puntos ya se
+   verificaron a mano contra el proyecto real y son necesarios, no opcionales**:
+   - **Configure → User & authentication → Email, Phone, Username**: pon
+     "Username" y "Phone number" en **Off/Not required** (deja solo "Email
+     address" y "Password"). Sin esto, crear un usuario desde el panel admin
+     falla con error 422 "missing data" — Clerk los exige por defecto aunque
+     esta app es solo correo + contraseña.
+   - **Configure → Organizations**: déjalo **desactivado por completo**. Si
+     queda activo, cada login se queda atascado indefinidamente (pending task
+     "choose-organization") sin mensaje de error — esta app no usa
+     Organizations de Clerk, las empresas se manejan en Neon.
+   - **Configure → User & authentication → Multi-factor**: la verificación en
+     dos pasos (TOTP/app autenticadora) requiere el **plan Pro de Clerk** — en
+     el plan gratuito el toggle aparece con una insignia "Pro" y no se puede
+     activar. Mientras no se actualice el plan, el enforcement de 2FA
+     obligatorio para CEO/RRHH queda deshabilitado en el código (comentario
+     explícito en `dashboard/app/page.tsx`) — no rompe nada, simplemente nadie
+     pasa por el paso de activarlo todavía. Si actualizas el plan: activa el
+     toggle de "Authenticator application" aquí, y **deja en OFF** el toggle
+     separado "Require multi-factor authentication" (ese es una función
+     todo-o-nada de Clerk que entra en conflicto con nuestro enforcement
+     condicional por rol).
+   - Verifica el dominio `panel.talentix.com.do` en modo producción antes del
+     cutover real (Clerk lo exige para que las invitaciones/emails salgan desde
+     el dominio correcto).
+2. Agrega `CLERK_SECRET_KEY` (Railway) y `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` +
+   `CLERK_SECRET_KEY` (Vercel) como se indica en las secciones 1.2 y 2.2, y
+   despliega — en este punto el código ya corre con Clerk pero los usuarios
+   viejos todavía no están enlazados (`Usuario.clerkUserId`).
+3. Corre el script de migración **una sola vez**, contra producción:
+   ```bash
+   CLERK_SECRET_KEY=... DATABASE_URL=... npm run migrar:usuarios-clerk
+   ```
+   Envía una invitación por correo a cada usuario sin enlazar todavía. Cuando una
+   persona completa la invitación (fija su contraseña en Clerk), vuelve a correr
+   el mismo comando — es idempotente — para enlazar su `clerkUserId`.
+4. Confirma en staging (o con un usuario de prueba) que el ciclo completo
+   funciona: invitación → fijar contraseña → login → entrar al panel — **antes**
+   de anunciar el cambio a los usuarios reales. Un login desde un dispositivo
+   nuevo pedirá un código de confirmación por correo (protección nativa de
+   Clerk, no algo que agregamos nosotros) — es normal.
+5. Prueba explícitamente que ClawLink (`codigoAcceso`) sigue funcionando sin
+   cambios — es tráfico de producción real que no debe verse afectado por nada de
+   esto.
+
+---
+
+## 6. Antes de anunciar el lanzamiento — checklist
 
 - [ ] Confirmar que `ADMIN_TOKEN` y `CORS_ORIGIN` están configurados en Railway
       (sin ellos, `GET /empresas` queda bloqueado y el CORS usa el default de

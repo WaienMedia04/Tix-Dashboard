@@ -23,7 +23,8 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
-import { logout, type Rol } from "@/lib/api";
+import { useClerk } from "@clerk/nextjs";
+import { type Rol } from "@/lib/api";
 
 interface ItemGrupo {
   href: string;
@@ -124,6 +125,7 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { signOut } = useClerk();
   const reducirMovimiento = useReducedMotion();
   const { resolvedTheme, setTheme } = useTheme();
   const [montado, setMontado] = useState(false);
@@ -146,7 +148,7 @@ export function Sidebar({
   }
 
   async function handleLogout() {
-    await logout();
+    await signOut();
     router.push("/");
   }
 

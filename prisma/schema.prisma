@@ -74,42 +74,26 @@ model Talento {
 }
 
 model Usuario {
-  id                  String    @id @default(cuid())
-  empresaId           String
-  email               String    @unique
-  passwordHash        String
-  nombre              String
-  rol                 Rol
-  talentoId           String?   @unique
-  passwordDebeCambiar Boolean   @default(false)
-  activo              Boolean   @default(true)
-  ultimoLoginAt       DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  empresaId     String
+  email         String    @unique
+  clerkUserId   String    @unique
+  nombre        String
+  rol           Rol
+  talentoId     String?   @unique
+  activo        Boolean   @default(true)
+  ultimoLoginAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   empresa            Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   talento            Talento?  @relation("UsuarioTalento", fields: [talentoId], references: [id])
   equipoGestionado   Talento[] @relation("ManagerEquipo")
-  sesiones           Sesion[]
   novedadesCreadas   Novedad[]
   ausenciasCreadas   Ausencia[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
-}
-
-model Sesion {
-  id        String    @id @default(cuid())
-  usuarioId String
-  tokenHash String    @unique
-  createdAt DateTime  @default(now())
-  expiresAt DateTime
-  userAgent String?
-  revokedAt DateTime?
-
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-
-  @@index([usuarioId])
 }
 
 model Worklog {
