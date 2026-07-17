@@ -150,11 +150,20 @@ No asumas los valores por defecto — verifica cada uno contra el proyecto real:
   público, ya que todos los usuarios se crean por invitación desde el panel admin.
 - **Authentication → Multi-factor**: confirmar que TOTP esté habilitado (debería
   estarlo por defecto en el plan Free, pero verifica contra el proyecto real).
-- **Email Templates → Invite user**: personaliza el texto para que se lea como
-  "activa tu cuenta en TalentiX" en vez del texto genérico de Supabase.
-- Si el envío de correos fue lento/inconsistente durante pruebas (posible en el
-  SMTP por defecto de Supabase en plan Free), considera configurar un proveedor
-  SMTP propio en **Authentication → SMTP Settings** antes de invitar usuarios reales.
+- **Email Templates → Invite user / Reset password**: personalizar el texto es
+  opcional, pero requiere SMTP propio configurado (el servicio de correo por
+  defecto del plan Free no deja editar la plantilla) — **no es necesario para
+  que el flujo funcione**: `app/auth/confirm/page.tsx` ya maneja los dos
+  formatos de link que Supabase puede generar (el de la plantilla por
+  defecto, que pasa la sesión en el fragmento `#access_token=...` de la URL,
+  y el de una plantilla personalizada apuntando a `?token_hash=...&type=...`).
+  Si en algún momento se personaliza la plantilla, el link debe apuntar a
+  `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite` (o
+  `type=recovery` en la plantilla de reset) para usar el segundo formato.
+- Si el envío de correos fue lento/inconsistente durante pruebas (el límite
+  por hora del SMTP por defecto de Supabase en plan Free es bajo), considera
+  configurar un proveedor SMTP propio en **Authentication → SMTP Settings**
+  antes de invitar a muchos usuarios reales de una vez.
 
 ### 3.4 Runbook de despliegue (orden obligatorio, evita cortar el login en producción)
 
