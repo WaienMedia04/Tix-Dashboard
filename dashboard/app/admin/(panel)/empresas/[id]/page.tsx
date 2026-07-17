@@ -91,7 +91,7 @@ botToken (reservado para auth futura): ${empresa.botToken ?? "⚠️ sin token �
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl border border-border bg-card shadow-2xl">
+      <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl border border-border bg-popover shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div className="flex items-center gap-3">
@@ -239,7 +239,7 @@ function ModalEliminarEmpresa({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-xl border border-destructive/40 bg-card p-6 shadow-2xl">
+      <div className="w-full max-w-md rounded-xl border border-destructive/40 bg-popover p-6 shadow-2xl">
         <div className="mb-4 flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10">
             <Trash2 className="h-5 w-5 text-destructive" />

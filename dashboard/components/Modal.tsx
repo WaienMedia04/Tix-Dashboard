@@ -75,9 +75,9 @@ export function Modal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className={`relative z-10 max-h-[85vh] w-full ${TAMANOS[size]} overflow-y-auto rounded-xl border border-border bg-card shadow-elegant outline-none`}
+            className={`relative z-10 max-h-[85vh] w-full ${TAMANOS[size]} overflow-y-auto rounded-xl border border-border bg-popover shadow-elegant outline-none`}
           >
-            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-border bg-card px-6 py-4">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-border bg-popover px-6 py-4">
               <div>
                 <h2 id={tituloId} className="text-base font-semibold text-foreground">
                   {title}
