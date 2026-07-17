@@ -32,10 +32,15 @@ async function main() {
     throw new Error('CORS_ORIGIN no está configurado');
   }
 
-  const usuarios = await prisma.usuario.findMany({
-    where: { supabaseUserId: null },
-    select: { id: true, email: true, nombre: true, rol: true },
+  // Filtrado en memoria (no en el `where`): schema.prisma ya modela
+  // supabaseUserId como obligatorio (estado post-corte), pero este script
+  // corre a propósito en la ventana transicional donde la columna todavía
+  // es nullable en la base real — el tipo generado por Prisma Client no
+  // acepta `null` como filtro para un campo que él cree no-nulo.
+  const todos = await prisma.usuario.findMany({
+    select: { id: true, email: true, nombre: true, rol: true, supabaseUserId: true },
   });
+  const usuarios = todos.filter((u) => !u.supabaseUserId);
 
   console.log(`${usuarios.length} usuario(s) por migrar.`);
 
