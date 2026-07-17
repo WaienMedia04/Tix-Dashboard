@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "next-themes";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import "./globals.css";
@@ -24,11 +23,9 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col">
-        <ClerkProvider>
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-            <MotionProvider>{children}</MotionProvider>
-          </ThemeProvider>
-        </ClerkProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <MotionProvider>{children}</MotionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

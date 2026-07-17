@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { useClerk } from "@clerk/nextjs";
 import { CheckCircle2, ClipboardList, LogOut, Moon, Sparkles, Sun } from "lucide-react";
 import {
   EmpresaNoEncontradaError,
   SesionInvalidaError,
+  logout,
   me,
   fetchBitacoras,
   registrarWorklogPropio,
@@ -293,7 +293,6 @@ function MiProgreso({ slug, recargarClave }: { slug: string; recargarClave: numb
 export default function MiEspacioPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
-  const { signOut } = useClerk();
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [recargarClave, setRecargarClave] = useState(0);
 
@@ -332,7 +331,7 @@ export default function MiEspacioPage() {
   if (estado.tipo === "error") return <ErrorScreen message={estado.mensaje} />;
 
   async function handleLogout() {
-    await signOut();
+    await logout();
     router.push("/");
   }
 

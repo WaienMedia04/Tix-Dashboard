@@ -1,19 +1,5 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
-/**
- * Token de sesión de Clerk, leído fuera de un componente React vía el
- * singleton global `window.Clerk` (patrón documentado por Clerk para
- * exactamente este caso: código no-React, como este módulo de fetch). El
- * dominio de la API es distinto al del dashboard, así que no puede
- * compartir la cookie de sesión de Clerk — cada request lleva el JWT como
- * `Authorization: Bearer <token>`.
- */
-async function authHeaders(): Promise<Record<string, string>> {
-  if (typeof window === "undefined") return {};
-  const token = await window.Clerk?.session?.getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 export interface TalentoRanking {
   talentoId: string;
   nombreCompleto: string;
@@ -310,7 +296,7 @@ export async function fetchReporteEjecutivo(
   if (opciones.fechaFin) params.set("fechaFin", opciones.fechaFin);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/reportes-ejecutivos?${params.toString()}`, {
-    headers: await authHeaders(),
+    credentials: "include",
     cache: "no-store",
   });
   if (res.status === 401) {
@@ -341,9 +327,33 @@ export interface MeResponse {
 
 export class SesionInvalidaError extends Error {}
 export class EmpresaNoEncontradaError extends Error {}
+export class DemasiadosIntentosError extends Error {}
+
+export async function login(
+  email: string,
+  password: string,
+): Promise<{ usuario: SesionUsuario & { empresaSlug: string; empresaNombre: string; passwordDebeCambiar: boolean } }> {
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ email, password }),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Correo o contraseña incorrectos");
+  }
+  if (res.status === 429) {
+    throw new DemasiadosIntentosError("Demasiados intentos. Espera un momento antes de volver a intentar.");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo iniciar sesión");
+  }
+  return res.json();
+}
 
 export async function me(): Promise<MeResponse> {
-  const res = await fetch(`${API_URL}/auth/me`, { headers: await authHeaders(), cache: "no-store" });
+  const res = await fetch(`${API_URL}/auth/me`, { credentials: "include", cache: "no-store" });
   if (res.status === 401) {
     throw new SesionInvalidaError("Sesión inválida o expirada");
   }
@@ -353,9 +363,13 @@ export async function me(): Promise<MeResponse> {
   return res.json();
 }
 
+export async function logout(): Promise<void> {
+  await fetch(`${API_URL}/auth/logout`, { method: "POST", credentials: "include" });
+}
+
 export async function fetchDashboard(slug: string): Promise<DashboardData> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/dashboard`, {
-    headers: await authHeaders(),
+    credentials: "include",
     cache: "no-store",
   });
   if (res.status === 401) {
@@ -380,7 +394,7 @@ export async function fetchBitacoras(slug: string, filtros: BitacorasFiltros): P
   params.set("limit", String(filtros.limit ?? 20));
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/bitacoras?${params.toString()}`, {
-    headers: await authHeaders(),
+    credentials: "include",
     cache: "no-store",
   });
   if (res.status === 401) {
@@ -397,7 +411,7 @@ export async function fetchBitacoras(slug: string, filtros: BitacorasFiltros): P
 
 export async function fetchEmpleados(slug: string): Promise<EmpleadoResumen[]> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/empleados`, {
-    headers: await authHeaders(),
+    credentials: "include",
     cache: "no-store",
   });
   if (res.status === 401) {
@@ -423,7 +437,7 @@ export async function fetchEmpleadoDetalle(
 
   const res = await fetch(
     `${API_URL}/empresas/${encodeURIComponent(slug)}/empleados/${encodeURIComponent(talentoId)}?${params.toString()}`,
-    { headers: await authHeaders(), cache: "no-store" },
+    { credentials: "include", cache: "no-store" },
   );
   if (res.status === 401) {
     throw new SesionInvalidaError("Sesión inválida o expirada");
@@ -443,7 +457,8 @@ export async function actualizarEstadoTalento(
 ): Promise<{ id: string; nombreCompleto: string; rol: string; estado: string }> {
   const res = await fetch(`${API_URL}/talentos/${encodeURIComponent(talentoId)}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ estado }),
   });
   if (res.status === 401) {
@@ -474,7 +489,8 @@ export async function actualizarTalento(
 ): Promise<Omit<EmpleadoDetalle["talento"], "cvUrl" | "cvDatosExtraidos">> {
   const res = await fetch(`${API_URL}/talentos/${encodeURIComponent(talentoId)}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(datos),
   });
   if (res.status === 401) {
@@ -494,7 +510,7 @@ export async function fetchKpis(slug: string, periodo: string): Promise<KpisResp
   params.set("periodo", periodo);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/kpis?${params.toString()}`, {
-    headers: await authHeaders(),
+    credentials: "include",
     cache: "no-store",
   });
   if (res.status === 401) {
@@ -529,7 +545,7 @@ export interface AlertasResponse {
 
 export async function fetchAlertas(slug: string): Promise<AlertasResponse> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/alertas`, {
-    headers: await authHeaders(),
+    credentials: "include",
     cache: "no-store",
   });
   if (res.status === 401) {
@@ -564,7 +580,7 @@ export async function fetchNovedades(slug: string, filtros: { talentoId?: string
   if (filtros.tipo) params.set("tipo", filtros.tipo);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/novedades?${params.toString()}`, {
-    headers: await authHeaders(),
+    credentials: "include",
     cache: "no-store",
   });
   if (res.status === 401) {
@@ -585,7 +601,8 @@ export async function crearNovedad(
 ): Promise<NovedadItem> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/novedades`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(datos),
   });
   if (res.status === 401) {
@@ -620,7 +637,7 @@ export async function fetchAusencias(slug: string, filtros: { talentoId?: string
   if (filtros.talentoId) params.set("talentoId", filtros.talentoId);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/ausencias?${params.toString()}`, {
-    headers: await authHeaders(),
+    credentials: "include",
     cache: "no-store",
   });
   if (res.status === 401) {
@@ -641,7 +658,8 @@ export async function crearAusencia(
 ): Promise<{ ausencia: AusenciaItem; fechasOmitidas: string[] }> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/ausencias`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(datos),
   });
   if (res.status === 401) {
@@ -666,7 +684,7 @@ export async function fetchRankings(
   if (valor) params.set("valor", valor);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/rankings?${params.toString()}`, {
-    headers: await authHeaders(),
+    credentials: "include",
     cache: "no-store",
   });
   if (res.status === 401) {
@@ -693,7 +711,7 @@ export async function fetchReporte(
   if (opciones.fechaFin) params.set("fechaFin", opciones.fechaFin);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/reportes?${params.toString()}`, {
-    headers: await authHeaders(),
+    credentials: "include",
     cache: "no-store",
   });
   if (res.status === 401) {
@@ -719,7 +737,8 @@ export async function crearTalento(
 ): Promise<EmpleadoResumen> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/talentos`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(datos),
   });
   if (res.status === 401) {
@@ -740,7 +759,8 @@ export async function actualizarFotoTalento(
 ): Promise<{ id: string; nombreCompleto: string; fotoUrl: string | null }> {
   const res = await fetch(`${API_URL}/talentos/${encodeURIComponent(talentoId)}/foto`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ fotoUrl }),
   });
   if (res.status === 401) {
@@ -786,7 +806,8 @@ export async function registrarWorklogPropio(
 ): Promise<{ id: string; estadoEnvio: string; checkinEnviado: boolean }> {
   const res = await fetch(`${API_URL}/talentos/me/worklogs`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(input),
   });
   if (res.status === 401) {
@@ -809,7 +830,8 @@ export async function actualizarCvTalento(
 }> {
   const res = await fetch(`${API_URL}/talentos/${encodeURIComponent(talentoId)}/cv`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ cvUrl }),
   });
   if (res.status === 401) {
@@ -843,7 +865,8 @@ export async function actualizarCvDatosTalento(
 }> {
   const res = await fetch(`${API_URL}/talentos/${encodeURIComponent(talentoId)}/cv-datos`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(datos),
   });
   if (res.status === 401) {

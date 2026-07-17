@@ -6,13 +6,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { resolverUsuarioPorBearer } from '../clerk-auth.util';
+import { resolverUsuarioPorSesion } from '../session-resolver.util';
 import { Actor, RequestConActor } from '../actor.types';
 
 /**
  * Autoriza tráfico contra una empresa de dos formas, en este orden:
- *  1. Sesión humana (Authorization: Bearer <token de Clerk>, dashboard) —
- *     si es válida, exige que el usuario pertenezca a la empresa objetivo.
+ *  1. Cookie de sesión humana (dashboard) — si es válida, exige que el
+ *     usuario pertenezca a la empresa objetivo.
  *  2. codigoAcceso compartido, vía query param o header x-codigo-acceso —
  *     el mecanismo de siempre, usado por ClawLink y por cualquier request
  *     humana que todavía no haya migrado a sesión. Se comporta EXACTAMENTE
@@ -54,7 +54,7 @@ export class CompanyAccessGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    const usuario = await resolverUsuarioPorBearer(req, this.prisma);
+    const usuario = await resolverUsuarioPorSesion(req, this.prisma);
     if (usuario) {
       if (usuario.empresaId !== empresa.id) {
         throw new UnauthorizedException();

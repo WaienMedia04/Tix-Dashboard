@@ -4,8 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { clerkClient } from '../auth/clerk-auth.util';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import { EditarEmpresaDto } from './dto/editar-empresa.dto';
 import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
@@ -309,9 +309,8 @@ export class AdminService {
   async crearUsuario(empresaId: string, dto: CrearUsuarioAdminDto) {
     await this.validarEmpresaExiste(empresaId);
 
-    const email = dto.email.trim().toLowerCase();
     const existente = await this.prisma.usuario.findUnique({
-      where: { email },
+      where: { email: dto.email.trim().toLowerCase() },
     });
     if (existente) {
       throw new ConflictException('Ya existe un usuario con ese correo');
@@ -325,29 +324,19 @@ export class AdminService {
 
     const passwordTemporal =
       dto.password ?? randomBytes(9).toString('base64url');
-
-    let clerkUserId: string;
-    try {
-      const clerkUser = await clerkClient.users.createUser({
-        emailAddress: [email],
-        password: passwordTemporal,
-        firstName: dto.nombre.trim(),
-      });
-      clerkUserId = clerkUser.id;
-    } catch (err) {
-      throw new ConflictException(
-        `No se pudo crear el acceso en Clerk: ${err instanceof Error ? err.message : 'error desconocido'}`,
-      );
-    }
+    const passwordHash = await bcrypt.hash(passwordTemporal, 12);
 
     const usuario = await this.prisma.usuario.create({
       data: {
         empresaId,
-        email,
-        clerkUserId,
+        email: dto.email.trim().toLowerCase(),
         nombre: dto.nombre.trim(),
         rol: dto.rol,
         talentoId: dto.talentoId,
+        passwordHash,
+        // Si el admin fijó una contraseña específica, ya la conoce — no
+        // forzamos cambio. Con temporal aleatoria sí, para que la rote.
+        passwordDebeCambiar: !dto.password,
       },
       select: { id: true, email: true, nombre: true, rol: true },
     });
