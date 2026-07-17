@@ -23,7 +23,8 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
-import { logout, type Rol } from "@/lib/api";
+import { type Rol } from "@/lib/api";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 interface ItemGrupo {
   href: string;
@@ -146,7 +147,7 @@ export function Sidebar({
   }
 
   async function handleLogout() {
-    await logout();
+    await getSupabaseBrowserClient().auth.signOut();
     router.push("/");
   }
 

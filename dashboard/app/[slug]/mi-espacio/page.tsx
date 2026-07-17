@@ -7,13 +7,13 @@ import { CheckCircle2, ClipboardList, LogOut, Moon, Sparkles, Sun } from "lucide
 import {
   EmpresaNoEncontradaError,
   SesionInvalidaError,
-  logout,
   me,
   fetchBitacoras,
   registrarWorklogPropio,
   type BitacoraItem,
   type MeResponse,
 } from "@/lib/api";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { BrandMark } from "@/components/BrandMark";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { ErrorScreen } from "@/components/ErrorScreen";
@@ -305,6 +305,10 @@ export default function MiEspacioPage() {
           router.replace("/");
           return;
         }
+        if (!sesion.usuario.passwordEstablecida) {
+          router.replace("/activar-cuenta");
+          return;
+        }
         // Solo el TALENTO vive aquí; el resto de roles usan el panel completo.
         if (sesion.usuario.rol !== "TALENTO") {
           router.replace(`/${slug}/dashboard`);
@@ -331,7 +335,7 @@ export default function MiEspacioPage() {
   if (estado.tipo === "error") return <ErrorScreen message={estado.mensaje} />;
 
   async function handleLogout() {
-    await logout();
+    await getSupabaseBrowserClient().auth.signOut();
     router.push("/");
   }
 

@@ -167,8 +167,8 @@ export type RolAdmin = "CEO" | "RRHH" | "MANAGER" | "TALENTO";
 export function crearUsuarioAdmin(
   token: string,
   empresaId: string,
-  data: { email: string; nombre: string; rol: RolAdmin; talentoId?: string; password?: string },
-): Promise<{ usuario: { id: string; email: string; nombre: string; rol: RolAdmin }; passwordTemporal: string }> {
+  data: { email: string; nombre: string; rol: RolAdmin; talentoId?: string },
+): Promise<{ usuario: { id: string; email: string; nombre: string; rol: RolAdmin }; invitacionEnviada: true }> {
   return adminFetch(`/admin/empresas/${empresaId}/usuarios`, token, {
     method: "POST",
     body: JSON.stringify(data),

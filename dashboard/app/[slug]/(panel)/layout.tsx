@@ -11,6 +11,7 @@ import {
   me,
   type Rol,
 } from "@/lib/api";
+import { resolverEstadoMfa } from "@/lib/mfa";
 import { Sidebar } from "@/components/panel/Sidebar";
 import { Header } from "@/components/panel/Header";
 import { PanelProvider } from "@/components/panel/PanelContext";
@@ -41,6 +42,15 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
         const sesion = await me();
         if (!sesion.empresa || sesion.empresa.slug !== slug) {
           if (!cancelado) router.replace("/");
+          return;
+        }
+        if (!sesion.usuario.passwordEstablecida) {
+          if (!cancelado) router.replace("/activar-cuenta");
+          return;
+        }
+        const estadoMfa = await resolverEstadoMfa(sesion.usuario.rol);
+        if (estadoMfa !== "ok") {
+          if (!cancelado) router.replace(estadoMfa === "enroll" ? "/mfa-enroll" : "/mfa-challenge");
           return;
         }
         // Un TALENTO no usa el panel completo — su vista vive en /mi-espacio.

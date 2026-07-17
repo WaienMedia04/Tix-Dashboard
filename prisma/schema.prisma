@@ -77,11 +77,11 @@ model Usuario {
   id                  String    @id @default(cuid())
   empresaId           String
   email               String    @unique
-  passwordHash        String
+  supabaseUserId      String    @unique
+  passwordEstablecida Boolean   @default(false)
   nombre              String
   rol                 Rol
   talentoId           String?   @unique
-  passwordDebeCambiar Boolean   @default(false)
   activo              Boolean   @default(true)
   ultimoLoginAt       DateTime?
   createdAt           DateTime  @default(now())
@@ -90,26 +90,11 @@ model Usuario {
   empresa            Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   talento            Talento?  @relation("UsuarioTalento", fields: [talentoId], references: [id])
   equipoGestionado   Talento[] @relation("ManagerEquipo")
-  sesiones           Sesion[]
   novedadesCreadas   Novedad[]
   ausenciasCreadas   Ausencia[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
-}
-
-model Sesion {
-  id        String    @id @default(cuid())
-  usuarioId String
-  tokenHash String    @unique
-  createdAt DateTime  @default(now())
-  expiresAt DateTime
-  userAgent String?
-  revokedAt DateTime?
-
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-
-  @@index([usuarioId])
 }
 
 model Worklog {

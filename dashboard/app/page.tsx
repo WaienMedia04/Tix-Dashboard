@@ -2,7 +2,9 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { DemasiadosIntentosError, SesionInvalidaError, login } from "@/lib/api";
+import { me, SesionInvalidaError } from "@/lib/api";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import { resolverEstadoMfa } from "@/lib/mfa";
 import { BrandMark } from "@/components/BrandMark";
 import { Iridescence } from "@/components/Iridescence";
 import CurvedInput from "@/components/CurvedInput";
@@ -19,6 +21,7 @@ function AccesoInterno() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(initialError);
   const [loading, setLoading] = useState(false);
+  const [modo, setModo] = useState<"login" | "recuperar" | "recuperar_enviado">("login");
 
   async function handleSubmit(valorPassword: string) {
     const emailLimpio = email.trim();
@@ -26,20 +29,61 @@ function AccesoInterno() {
     setError(null);
     setLoading(true);
     try {
-      const { usuario } = await login(emailLimpio, valorPassword);
+      const { error: signInError } = await getSupabaseBrowserClient().auth.signInWithPassword({
+        email: emailLimpio,
+        password: valorPassword,
+      });
+      if (signInError) {
+        setError("Correo o contraseña incorrectos.");
+        setLoading(false);
+        return;
+      }
+
+      const sesion = await me();
+      if (!sesion.usuario.passwordEstablecida) {
+        router.push("/activar-cuenta");
+        return;
+      }
+      if (!sesion.empresa) {
+        setError("Tu usuario no está asociado a ninguna empresa.");
+        setLoading(false);
+        return;
+      }
+
+      const estadoMfa = await resolverEstadoMfa(sesion.usuario.rol);
+      if (estadoMfa === "enroll") {
+        router.push("/mfa-enroll");
+        return;
+      }
+      if (estadoMfa === "challenge") {
+        router.push("/mfa-challenge");
+        return;
+      }
+
       router.push(
-        usuario.rol === "TALENTO" ? `/${usuario.empresaSlug}/mi-espacio` : `/${usuario.empresaSlug}/dashboard`,
+        sesion.usuario.rol === "TALENTO"
+          ? `/${sesion.empresa.slug}/mi-espacio`
+          : `/${sesion.empresa.slug}/dashboard`,
       );
     } catch (err) {
       if (err instanceof SesionInvalidaError) {
         setError("Correo o contraseña incorrectos.");
-      } else if (err instanceof DemasiadosIntentosError) {
-        setError(err.message);
       } else {
         setError("No se pudo conectar con el servidor. Intenta de nuevo.");
       }
       setLoading(false);
     }
+  }
+
+  async function handleRecuperar(correo: string) {
+    if (!correo.trim() || loading) return;
+    setLoading(true);
+    setError(null);
+    await getSupabaseBrowserClient().auth.resetPasswordForEmail(correo.trim(), {
+      redirectTo: `${window.location.origin}/auth/confirm`,
+    });
+    setLoading(false);
+    setModo("recuperar_enviado");
   }
 
   return (
@@ -57,43 +101,77 @@ function AccesoInterno() {
       </div>
 
       <div className="relative z-10 flex w-full max-w-sm flex-col items-center text-center">
-        <h1 className="font-sans text-3xl font-semibold text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.4)]">
-          Acceso al panel
-        </h1>
-        <p className="mt-2 text-sm text-white/75 drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)]">
-          Ingresa con tu correo y contraseña.
-        </p>
+        {modo === "recuperar_enviado" ? (
+          <>
+            <h1 className="font-sans text-3xl font-semibold text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.4)]">
+              Revisa tu correo
+            </h1>
+            <p className="mt-2 text-sm text-white/75 drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)]">
+              Si el correo existe, te enviamos un link para restablecer tu contraseña.
+            </p>
+            <button
+              onClick={() => setModo("login")}
+              className="mt-6 text-sm text-white/75 underline decoration-white/40 underline-offset-4 hover:text-white"
+            >
+              Volver a ingresar
+            </button>
+          </>
+        ) : (
+          <>
+            <h1 className="font-sans text-3xl font-semibold text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.4)]">
+              {modo === "login" ? "Acceso al panel" : "Recuperar contraseña"}
+            </h1>
+            <p className="mt-2 text-sm text-white/75 drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)]">
+              {modo === "login"
+                ? "Ingresa con tu correo y contraseña."
+                : "Escribe tu correo y te enviaremos un link para restablecerla."}
+            </p>
 
-        <div className="mt-8 flex w-full flex-col gap-2.5">
-          <CurvedInput
-            value={email}
-            onChange={setEmail}
-            type="email"
-            placeholder="Correo electrónico"
-            theme="dark"
-            showButton={false}
-            width="100%"
-            bend={6}
-            height={56}
-          />
-          <CurvedInput
-            value={password}
-            onChange={setPassword}
-            onSubmit={handleSubmit}
-            type="password"
-            placeholder="Contraseña"
-            buttonText={loading ? "Verificando..." : "Ingresar"}
-            theme="dark"
-            showIcon={false}
-            buttonColor="#8B5CF6"
-            buttonGradient={["#22D3EE", "#8B5CF6", "#D946EF"]}
-            width="100%"
-            bend={6}
-            height={56}
-          />
-        </div>
+            <div className="mt-8 flex w-full flex-col gap-2.5">
+              <CurvedInput
+                value={email}
+                onChange={setEmail}
+                onSubmit={modo === "recuperar" ? handleRecuperar : undefined}
+                type="email"
+                placeholder="Correo electrónico"
+                theme="dark"
+                showButton={modo === "recuperar"}
+                buttonText={loading ? "Enviando..." : "Enviar link"}
+                buttonColor="#8B5CF6"
+                buttonGradient={["#22D3EE", "#8B5CF6", "#D946EF"]}
+                width="100%"
+                bend={6}
+                height={56}
+              />
+              {modo === "login" && (
+                <CurvedInput
+                  value={password}
+                  onChange={setPassword}
+                  onSubmit={handleSubmit}
+                  type="password"
+                  placeholder="Contraseña"
+                  buttonText={loading ? "Verificando..." : "Ingresar"}
+                  theme="dark"
+                  showIcon={false}
+                  buttonColor="#8B5CF6"
+                  buttonGradient={["#22D3EE", "#8B5CF6", "#D946EF"]}
+                  width="100%"
+                  bend={6}
+                  height={56}
+                />
+              )}
+            </div>
 
-        {error && <p className="mt-4 text-sm text-rose-300 drop-shadow-[0_1px_6px_rgba(0,0,0,0.4)]">{error}</p>}
+            <button
+              onClick={() => setModo(modo === "login" ? "recuperar" : "login")}
+              className="mt-4 text-sm text-white/75 underline decoration-white/40 underline-offset-4 hover:text-white"
+            >
+              {modo === "login" ? "¿Olvidaste tu contraseña?" : "Volver a ingresar"}
+            </button>
+
+            {error && <p className="mt-4 text-sm text-rose-300 drop-shadow-[0_1px_6px_rgba(0,0,0,0.4)]">{error}</p>}
+          </>
+        )}
       </div>
     </div>
   );

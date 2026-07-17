@@ -1,11 +1,12 @@
 import {
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { obtenerClienteServiceRole } from '../auth/supabase-auth.util';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import { EditarEmpresaDto } from './dto/editar-empresa.dto';
 import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
@@ -300,17 +301,17 @@ export class AdminService {
   }
 
   /**
-   * Crea el usuario humano de una empresa (bootstrap del CEO al migrar del
-   * código compartido a login individual, o para dar de alta RRHH/managers
-   * más adelante). Genera una contraseña temporal aleatoria y la devuelve
-   * UNA sola vez en la respuesta — no se guarda en texto plano en ningún
-   * lado, hay que entregarla al usuario fuera de banda.
+   * Crea el usuario humano de una empresa y le envía una invitación por
+   * correo vía Supabase Auth: la persona fija su propia contraseña desde
+   * el link recibido, nunca la conocemos en texto plano. El Usuario en
+   * Neon queda con passwordEstablecida: false hasta que complete ese paso.
    */
   async crearUsuario(empresaId: string, dto: CrearUsuarioAdminDto) {
     await this.validarEmpresaExiste(empresaId);
 
+    const email = dto.email.trim().toLowerCase();
     const existente = await this.prisma.usuario.findUnique({
-      where: { email: dto.email.trim().toLowerCase() },
+      where: { email },
     });
     if (existente) {
       throw new ConflictException('Ya existe un usuario con ese correo');
@@ -322,26 +323,41 @@ export class AdminService {
       );
     }
 
-    const passwordTemporal =
-      dto.password ?? randomBytes(9).toString('base64url');
-    const passwordHash = await bcrypt.hash(passwordTemporal, 12);
+    const origenDashboard = (process.env.CORS_ORIGIN ?? '')
+      .split(',')[0]
+      ?.trim();
+    if (!origenDashboard) {
+      throw new InternalServerErrorException(
+        'CORS_ORIGIN no está configurado; no se puede armar el link de invitación',
+      );
+    }
+
+    const { data, error } = await obtenerClienteServiceRole().auth.admin.inviteUserByEmail(
+      email,
+      {
+        redirectTo: `${origenDashboard}/auth/confirm`,
+        data: { nombre: dto.nombre.trim(), rol: dto.rol },
+      },
+    );
+    if (error || !data?.user) {
+      throw new ConflictException(
+        `No se pudo enviar la invitación: ${error?.message ?? 'error desconocido'}`,
+      );
+    }
 
     const usuario = await this.prisma.usuario.create({
       data: {
         empresaId,
-        email: dto.email.trim().toLowerCase(),
+        email,
         nombre: dto.nombre.trim(),
         rol: dto.rol,
         talentoId: dto.talentoId,
-        passwordHash,
-        // Si el admin fijó una contraseña específica, ya la conoce — no
-        // forzamos cambio. Con temporal aleatoria sí, para que la rote.
-        passwordDebeCambiar: !dto.password,
+        supabaseUserId: data.user.id,
       },
       select: { id: true, email: true, nombre: true, rol: true },
     });
 
-    return { usuario, passwordTemporal };
+    return { usuario, invitacionEnviada: true };
   }
 
   private async validarEmpresaExiste(id: string) {

@@ -313,11 +313,10 @@ export default function AdminEmpresaDetallePage() {
   const [mostrarFormEmpleado, setMostrarFormEmpleado] = useState(false);
 
   const [crearAcceso, setCrearAcceso] = useState(false);
-  const [nuevoAcceso, setNuevoAcceso] = useState({ email: "", nombreLogin: "", rolLogin: "TALENTO" as RolAdmin, password: "" });
+  const [nuevoAcceso, setNuevoAcceso] = useState({ email: "", nombreLogin: "", rolLogin: "TALENTO" as RolAdmin });
   const [resultadoAcceso, setResultadoAcceso] = useState<
-    { tipo: "ok"; passwordTemporal: string | null } | { tipo: "error"; mensaje: string } | null
+    { tipo: "ok"; correo: string } | { tipo: "error"; mensaje: string } | null
   >(null);
-  const [passwordCopiada, setPasswordCopiada] = useState(false);
 
   const [toggling, setToggling] = useState<string | null>(null);
   const [confirmandoEliminarId, setConfirmandoEliminarId] = useState<string | null>(null);
@@ -383,15 +382,14 @@ export default function AdminEmpresaDetallePage() {
 
       if (crearAcceso) {
         try {
-          const { passwordTemporal } = await crearUsuarioAdmin(token, id, {
+          await crearUsuarioAdmin(token, id, {
             email: nuevoAcceso.email,
             nombre: nuevoAcceso.nombreLogin || nuevo.nombreCompleto,
             rol: nuevoAcceso.rolLogin,
             talentoId: nuevo.id,
-            password: nuevoAcceso.password || undefined,
           });
-          setResultadoAcceso({ tipo: "ok", passwordTemporal: nuevoAcceso.password ? null : passwordTemporal });
-          setNuevoAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO", password: "" });
+          setResultadoAcceso({ tipo: "ok", correo: nuevoAcceso.email });
+          setNuevoAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO" });
           setCrearAcceso(false);
         } catch (err) {
           setResultadoAcceso({
@@ -629,17 +627,6 @@ export default function AdminEmpresaDetallePage() {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                      Contraseña (vacío = temporal automática)
-                    </label>
-                    <input
-                      type="text"
-                      value={nuevoAcceso.password}
-                      onChange={(e) => setNuevoAcceso((f) => ({ ...f, password: e.target.value }))}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                  </div>
                 </div>
               )}
 
@@ -649,28 +636,9 @@ export default function AdminEmpresaDetallePage() {
 
               {resultadoAcceso?.tipo === "ok" && (
                 <div className="rounded-md border border-success/30 bg-success/5 p-3">
-                  <p className="text-sm text-success">Empleado y acceso creados correctamente.</p>
-                  {resultadoAcceso.passwordTemporal && (
-                    <div className="mt-2 flex items-center justify-between gap-2 rounded-md bg-zinc-950 px-3 py-2">
-                      <code className="font-mono text-xs text-emerald-400 break-all">
-                        {resultadoAcceso.passwordTemporal}
-                      </code>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(resultadoAcceso.passwordTemporal ?? "");
-                          setPasswordCopiada(true);
-                          setTimeout(() => setPasswordCopiada(false), 2000);
-                        }}
-                        className="flex shrink-0 items-center gap-1 rounded px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/10"
-                      >
-                        <Copy className="h-3 w-3" />
-                        {passwordCopiada ? "¡Copiado!" : "Copiar"}
-                      </button>
-                    </div>
-                  )}
+                  <p className="text-sm text-success">Empleado creado. Invitación enviada a {resultadoAcceso.correo}.</p>
                   <p className="mt-1.5 text-xs text-muted-foreground">
-                    Contraseña temporal — guárdala ahora, no se vuelve a mostrar.
+                    Recibirá un correo para crear su propia contraseña y activar su cuenta.
                   </p>
                 </div>
               )}

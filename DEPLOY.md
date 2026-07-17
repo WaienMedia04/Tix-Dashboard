@@ -113,7 +113,98 @@ exactamente `https://panel.talentix.com.do`, sin `www.` y sin slash final).
 
 ---
 
-## 3. DNS — resumen de registros a crear
+## 3. Autenticación (Supabase Auth)
+
+El login ya no usa contraseñas propias con bcrypt — se migró a Supabase Auth,
+con alta de usuarios **exclusivamente por invitación** (el CEO/RRHH escribe el
+correo del talento desde el panel admin, Supabase le manda un correo, y desde
+ahí la persona fija su propia contraseña). No hay registro público.
+
+### 3.1 Variables de entorno — Railway (backend)
+
+| Variable | Valor | Notas |
+|---|---|---|
+| `SUPABASE_URL` | `https://wutbiktticjoidvybago.supabase.co` | del dashboard de Supabase del proyecto |
+| `SUPABASE_ANON_KEY` | la clave `anon` del proyecto | usada en cada request para verificar el JWT vía `getClaims()` — clave de menor privilegio |
+| `SUPABASE_SERVICE_ROLE_KEY` | la clave `service_role` del proyecto | **solo** necesaria si el panel admin de creación de usuarios debe funcionar en producción (`AdminService.crearUsuario()` la usa para `inviteUserByEmail`). Nunca se usa para resolver sesiones de request normales |
+
+### 3.2 Variables de entorno — Vercel (dashboard)
+
+| Variable | Valor |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | la misma URL del proyecto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | la misma clave `anon` (segura de exponer en el cliente por diseño) |
+
+Agrega ambas para **Production** y **Preview**. `SUPABASE_SERVICE_ROLE_KEY` **nunca**
+va en el dashboard/frontend — solo en el backend (Railway) o como variable local/CI
+para `scripts/migrar-usuarios-supabase.ts`.
+
+### 3.3 Configuración a verificar en el dashboard de Supabase antes del cutover
+
+No asumas los valores por defecto — verifica cada uno contra el proyecto real:
+
+- **Authentication → URL Configuration**: `Site URL` = dominio real del dashboard
+  (`https://panel.talentix.com.do`); agrega `https://panel.talentix.com.do/auth/confirm`
+  a **Redirect URLs** (Supabase rechaza cualquier `redirectTo` que no esté en esa lista).
+- **Authentication → Providers → Email**: considera deshabilitar el auto-registro
+  público, ya que todos los usuarios se crean por invitación desde el panel admin.
+- **Authentication → Multi-factor**: confirmar que TOTP esté habilitado (debería
+  estarlo por defecto en el plan Free, pero verifica contra el proyecto real).
+- **Email Templates → Invite user**: personaliza el texto para que se lea como
+  "activa tu cuenta en TalentiX" en vez del texto genérico de Supabase.
+- Si el envío de correos fue lento/inconsistente durante pruebas (posible en el
+  SMTP por defecto de Supabase en plan Free), considera configurar un proveedor
+  SMTP propio en **Authentication → SMTP Settings** antes de invitar usuarios reales.
+
+### 3.4 Runbook de despliegue (orden obligatorio, evita cortar el login en producción)
+
+1. **Migración de schema aditiva primero**: `npx prisma migrate deploy` debe
+   aplicar `20260717010000_supabase_auth_add_columns` (agrega `supabaseUserId`
+   nullable y `passwordEstablecida` con default `false`) **sin** aplicar todavía
+   `20260717020000_supabase_auth_cutover` (que es destructiva: borra
+   `passwordHash`/`passwordDebeCambiar`/`Sesion` y vuelve `supabaseUserId`
+   obligatorio). Si usas Release Command de Railway con `migrate deploy` sin
+   más control, aplica ambas en el mismo deploy — para un rollout gradual real,
+   despliega primero solo con la migración aditiva aplicada a mano
+   (`prisma migrate resolve` o aplicando ese único archivo), deja el código
+   viejo funcionando, y recién en el paso 3 aplicas la migración de corte.
+2. Correr `scripts/migrar-usuarios-supabase.ts` contra producción (con
+   `SUPABASE_SERVICE_ROLE_KEY` y `DATABASE_URL` de producción como variables
+   locales, nunca commiteadas) — envía la invitación real a cada `Usuario`
+   existente, incluyendo `eric.vizcaino@agil.com.do`, y les asigna su
+   `supabaseUserId`.
+3. **Cutover**: desplegar en un solo release el código de este commit (login
+   nuevo + guards basados en Bearer + `proxy.ts` nuevo + `lib/api.ts` nuevo) y
+   aplicar la migración destructiva `20260717020000_supabase_auth_cutover`.
+   Confirmar primero en un usuario de prueba que el ciclo completo (invitación →
+   activar cuenta → login → MFA si es CEO/RRHH → panel) funciona de punta a
+   punta contra producción, no solo local.
+4. Solo después de confirmar estabilidad, considerar el cutover cerrado — no hay
+   vuelta atrás sencilla una vez aplicada la migración destructiva.
+
+### 3.5 Antes de cualquier `git push` de esta fase
+
+Confirmar explícitamente qué commits se van a subir con `git log origin/main..HEAD`
+— no asumir que "el commit de arriba" es el único que sube. Esta migración de auth
+ya se pusheó por accidente una vez junto con un fix no relacionado (ver historial de
+commits `bd0bb91`/`b206933`); no repetir ese error.
+
+### 3.6 Verificación post-deploy
+
+- `GET /auth/me` con un token real (`curl -H "Authorization: Bearer <token>"`)
+  antes y después del cutover, confirmando que devuelve `passwordEstablecida`
+  correctamente.
+- Confirmar que alguien con `passwordEstablecida = false` **no puede** saltarse
+  `/activar-cuenta` navegando directo a otra URL del panel.
+- Confirmar que ClawLink (`codigoAcceso`) sigue funcionando sin cambios:
+  `curl "https://api.talentix.com.do/empresas/<slug>/dashboard?codigoAcceso=<codigo>"`
+  debe seguir respondiendo 200.
+- Confirmar que el correo de invitación/reset llega y su link resuelve
+  correctamente contra el dominio real de producción, no solo localhost.
+
+---
+
+## 4. DNS — resumen de registros a crear
 
 En el proveedor de DNS de `talentix.com.do`, crea:
 
@@ -128,7 +219,7 @@ configurar HTTPS manualmente en ninguno de los dos.
 
 ---
 
-## 4. Orden recomendado para el día del deploy
+## 5. Orden recomendado para el día del deploy
 
 1. Desplegar la API en Railway (sección 1) y confirmar que responde en su dominio
    `*.up.railway.app` por defecto, **antes** de mover DNS.
@@ -136,7 +227,7 @@ configurar HTTPS manualmente en ninguno de los dos.
    `*.up.railway.app` de Railway en `NEXT_PUBLIC_API_URL`, y confirmar que el panel
    funciona end-to-end con esa URL temporal.
 3. Agregar los dominios personalizados en ambos (secciones 1.3 y 2.3).
-4. Crear los registros DNS (sección 3).
+4. Crear los registros DNS (sección 4).
 5. Una vez el DNS propague y los dominios se verifiquen, actualizar
    `CORS_ORIGIN` (Railway) y `NEXT_PUBLIC_API_URL` (Vercel) a los dominios finales
    y volver a desplegar ambos servicios (un redeploy manual basta, no requiere
@@ -147,11 +238,14 @@ existe, y permite probar todo el flujo antes de tocar el DNS real.
 
 ---
 
-## 5. Antes de anunciar el lanzamiento — checklist
+## 6. Antes de anunciar el lanzamiento — checklist
 
 - [ ] Confirmar que `ADMIN_TOKEN` y `CORS_ORIGIN` están configurados en Railway
       (sin ellos, `GET /empresas` queda bloqueado y el CORS usa el default de
       desarrollo).
+- [ ] Confirmar que `SUPABASE_URL`/`SUPABASE_ANON_KEY` (Railway y Vercel) y
+      `SUPABASE_SERVICE_ROLE_KEY` (solo Railway, solo si el panel admin debe
+      poder invitar usuarios en producción) están configurados — ver sección 3.
 - [ ] Considerar rotar los códigos de acceso de demo (`IAGIL-2026` y los de
       `Cliente Demo 1-4`) si la base de Neon de producción es la misma que se usó
       durante el desarrollo — esos códigos ya aparecieron en este chat y en
