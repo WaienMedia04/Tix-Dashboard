@@ -1,6 +1,7 @@
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import type { KpiEmpleado, Tendencia } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
+import { EstadoBadge } from "@/components/EstadoBadge";
 import { StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 
 function colorPuntaje(puntaje: number | null): string {
@@ -49,6 +50,7 @@ export function TablaKpisEmpleado({ datos }: { datos: KpiEmpleado[] }) {
                     <div className="flex items-center gap-2.5">
                       <Avatar nombreCompleto={d.nombre} fotoUrl={d.fotoUrl} size="sm" />
                       {d.nombre}
+                      {d.estadoActual && <EstadoBadge estado={d.estadoActual} />}
                     </div>
                   </td>
                   <td className={`px-4 py-2.5 font-semibold tabular-nums ${colorPuntaje(d.puntajeProm)}`}>

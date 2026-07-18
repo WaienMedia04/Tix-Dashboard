@@ -31,3 +31,18 @@ export function clasificarEstado(raw: string): EstadoClasificado {
   }
   return { label: raw.replace(/[✅❌📋]/gu, '').trim(), colorKey: 'muted' };
 }
+
+/**
+ * Días cubiertos por una ausencia autorizada (permiso, licencia médica o
+ * vacaciones) — no deben contar como "no enviada" al calcular cumplimiento:
+ * la persona no dejó de trabajar, tenía autorización para no hacerlo.
+ */
+export function esAusenciaAutorizada(raw: string): boolean {
+  const texto = raw.toLowerCase();
+  return (
+    texto.includes('vacacion') ||
+    raw.includes('📋') ||
+    texto.includes('permiso') ||
+    texto.includes('licencia')
+  );
+}

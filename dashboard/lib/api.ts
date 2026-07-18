@@ -233,6 +233,8 @@ export interface KpiEmpleado {
   cumplimientoTareasProm: number | null;
   enviadas: number;
   tendencia: Tendencia;
+  /** Marcador crudo si hoy tiene una ausencia autorizada activa (permiso/licencia/vacaciones), si no null. */
+  estadoActual: string | null;
 }
 
 export interface KpisResumen {

@@ -29,6 +29,17 @@ export function talentoScopeWhere(actor: Actor): Prisma.TalentoWhereInput {
 }
 
 /**
+ * Igual que talentoScopeWhere, pero además excluye a los talentos
+ * inactivos — para las métricas (dashboard, KPIs, rankings, reportes),
+ * donde un empleado que ya no está no debe figurar ni contar. La lista de
+ * Empleados y el histórico de Bitácoras siguen usando talentoScopeWhere
+ * sin este filtro: ahí sí interesa ver/buscar inactivos.
+ */
+export function talentoActivoScopeWhere(actor: Actor): Prisma.TalentoWhereInput {
+  return { ...talentoScopeWhere(actor), estado: 'activo' };
+}
+
+/**
  * Devuelve `null` cuando el actor ve toda la empresa (sin restricción que
  * aplicar), o el array de talentoId permitidos cuando el alcance es parcial
  * (MANAGER/TALENTO) — incluso si queda vacío, para no filtrar "sin filtro".

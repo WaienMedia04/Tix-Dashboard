@@ -13,7 +13,7 @@ import { CrearTalentoDto } from './dto/crear-talento.dto';
 import { CrearUsuarioEmpresaDto } from './dto/crear-usuario-empresa.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { AnalisisEjecutivoService } from './analisis-ejecutivo.service';
-import { clasificarEstado } from './estado.util';
+import { clasificarEstado, esAusenciaAutorizada } from './estado.util';
 import { invitarUsuario } from '../auth/invitar-usuario.util';
 import { cambiarCorreoUsuario, enviarResetPassword } from '../auth/gestionar-usuario.util';
 import {
@@ -25,8 +25,14 @@ import {
 import { Actor } from '../auth/actor.types';
 import {
   resolverAlcanceTalentoIds,
+  talentoActivoScopeWhere,
   talentoScopeWhere,
 } from '../auth/talento-scope.util';
+
+/** Días de ausencia autorizada quedan fuera del numerador y denominador. */
+function excluirAusencias<T extends { estadoEnvio: string }>(registros: T[]): T[] {
+  return registros.filter((w) => !esAusenciaAutorizada(w.estadoEnvio));
+}
 
 const MARCADOR_ESTADO: Record<string, string> = {
   enviada: '✅',
@@ -77,14 +83,16 @@ export class EmpresasService {
     const empresa = await this.resolverEmpresa(slug, actor);
 
     // TODO: filtrar por empresaId es manual porque todavia no hay RLS en Postgres.
-    // Alcance adicional por rol (MANAGER/TALENTO ven solo su gente) via talentoScopeWhere.
+    // Alcance adicional por rol (MANAGER/TALENTO ven solo su gente) via
+    // talentoActivoScopeWhere — solo talentos activos entran a las métricas,
+    // un inactivo no tiene sentido que "no envió bitácora".
     const [worklogsTodos, talentos] = await Promise.all([
       this.prisma.worklog.findMany({
         where: { empresaId: empresa.id },
         include: { talento: { select: { nombreCompleto: true } } },
         orderBy: { fecha: 'desc' },
       }),
-      this.prisma.talento.findMany({ where: talentoScopeWhere(actor) }),
+      this.prisma.talento.findMany({ where: talentoActivoScopeWhere(actor) }),
     ]);
 
     const talentoIdsVisibles = new Set(talentos.map((t) => t.id));
@@ -100,9 +108,11 @@ export class EmpresasService {
     const worklogsMesActual = worklogs.filter(
       (w) => w.fecha >= rangoMesActual.inicio && w.fecha <= rangoMesActual.fin,
     );
+    // Vacaciones/permiso/licencia no cuentan como bitácora esperada.
+    const worklogsMesActualEvaluables = excluirAusencias(worklogsMesActual);
 
-    const totalBitacoras = worklogsMesActual.length;
-    const enviadas = worklogsMesActual.filter(
+    const totalBitacoras = worklogsMesActualEvaluables.length;
+    const enviadas = worklogsMesActualEvaluables.filter(
       (w) => w.estadoEnvio === '✅ Enviada',
     ).length;
     const porcentajeEnviadas =
@@ -113,6 +123,7 @@ export class EmpresasService {
     const rankingTalentos = talentos
       .map((t) => {
         const propios = worklogs.filter((w) => w.talentoId === t.id);
+        const propiosEvaluables = excluirAusencias(propios);
         const conPuntaje = propios.filter((w) => w.puntajeIA !== null);
         const promedio =
           conPuntaje.length === 0
@@ -128,10 +139,10 @@ export class EmpresasService {
           rol: t.rol,
           fotoUrl: t.fotoUrl,
           puntajeIAPromedio: promedio,
-          bitacorasEnviadas: propios.filter(
+          bitacorasEnviadas: propiosEvaluables.filter(
             (w) => w.estadoEnvio === '✅ Enviada',
           ).length,
-          totalBitacoras: propios.length,
+          totalBitacoras: propiosEvaluables.length,
         };
       })
       .sort(
@@ -573,12 +584,17 @@ export class EmpresasService {
       semanas.push({ inicio, fin });
     }
 
+    const hoy = new Date(
+      Date.UTC(ahora.getUTCFullYear(), ahora.getUTCMonth(), ahora.getUTCDate()),
+    );
+
     // TODO: filtrar por empresaId es manual porque todavia no hay RLS en Postgres.
     const [
-      worklogsRangoSemanal,
-      worklogsPeriodo,
-      worklogsPeriodoAnterior,
+      worklogsRangoSemanalTodos,
+      worklogsPeriodoTodos,
+      worklogsPeriodoAnteriorTodos,
       talentos,
+      worklogsHoy,
     ] = await Promise.all([
       this.prisma.worklog.findMany({
         where: {
@@ -586,7 +602,7 @@ export class EmpresasService {
           talentoId: talentoIdFiltro,
           fecha: { gte: semanas[0].inicio, lte: semanas[7].fin },
         },
-        select: { fecha: true, estadoEnvio: true, puntajeIA: true },
+        select: { talentoId: true, fecha: true, estadoEnvio: true, puntajeIA: true },
       }),
       this.prisma.worklog.findMany({
         where: {
@@ -609,8 +625,31 @@ export class EmpresasService {
         },
         select: { talentoId: true, puntajeIA: true },
       }),
-      this.prisma.talento.findMany({ where: talentoScopeWhere(actor) }),
+      this.prisma.talento.findMany({ where: talentoActivoScopeWhere(actor) }),
+      this.prisma.worklog.findMany({
+        where: { empresaId: empresa.id, talentoId: talentoIdFiltro, fecha: hoy },
+        select: { talentoId: true, estadoEnvio: true },
+      }),
     ]);
+
+    // talentoIdFiltro no distingue activo/inactivo (viene del alcance por
+    // rol) — se vuelve a filtrar aquí contra los talentos activos ya
+    // resueltos, para que ningún inactivo se cuele en los agregados.
+    const talentoIdsVisibles = new Set(talentos.map((t) => t.id));
+    const worklogsRangoSemanal = worklogsRangoSemanalTodos.filter((w) =>
+      talentoIdsVisibles.has(w.talentoId),
+    );
+    const worklogsPeriodo = worklogsPeriodoTodos.filter((w) =>
+      talentoIdsVisibles.has(w.talentoId),
+    );
+    const worklogsPeriodoAnterior = worklogsPeriodoAnteriorTodos.filter((w) =>
+      talentoIdsVisibles.has(w.talentoId),
+    );
+    const estadoActualPorTalento = new Map(
+      worklogsHoy
+        .filter((w) => esAusenciaAutorizada(w.estadoEnvio))
+        .map((w) => [w.talentoId, w.estadoEnvio]),
+    );
 
     const evolucionSemanal = semanas.map(({ inicio, fin }) => {
       const enSemana = worklogsRangoSemanal.filter(
@@ -629,8 +668,8 @@ export class EmpresasService {
     });
 
     const bitacorasSemanal = semanas.map(({ inicio, fin }) => {
-      const enSemana = worklogsRangoSemanal.filter(
-        (w) => w.fecha >= inicio && w.fecha <= fin,
+      const enSemana = excluirAusencias(
+        worklogsRangoSemanal.filter((w) => w.fecha >= inicio && w.fecha <= fin),
       );
       const enviadas = enSemana.filter((w) =>
         w.estadoEnvio.includes('✅'),
@@ -710,13 +749,14 @@ export class EmpresasService {
                   conPuntaje.length) *
                   10,
               ) / 10;
-        const enviadas = propios.filter((w) =>
+        const propiosEvaluables = excluirAusencias(propios);
+        const enviadas = propiosEvaluables.filter((w) =>
           w.estadoEnvio.includes('✅'),
         ).length;
         const cumplimiento =
-          propios.length === 0
+          propiosEvaluables.length === 0
             ? null
-            : Math.round((enviadas / propios.length) * 1000) / 10;
+            : Math.round((enviadas / propiosEvaluables.length) * 1000) / 10;
         const conCumplimientoTareas = propios.filter(
           (w) => w.cumplimientoTareas !== null,
         );
@@ -747,6 +787,7 @@ export class EmpresasService {
           cumplimientoTareasProm,
           enviadas,
           tendencia,
+          estadoActual: estadoActualPorTalento.get(t.id) ?? null,
         };
       })
       .sort((a, b) => (b.puntajeProm ?? -1) - (a.puntajeProm ?? -1));
@@ -770,13 +811,14 @@ export class EmpresasService {
         ? Math.round((puntajeProm - puntajePromAnterior) * 10) / 10
         : null;
 
-    const enviadasPeriodo = worklogsPeriodo.filter((w) =>
+    const worklogsPeriodoEvaluables = excluirAusencias(worklogsPeriodo);
+    const enviadasPeriodo = worklogsPeriodoEvaluables.filter((w) =>
       w.estadoEnvio.includes('✅'),
     ).length;
     const porcentajeCumplimientoPromedio =
-      worklogsPeriodo.length === 0
+      worklogsPeriodoEvaluables.length === 0
         ? null
-        : Math.round((enviadasPeriodo / worklogsPeriodo.length) * 1000) / 10;
+        : Math.round((enviadasPeriodo / worklogsPeriodoEvaluables.length) * 1000) / 10;
 
     const empleadoDestacado =
       kpisPorEmpleado.length > 0 && kpisPorEmpleado[0].puntajeProm !== null
@@ -838,7 +880,7 @@ export class EmpresasService {
             : rangoAnual(query.valor));
     }
 
-    const [worklogs, talentos] = await Promise.all([
+    const [worklogsTodos, talentos] = await Promise.all([
       this.prisma.worklog.findMany({
         where: {
           empresaId: empresa.id,
@@ -852,11 +894,19 @@ export class EmpresasService {
           cumplimientoTareas: true,
         },
       }),
-      this.prisma.talento.findMany({ where: talentoScopeWhere(actor) }),
+      this.prisma.talento.findMany({ where: talentoActivoScopeWhere(actor) }),
     ]);
 
-    const totalBitacoras = worklogs.length;
-    const enviadas = worklogs.filter((w) =>
+    // talentoIdFiltro no distingue activo/inactivo — se re-filtra contra
+    // los talentos activos ya resueltos.
+    const talentoIdsVisibles = new Set(talentos.map((t) => t.id));
+    const worklogs = worklogsTodos.filter((w) =>
+      talentoIdsVisibles.has(w.talentoId),
+    );
+    const worklogsEvaluables = excluirAusencias(worklogs);
+
+    const totalBitacoras = worklogsEvaluables.length;
+    const enviadas = worklogsEvaluables.filter((w) =>
       w.estadoEnvio.includes('✅'),
     ).length;
     const porcentajeEnviadas =
@@ -888,13 +938,14 @@ export class EmpresasService {
                   propiosConPuntaje.length) *
                   10,
               ) / 10;
-        const propiasEnviadas = propios.filter((w) =>
+        const propiosEvaluables = excluirAusencias(propios);
+        const propiasEnviadas = propiosEvaluables.filter((w) =>
           w.estadoEnvio.includes('✅'),
         ).length;
         const propioCumplimiento =
-          propios.length === 0
+          propiosEvaluables.length === 0
             ? null
-            : Math.round((propiasEnviadas / propios.length) * 1000) / 10;
+            : Math.round((propiasEnviadas / propiosEvaluables.length) * 1000) / 10;
         const propiosConCumplimientoTareas = propios.filter(
           (w) => w.cumplimientoTareas !== null,
         );
@@ -916,7 +967,7 @@ export class EmpresasService {
           cumplimiento: propioCumplimiento,
           cumplimientoTareasProm: propioCumplimientoTareasProm,
           enviadas: propiasEnviadas,
-          totalBitacoras: propios.length,
+          totalBitacoras: propiosEvaluables.length,
         };
       })
       .sort((a, b) => (b.puntajeProm ?? -1) - (a.puntajeProm ?? -1));
@@ -1088,7 +1139,7 @@ export class EmpresasService {
     }
 
     const [talentos, worklogs] = await Promise.all([
-      this.prisma.talento.findMany({ where: talentoScopeWhere(actor) }),
+      this.prisma.talento.findMany({ where: talentoActivoScopeWhere(actor) }),
       this.prisma.worklog.findMany({
         where: {
           empresaId: empresa.id,
@@ -1111,16 +1162,17 @@ export class EmpresasService {
                     conPuntaje.length) *
                     10,
                 ) / 10;
+          const propiosEvaluables = excluirAusencias(propios);
           return {
             talentoId: t.id,
             nombreCompleto: t.nombreCompleto,
             rol: t.rol,
             fotoUrl: t.fotoUrl,
             puntajeIAPromedio,
-            bitacorasEnviadas: propios.filter((w) =>
+            bitacorasEnviadas: propiosEvaluables.filter((w) =>
               w.estadoEnvio.includes('✅'),
             ).length,
-            totalBitacoras: propios.length,
+            totalBitacoras: propiosEvaluables.length,
           };
         })
         .sort(
@@ -1170,7 +1222,7 @@ export class EmpresasService {
     const empresa = await this.resolverEmpresa(slug, actor);
 
     const [talentos, worklogsDesc] = await Promise.all([
-      this.prisma.talento.findMany({ where: talentoScopeWhere(actor) }),
+      this.prisma.talento.findMany({ where: talentoActivoScopeWhere(actor) }),
       this.prisma.worklog.findMany({
         where: { empresaId: empresa.id },
         select: {
@@ -1198,7 +1250,6 @@ export class EmpresasService {
     const alertas: Alerta[] = [];
 
     for (const t of talentos) {
-      if (t.estado !== 'activo') continue;
       // worklogs ya viene ordenado desc por fecha; filter() preserva ese orden.
       const propios = worklogs.filter((w) => w.talentoId === t.id);
       const ultimo = propios[0] ?? null;
@@ -1235,10 +1286,14 @@ export class EmpresasService {
       );
       if (delMes.length === 0) continue;
 
-      const enviadas = delMes.filter((w) =>
+      const delMesEvaluable = excluirAusencias(delMes);
+      const enviadas = delMesEvaluable.filter((w) =>
         w.estadoEnvio.includes('✅'),
       ).length;
-      const cumplimiento = Math.round((enviadas / delMes.length) * 1000) / 10;
+      const cumplimiento =
+        delMesEvaluable.length === 0
+          ? 100
+          : Math.round((enviadas / delMesEvaluable.length) * 1000) / 10;
       const conPuntaje = delMes.filter((w) => w.puntajeIA !== null);
       const puntajeProm =
         conPuntaje.length === 0
