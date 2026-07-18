@@ -1,8 +1,17 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
 
-export function Header({ empresaNombre, plan }: { empresaNombre: string; plan: string }) {
+export function Header({
+  empresaNombre,
+  plan,
+  onAbrirMenu,
+}: {
+  empresaNombre: string;
+  plan: string;
+  onAbrirMenu?: () => void;
+}) {
   const pathname = usePathname();
   const segmento = pathname.split("/").filter(Boolean)[1] ?? "dashboard";
 
@@ -21,13 +30,24 @@ export function Header({ empresaNombre, plan }: { empresaNombre: string; plan: s
   const seccion = SECCIONES[segmento] ?? SECCIONES.dashboard;
 
   return (
-    <header className="bg-gradient-mesh relative flex h-20 select-none items-center justify-between border-b border-border bg-background px-8 print:hidden">
-      <div>
-        <h1 className="font-display text-2xl font-semibold text-foreground">{seccion.titulo}</h1>
-        <p className="text-sm text-muted-foreground">{seccion.subtitulo}</p>
+    <header className="bg-gradient-mesh pt-safe relative flex h-auto min-h-16 select-none items-center justify-between gap-3 border-b border-border bg-background px-4 py-3 sm:h-20 sm:px-8 sm:py-0 print:hidden">
+      <div className="flex min-w-0 items-center gap-2">
+        <button
+          onClick={onAbrirMenu}
+          aria-label="Abrir menú"
+          className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-foreground transition-colors hover:bg-accent lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="min-w-0">
+          <h1 className="font-display truncate text-lg font-semibold text-foreground sm:text-2xl">
+            {seccion.titulo}
+          </h1>
+          <p className="hidden truncate text-sm text-muted-foreground sm:block">{seccion.subtitulo}</p>
+        </div>
       </div>
-      <div className="text-right">
-        <p className="text-sm font-medium text-foreground">{empresaNombre}</p>
+      <div className="shrink-0 text-right">
+        <p className="max-w-[40vw] truncate text-sm font-medium text-foreground">{empresaNombre}</p>
         <p className="text-xs text-muted-foreground capitalize">Plan {plan}</p>
       </div>
     </header>

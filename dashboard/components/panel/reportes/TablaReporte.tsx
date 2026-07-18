@@ -1,5 +1,5 @@
 import type { ReporteDetalleItem } from "@/lib/api";
-import { StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
+import { StaggerGroup, StaggerItem, StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 
 function colorPuntaje(puntaje: number | null): string {
   if (puntaje === null) return "text-muted-foreground";
@@ -9,9 +9,12 @@ function colorPuntaje(puntaje: number | null): string {
 }
 
 export function TablaReporte({ datos }: { datos: ReporteDetalleItem[] }) {
+  const vacio = datos.length === 0;
+
   return (
     <section className="rounded-lg border border-border bg-card shadow-card">
-      <div className="overflow-x-auto">
+      {/* Escritorio/tablet ancha (y siempre al imprimir): tabla */}
+      <div className="hidden overflow-x-auto lg:block print:!block">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -25,7 +28,7 @@ export function TablaReporte({ datos }: { datos: ReporteDetalleItem[] }) {
             </tr>
           </thead>
           <tbody>
-            {datos.length === 0 && (
+            {vacio && (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">
                   No hay empleados registrados.
@@ -33,7 +36,7 @@ export function TablaReporte({ datos }: { datos: ReporteDetalleItem[] }) {
               </tr>
             )}
           </tbody>
-          {datos.length > 0 && (
+          {!vacio && (
             <StaggerTableBody>
               {datos.map((d) => (
                 <StaggerRow
@@ -60,6 +63,51 @@ export function TablaReporte({ datos }: { datos: ReporteDetalleItem[] }) {
             </StaggerTableBody>
           )}
         </table>
+      </div>
+
+      {/* Celular/tablet vertical: tarjetas apiladas (ocultas al imprimir) */}
+      <div className="divide-y divide-border lg:hidden print:hidden">
+        {vacio && (
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">No hay empleados registrados.</p>
+        )}
+        {!vacio && (
+          <StaggerGroup>
+            {datos.map((d) => (
+              <StaggerItem key={d.talentoId}>
+                <div className="flex flex-col gap-2 px-4 py-3">
+                  <div>
+                    <p className="truncate text-sm font-medium text-foreground">{d.nombre}</p>
+                    <p className="truncate text-xs text-muted-foreground">{d.rol}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                    <span className="text-muted-foreground">
+                      Puntaje:{" "}
+                      <span className={`font-semibold tabular-nums ${colorPuntaje(d.puntajeProm)}`}>
+                        {d.puntajeProm === null ? "—" : d.puntajeProm.toFixed(1)}
+                      </span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      Cumplimiento:{" "}
+                      <span className="tabular-nums text-foreground">
+                        {d.cumplimiento === null ? "—" : `${d.cumplimiento}%`}
+                      </span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      Tareas:{" "}
+                      <span className="tabular-nums text-foreground">
+                        {d.cumplimientoTareasProm === null ? "—" : `${d.cumplimientoTareasProm}%`}
+                      </span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      Enviadas: <span className="tabular-nums text-foreground">{d.enviadas}</span> /{" "}
+                      {d.totalBitacoras}
+                    </span>
+                  </div>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerGroup>
+        )}
       </div>
     </section>
   );

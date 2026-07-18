@@ -95,14 +95,14 @@ botToken (reservado para auth futura): ${empresa.botToken ?? "⚠️ sin token �
   const botTokenTexto = empresa.botToken ?? "⚠️ sin token — regenera desde el panel";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div className="pt-safe pb-safe fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl border border-border bg-popover shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Bot className="h-5 w-5 text-primary" />
-            <div>
-              <h2 className="font-display text-base font-semibold text-foreground">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <Bot className="h-5 w-5 shrink-0 text-primary" />
+            <div className="min-w-0">
+              <h2 className="font-display truncate text-base font-semibold text-foreground">
                 Conectar Bot — {empresa.nombre}
               </h2>
               <p className="text-xs text-muted-foreground">Instrucciones de integración con OpenClaw</p>
@@ -110,14 +110,14 @@ botToken (reservado para auth futura): ${empresa.botToken ?? "⚠️ sin token �
           </div>
           <button
             onClick={onClose}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Body (scrollable) */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 sm:px-6 sm:py-5">
 
           {/* Datos clave */}
           <div>
@@ -205,7 +205,7 @@ botToken (reservado para auth futura): ${empresa.botToken ?? "⚠️ sin token �
         </div>
 
         {/* Footer */}
-        <div className="border-t border-border px-6 py-4">
+        <div className="border-t border-border px-4 py-3 sm:px-6 sm:py-4">
           <button
             onClick={onClose}
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
@@ -243,8 +243,8 @@ function ModalEliminarEmpresa({
   const confirmado = confirmInput === empresa.nombre;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-xl border border-destructive/40 bg-popover p-6 shadow-2xl">
+    <div className="pt-safe pb-safe fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-md rounded-xl border border-destructive/40 bg-popover p-4 shadow-2xl sm:p-6">
         <div className="mb-4 flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10">
             <Trash2 className="h-5 w-5 text-destructive" />
@@ -659,7 +659,7 @@ export default function AdminEmpresaDetallePage() {
               onSubmit={(e) => void handleCrearEmpleado(e)}
               className="space-y-3 border-b border-border px-5 py-4"
             >
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">Nombre completo *</label>
                   <input
@@ -693,7 +693,7 @@ export default function AdminEmpresaDetallePage() {
               </label>
 
               {crearAcceso && (
-                <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-background/50 p-3">
+                <div className="grid grid-cols-1 gap-3 rounded-md border border-border bg-background/50 p-3 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-muted-foreground">Correo *</label>
                     <input
@@ -780,7 +780,7 @@ export default function AdminEmpresaDetallePage() {
               <p className="px-5 py-6 text-sm text-muted-foreground">Sin empleados registrados.</p>
             ) : (
               empleados.map((emp) => (
-                <div key={emp.id} className="flex items-center justify-between px-5 py-3 gap-3">
+                <div key={emp.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">{emp.nombreCompleto}</p>
                     <p className="text-xs text-muted-foreground">{emp.rol} · {emp._count.worklogs} bitácoras</p>

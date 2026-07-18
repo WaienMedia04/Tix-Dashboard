@@ -96,7 +96,8 @@ export default function AdminDashboardPage() {
             Gestionar →
           </Link>
         </div>
-        <div className="overflow-x-auto">
+        {/* Escritorio/tablet ancha: tabla */}
+        <div className="hidden overflow-x-auto lg:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -133,6 +134,37 @@ export default function AdminDashboardPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Celular/tablet vertical: tarjetas apiladas */}
+        <div className="divide-y divide-border lg:hidden">
+          {empresas.map((e) => (
+            <div key={e.id} className="flex flex-col gap-2 px-4 py-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <Link
+                    href={`/admin/empresas/${e.id}`}
+                    className="truncate text-sm font-medium text-foreground hover:text-primary"
+                  >
+                    {e.nombre}
+                  </Link>
+                  <p className="truncate text-xs font-mono text-muted-foreground">{e.slug}</p>
+                </div>
+                <button
+                  onClick={() => void toggleEmpresa(e.id, e.activo)}
+                  disabled={toggling === e.id}
+                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors ${e.activo ? "bg-success/10 text-success hover:bg-success/20" : "bg-destructive/10 text-destructive hover:bg-destructive/20"} disabled:opacity-50`}
+                >
+                  {toggling === e.id ? "..." : e.activo ? "Activa" : "Inactiva"}
+                </button>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <BadgePlan plan={e.plan} />
+                <span className="tabular-nums">{e.totalEmpleados} empl.</span>
+                <span className="tabular-nums">{e.totalBitacoras} bit.</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

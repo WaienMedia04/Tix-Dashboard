@@ -56,7 +56,7 @@ export function Modal({
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="pt-safe pb-safe fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -77,9 +77,9 @@ export function Modal({
             transition={{ duration: 0.18, ease: "easeOut" }}
             className={`relative z-10 max-h-[85vh] w-full ${TAMANOS[size]} overflow-y-auto rounded-xl border border-border bg-popover shadow-elegant outline-none`}
           >
-            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-border bg-popover px-6 py-4">
-              <div>
-                <h2 id={tituloId} className="text-base font-semibold text-foreground">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-border bg-popover px-4 py-3 sm:px-6 sm:py-4">
+              <div className="min-w-0">
+                <h2 id={tituloId} className="truncate text-base font-semibold text-foreground">
                   {title}
                 </h2>
                 {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
@@ -92,7 +92,7 @@ export function Modal({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="px-6 py-5">{children}</div>
+            <div className="px-4 py-4 sm:px-6 sm:py-5">{children}</div>
           </motion.div>
         </div>
       )}

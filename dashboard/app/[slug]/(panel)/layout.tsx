@@ -33,6 +33,14 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
   const router = useRouter();
   const pathname = usePathname();
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
+
+  // Cierra el drawer si la ruta cambia por fuera de un tap en el propio
+  // menú (ej. gesto de atrás/adelante del navegador).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMenuMovilAbierto(false);
+  }, [pathname]);
 
   useEffect(() => {
     let cancelado = false;
@@ -101,10 +109,20 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
       }}
     >
       <div className="flex h-screen w-screen overflow-hidden bg-background print:h-auto print:w-auto print:overflow-visible">
-        <Sidebar slug={slug} empresaNombre={estado.data.empresa.nombre} rol={estado.rol} />
+        <Sidebar
+          slug={slug}
+          empresaNombre={estado.data.empresa.nombre}
+          rol={estado.rol}
+          abierto={menuMovilAbierto}
+          onCerrar={() => setMenuMovilAbierto(false)}
+        />
         <div className="flex min-w-0 flex-1 flex-col print:overflow-visible">
-          <Header empresaNombre={estado.data.empresa.nombre} plan={estado.data.empresa.plan} />
-          <main className="bg-page-backdrop flex-1 overflow-y-auto px-6 py-5 print:overflow-visible print:bg-transparent print:p-0">
+          <Header
+            empresaNombre={estado.data.empresa.nombre}
+            plan={estado.data.empresa.plan}
+            onAbrirMenu={() => setMenuMovilAbierto(true)}
+          />
+          <main className="bg-page-backdrop flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5 print:overflow-visible print:bg-transparent print:p-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={pathname}

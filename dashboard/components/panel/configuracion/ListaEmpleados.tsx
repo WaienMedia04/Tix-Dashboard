@@ -15,7 +15,7 @@ import {
   restablecerPasswordUsuarioTalento,
 } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
-import { StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
+import { StaggerGroup, StaggerItem, StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 import { SkeletonTableRows } from "@/components/motion/Skeleton";
 
 const CAMPO_CLASES =
@@ -397,7 +397,8 @@ export function ListaEmpleados({ slug }: { slug: string }) {
         </form>
       )}
 
-      <div className="overflow-x-auto">
+      {/* Escritorio/tablet ancha: tabla */}
+      <div className="hidden overflow-x-auto lg:block">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -535,6 +536,128 @@ export function ListaEmpleados({ slug }: { slug: string }) {
             </StaggerTableBody>
           )}
         </table>
+      </div>
+
+      {/* Celular/tablet vertical: tarjetas apiladas */}
+      <div className="divide-y divide-border lg:hidden">
+        {estado.tipo === "cargando" && (
+          <div className="space-y-3 p-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="skeleton-shimmer h-20 rounded-lg" />
+            ))}
+          </div>
+        )}
+        {estado.tipo === "error" && (
+          <p className="px-4 py-8 text-center text-sm text-destructive">No se pudo cargar el listado de empleados.</p>
+        )}
+        {estado.tipo === "listo" && (
+          <StaggerGroup>
+            {estado.empleados.map((e) => {
+              const acceso = usuarios.find((u) => u.talentoId === e.id);
+              return (
+                <StaggerItem key={e.id}>
+                  <div className="flex flex-col gap-2 px-4 py-3">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar nombreCompleto={e.nombreCompleto} fotoUrl={e.fotoUrl} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">{e.nombreCompleto}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {e.rol}
+                          {e.departamento ? ` · ${e.departamento}` : ""}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${
+                          e.estado === "activo" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {e.estado === "activo" ? "Activo" : "Inactivo"}
+                      </span>
+                    </div>
+
+                    <div>
+                      {acceso ? (
+                        <span className="inline-flex items-center rounded-md bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                          {acceso.passwordEstablecida ? "Con acceso" : "Invitado"}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setInvitandoTalentoId(invitandoTalentoId === e.id ? null : e.id);
+                            setFormAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO" });
+                            setAccesoExistenteError(null);
+                          }}
+                          className="text-xs font-medium text-primary hover:underline"
+                        >
+                          Dar acceso
+                        </button>
+                      )}
+                    </div>
+
+                    {invitandoTalentoId === e.id && (
+                      <div className="flex flex-col gap-2 rounded-md border border-border bg-muted/30 p-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                            Correo *
+                          </label>
+                          <input
+                            type="email"
+                            value={formAcceso.email}
+                            onChange={(ev) => setFormAcceso((f) => ({ ...f, email: ev.target.value }))}
+                            className={CAMPO_CLASES}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                            Nombre de acceso
+                          </label>
+                          <input
+                            placeholder={e.nombreCompleto}
+                            value={formAcceso.nombreLogin}
+                            onChange={(ev) => setFormAcceso((f) => ({ ...f, nombreLogin: ev.target.value }))}
+                            className={CAMPO_CLASES}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                            Rol de acceso
+                          </label>
+                          <select
+                            value={formAcceso.rolLogin}
+                            onChange={(ev) => setFormAcceso((f) => ({ ...f, rolLogin: ev.target.value as RolInvitable }))}
+                            className={CAMPO_CLASES}
+                          >
+                            {ROLES_INVITABLES.map((r) => (
+                              <option key={r.value} value={r.value}>
+                                {r.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => void handleDarAcceso(e.id, e.nombreCompleto)}
+                            disabled={guardandoAccesoId === e.id}
+                            className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                          >
+                            {guardandoAccesoId === e.id ? "Enviando..." : "Invitar"}
+                          </button>
+                          <button
+                            onClick={() => setInvitandoTalentoId(null)}
+                            className="rounded-md border border-border px-3 py-2 text-xs hover:bg-accent"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                        {accesoExistenteError && <p className="text-xs text-destructive">{accesoExistenteError}</p>}
+                      </div>
+                    )}
+                  </div>
+                </StaggerItem>
+              );
+            })}
+          </StaggerGroup>
+        )}
       </div>
 
       {usuarios.length > 0 && (

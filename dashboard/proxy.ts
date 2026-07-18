@@ -51,5 +51,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  // El manifest y los iconos deben poder cargarse sin sesión — el navegador
+  // los pide desde <head> incluso en la pantalla de login, y son requisito
+  // para que la PWA sea instalable.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|icon|apple-icon).*)"],
 };

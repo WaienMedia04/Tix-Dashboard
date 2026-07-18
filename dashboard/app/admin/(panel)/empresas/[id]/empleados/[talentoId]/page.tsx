@@ -181,7 +181,7 @@ export default function AdminFichaEmpleadoPage() {
       </div>
 
       {/* Métricas */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[
           { label: "Bitácoras", value: metricas.totalBitacoras, icon: ClipboardList },
           {
@@ -321,42 +321,63 @@ export default function AdminFichaEmpleadoPage() {
         {worklogs.length === 0 ? (
           <p className="px-5 py-6 text-sm text-muted-foreground">Sin bitácoras registradas.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  <th className="px-5 py-3">Fecha</th>
-                  <th className="px-3 py-3">Día</th>
-                  <th className="px-3 py-3 text-center">Sem.</th>
-                  <th className="px-3 py-3">Estado</th>
-                  <th className="px-3 py-3 text-center">Pts. IA</th>
-                  <th className="px-3 py-3">Actividades</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {worklogs.map((w) => (
-                  <tr key={w.id} className="hover:bg-accent/40">
-                    <td className="px-5 py-2.5 font-mono text-xs text-muted-foreground whitespace-nowrap">
-                      {formatFecha(w.fecha)}
-                    </td>
-                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{w.dia ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-center text-xs text-muted-foreground tabular-nums">
-                      {w.semana ?? "—"}
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <BadgeEstado estado={w.estadoEnvio} />
-                    </td>
-                    <td className="px-3 py-2.5 text-center font-mono text-xs tabular-nums text-foreground">
-                      {w.puntajeIA ?? "—"}
-                    </td>
-                    <td className="max-w-xs px-3 py-2.5 text-xs text-muted-foreground">
-                      <span className="line-clamp-1">{w.actividadesRealizadas ?? "—"}</span>
-                    </td>
+          <>
+            {/* Escritorio/tablet ancha: tabla */}
+            <div className="hidden overflow-x-auto lg:block">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    <th className="px-5 py-3">Fecha</th>
+                    <th className="px-3 py-3">Día</th>
+                    <th className="px-3 py-3 text-center">Sem.</th>
+                    <th className="px-3 py-3">Estado</th>
+                    <th className="px-3 py-3 text-center">Pts. IA</th>
+                    <th className="px-3 py-3">Actividades</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {worklogs.map((w) => (
+                    <tr key={w.id} className="hover:bg-accent/40">
+                      <td className="px-5 py-2.5 font-mono text-xs text-muted-foreground whitespace-nowrap">
+                        {formatFecha(w.fecha)}
+                      </td>
+                      <td className="px-3 py-2.5 text-xs text-muted-foreground">{w.dia ?? "—"}</td>
+                      <td className="px-3 py-2.5 text-center text-xs text-muted-foreground tabular-nums">
+                        {w.semana ?? "—"}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <BadgeEstado estado={w.estadoEnvio} />
+                      </td>
+                      <td className="px-3 py-2.5 text-center font-mono text-xs tabular-nums text-foreground">
+                        {w.puntajeIA ?? "—"}
+                      </td>
+                      <td className="max-w-xs px-3 py-2.5 text-xs text-muted-foreground">
+                        <span className="line-clamp-1">{w.actividadesRealizadas ?? "—"}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Celular/tablet vertical: tarjetas apiladas */}
+            <div className="divide-y divide-border lg:hidden">
+              {worklogs.map((w) => (
+                <div key={w.id} className="flex flex-col gap-1.5 px-4 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {formatFecha(w.fecha)}
+                      {w.dia ? ` · ${w.dia}` : ""}
+                      {w.semana ? ` · Sem. ${w.semana}` : ""}
+                    </span>
+                    <BadgeEstado estado={w.estadoEnvio} />
+                  </div>
+                  <p className="line-clamp-2 text-xs text-muted-foreground">{w.actividadesRealizadas ?? "—"}</p>
+                  <p className="font-mono text-xs tabular-nums text-foreground">Pts. IA: {w.puntajeIA ?? "—"}</p>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
