@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { Camera, Loader2 } from "lucide-react";
-import { actualizarFotoTalento } from "@/lib/api";
+import { actualizarFotoTalento, authHeaders } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
 
 const TIPOS_PERMITIDOS = ["image/png", "image/jpeg", "image/webp"];
@@ -36,6 +36,7 @@ export function FotoTalento({
       const blob = await upload(`talentos/${talentoId}/foto-${file.name}`, file, {
         access: "public",
         handleUploadUrl: `/api/talentos/${talentoId}/foto`,
+        headers: await authHeaders(),
       });
       const actualizado = await actualizarFotoTalento(talentoId, blob.url);
       onActualizada(actualizado.fotoUrl ?? blob.url);

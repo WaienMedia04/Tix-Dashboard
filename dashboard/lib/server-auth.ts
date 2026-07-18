@@ -1,14 +1,14 @@
 import { API_URL } from "./api";
 
 /**
- * Verifica, del lado del servidor (Route Handler), que la cookie de sesión
- * de la request pertenezca a un CEO o RRHH — son los únicos roles que
- * pueden subir fotos/CVs de talentos. Lanza si no está autorizado.
+ * Verifica, del lado del servidor (Route Handler), que el Bearer token
+ * Supabase de la request pertenezca a un CEO o RRHH — son los únicos roles
+ * que pueden subir fotos/CVs de talentos. Lanza si no está autorizado.
  */
 export async function exigirRolAdministrativo(request: Request): Promise<void> {
-  const cookie = request.headers.get("cookie") ?? "";
+  const authorization = request.headers.get("authorization") ?? "";
   const res = await fetch(`${API_URL}/auth/me`, {
-    headers: { cookie },
+    headers: { authorization },
     cache: "no-store",
   });
   if (!res.ok) {

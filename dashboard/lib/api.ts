@@ -3,7 +3,7 @@ import { getSupabaseBrowserClient } from "./supabase-browser";
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
 /** Header Authorization con el access token de la sesión Supabase actual. */
-async function authHeaders(): Promise<Record<string, string>> {
+export async function authHeaders(): Promise<Record<string, string>> {
   const {
     data: { session },
   } = await getSupabaseBrowserClient().auth.getSession();

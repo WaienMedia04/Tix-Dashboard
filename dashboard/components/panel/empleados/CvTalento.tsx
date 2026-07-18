@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { ExternalLink, FileText, Loader2, Pencil, Sparkles, Upload } from "lucide-react";
-import { actualizarCvDatosTalento, actualizarCvTalento, type CvDatosExtraidos } from "@/lib/api";
+import { actualizarCvDatosTalento, actualizarCvTalento, authHeaders, type CvDatosExtraidos } from "@/lib/api";
 
 const CAMPO_CLASES =
   "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring";
@@ -37,6 +37,7 @@ function SubidaCv({
       const blob = await upload(`talentos/${talentoId}/cv-${file.name}`, file, {
         access: "public",
         handleUploadUrl: `/api/talentos/${talentoId}/cv`,
+        headers: await authHeaders(),
       });
       const actualizado = await actualizarCvTalento(talentoId, blob.url);
       onSubido(actualizado);
