@@ -772,6 +772,73 @@ export async function crearUsuarioTalento(
   return res.json();
 }
 
+export interface UsuarioTalento {
+  id: string;
+  email: string;
+  nombre: string;
+  rol: RolInvitable;
+  activo: boolean;
+  passwordEstablecida: boolean;
+  talentoId: string | null;
+}
+
+export async function fetchUsuariosTalento(slug: string): Promise<UsuarioTalento[]> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/usuarios`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar los accesos");
+  }
+  return res.json();
+}
+
+export async function cambiarCorreoUsuarioTalento(
+  slug: string,
+  usuarioId: string,
+  email: string,
+): Promise<{ id: string; email: string; nombre: string; rol: RolInvitable }> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/usuarios/${encodeURIComponent(usuarioId)}/correo`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ email }),
+    },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    const cuerpo = await res.json().catch(() => null);
+    throw new Error(cuerpo?.message ?? "No se pudo cambiar el correo");
+  }
+  return res.json();
+}
+
+export async function restablecerPasswordUsuarioTalento(
+  slug: string,
+  usuarioId: string,
+): Promise<{ ok: boolean }> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/usuarios/${encodeURIComponent(usuarioId)}/restablecer-password`,
+    { method: "POST", headers: await authHeaders() },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo enviar el restablecimiento");
+  }
+  return res.json();
+}
+
 export async function actualizarFotoTalento(
   talentoId: string,
   fotoUrl: string,

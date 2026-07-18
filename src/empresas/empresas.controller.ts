@@ -4,6 +4,7 @@ import {
   Get,
   Headers,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -18,6 +19,7 @@ import { ReportesQueryDto } from './dto/reportes-query.dto';
 import { CrearTalentoDto } from './dto/crear-talento.dto';
 import { CrearUsuarioEmpresaDto } from './dto/crear-usuario-empresa.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
+import { CambiarCorreoDto } from '../auth/dto/cambiar-correo.dto';
 import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/guards/roles.decorator';
@@ -144,5 +146,35 @@ export class EmpresasController {
     @Req() req: RequestConActor,
   ) {
     return this.empresasService.crearUsuario(slug, req.actor!, dto);
+  }
+
+  @Get(':slug/usuarios')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  usuarios(@Param('slug') slug: string, @Req() req: RequestConActor) {
+    return this.empresasService.usuarios(slug, req.actor!);
+  }
+
+  @Patch(':slug/usuarios/:usuarioId/correo')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  cambiarCorreoUsuario(
+    @Param('slug') slug: string,
+    @Param('usuarioId') usuarioId: string,
+    @Body() dto: CambiarCorreoDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.cambiarCorreoUsuario(slug, req.actor!, usuarioId, dto.email);
+  }
+
+  @Post(':slug/usuarios/:usuarioId/restablecer-password')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  restablecerPasswordUsuario(
+    @Param('slug') slug: string,
+    @Param('usuarioId') usuarioId: string,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.restablecerPasswordUsuario(slug, req.actor!, usuarioId);
   }
 }

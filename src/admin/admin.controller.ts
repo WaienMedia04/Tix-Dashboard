@@ -20,6 +20,7 @@ import { EstadoEmpresaDto } from './dto/estado-empresa.dto';
 import { CrearTalentoAdminDto } from './dto/crear-talento-admin.dto';
 import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
 import { CrearUsuarioAdminDto } from './dto/crear-usuario-admin.dto';
+import { CambiarCorreoDto } from '../auth/dto/cambiar-correo.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -70,6 +71,24 @@ export class AdminController {
   @UseGuards(AdminGuard)
   crearUsuario(@Param('id') id: string, @Body() dto: CrearUsuarioAdminDto) {
     return this.adminService.crearUsuario(id, dto);
+  }
+
+  @Get('empresas/:id/usuarios')
+  @UseGuards(AdminGuard)
+  usuariosDeEmpresa(@Param('id') id: string) {
+    return this.adminService.usuariosDeEmpresa(id);
+  }
+
+  @Patch('usuarios/:id/correo')
+  @UseGuards(AdminGuard)
+  cambiarCorreoUsuario(@Param('id') id: string, @Body() dto: CambiarCorreoDto) {
+    return this.adminService.cambiarCorreoUsuario(id, dto.email);
+  }
+
+  @Post('usuarios/:id/restablecer-password')
+  @UseGuards(AdminGuard)
+  restablecerPasswordUsuario(@Param('id') id: string) {
+    return this.adminService.restablecerPasswordUsuario(id);
   }
 
   // ── Empleados por empresa ─────────────────────────────────────────────────

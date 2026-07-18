@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, Users } from "lucide-react";
+import { Fragment, useEffect, useState } from "react";
+import { KeyRound, Mail, Plus, Users } from "lucide-react";
 import {
   type DatosNuevoTalento,
   type EmpleadoResumen,
   type RolInvitable,
+  type UsuarioTalento,
   crearTalento,
   crearUsuarioTalento,
   fetchEmpleados,
+  fetchUsuariosTalento,
+  cambiarCorreoUsuarioTalento,
+  restablecerPasswordUsuarioTalento,
 } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
 import { StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
@@ -62,6 +66,20 @@ export function ListaEmpleados({ slug }: { slug: string }) {
     { tipo: "ok"; correo: string } | { tipo: "error"; mensaje: string } | null
   >(null);
 
+  const [usuarios, setUsuarios] = useState<UsuarioTalento[]>([]);
+  const [editandoCorreoId, setEditandoCorreoId] = useState<string | null>(null);
+  const [nuevoCorreoValor, setNuevoCorreoValor] = useState("");
+  const [guardandoCorreoId, setGuardandoCorreoId] = useState<string | null>(null);
+  const [correoError, setCorreoError] = useState<string | null>(null);
+  const [enviandoResetId, setEnviandoResetId] = useState<string | null>(null);
+  const [resetOkId, setResetOkId] = useState<string | null>(null);
+  const [resetErrorId, setResetErrorId] = useState<string | null>(null);
+
+  const [invitandoTalentoId, setInvitandoTalentoId] = useState<string | null>(null);
+  const [formAcceso, setFormAcceso] = useState({ email: "", nombreLogin: "", rolLogin: "TALENTO" as RolInvitable });
+  const [guardandoAccesoId, setGuardandoAccesoId] = useState<string | null>(null);
+  const [accesoExistenteError, setAccesoExistenteError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelado = false;
     fetchEmpleados(slug)
@@ -71,6 +89,11 @@ export function ListaEmpleados({ slug }: { slug: string }) {
       .catch(() => {
         if (!cancelado) setEstado({ tipo: "error" });
       });
+    fetchUsuariosTalento(slug)
+      .then((usrs) => {
+        if (!cancelado) setUsuarios(usrs);
+      })
+      .catch(() => {});
     return () => {
       cancelado = true;
     };
@@ -78,6 +101,60 @@ export function ListaEmpleados({ slug }: { slug: string }) {
 
   function campo<K extends keyof DatosNuevoTalento>(clave: K, valor: DatosNuevoTalento[K]) {
     setForm((prev) => ({ ...prev, [clave]: valor }));
+  }
+
+  async function handleCambiarCorreo(usuarioId: string) {
+    if (!nuevoCorreoValor.trim()) return;
+    setGuardandoCorreoId(usuarioId);
+    setCorreoError(null);
+    try {
+      const actualizado = await cambiarCorreoUsuarioTalento(slug, usuarioId, nuevoCorreoValor.trim());
+      setUsuarios((prev) => prev.map((u) => (u.id === usuarioId ? { ...u, email: actualizado.email } : u)));
+      setEditandoCorreoId(null);
+      setNuevoCorreoValor("");
+    } catch (err) {
+      setCorreoError(err instanceof Error ? err.message : "No se pudo cambiar el correo");
+    } finally {
+      setGuardandoCorreoId(null);
+    }
+  }
+
+  async function handleRestablecerPassword(usuarioId: string) {
+    setEnviandoResetId(usuarioId);
+    setResetOkId(null);
+    setResetErrorId(null);
+    try {
+      await restablecerPasswordUsuarioTalento(slug, usuarioId);
+      setResetOkId(usuarioId);
+    } catch {
+      setResetErrorId(usuarioId);
+    } finally {
+      setEnviandoResetId(null);
+    }
+  }
+
+  async function handleDarAcceso(talentoId: string, nombreTalento: string) {
+    if (!formAcceso.email.trim()) return;
+    setGuardandoAccesoId(talentoId);
+    setAccesoExistenteError(null);
+    try {
+      const { usuario } = await crearUsuarioTalento(slug, {
+        email: formAcceso.email,
+        nombre: formAcceso.nombreLogin || nombreTalento,
+        rol: formAcceso.rolLogin,
+        talentoId,
+      });
+      setUsuarios((prev) => [
+        ...prev,
+        { ...usuario, activo: true, passwordEstablecida: false, talentoId },
+      ]);
+      setInvitandoTalentoId(null);
+      setFormAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO" });
+    } catch (err) {
+      setAccesoExistenteError(err instanceof Error ? err.message : "No se pudo enviar la invitación");
+    } finally {
+      setGuardandoAccesoId(null);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -95,12 +172,16 @@ export function ListaEmpleados({ slug }: { slug: string }) {
 
       if (crearAcceso) {
         try {
-          await crearUsuarioTalento(slug, {
+          const { usuario } = await crearUsuarioTalento(slug, {
             email: nuevoAcceso.email,
             nombre: nuevoAcceso.nombreLogin || nuevo.nombreCompleto,
             rol: nuevoAcceso.rolLogin,
             talentoId: nuevo.id,
           });
+          setUsuarios((prev) => [
+            ...prev,
+            { ...usuario, activo: true, passwordEstablecida: false, talentoId: nuevo.id },
+          ]);
           setResultadoAcceso({ tipo: "ok", correo: nuevoAcceso.email });
           setNuevoAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO" });
           setCrearAcceso(false);
@@ -324,13 +405,14 @@ export function ListaEmpleados({ slug }: { slug: string }) {
               <th className="px-4 py-2">Rol</th>
               <th className="px-4 py-2">Departamento</th>
               <th className="px-4 py-2">Estado</th>
+              <th className="px-4 py-2">Acceso</th>
             </tr>
           </thead>
           <tbody>
-            {estado.tipo === "cargando" && <SkeletonTableRows rows={4} cols={4} />}
+            {estado.tipo === "cargando" && <SkeletonTableRows rows={4} cols={5} />}
             {estado.tipo === "error" && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-sm text-destructive">
+                <td colSpan={5} className="px-4 py-8 text-center text-sm text-destructive">
                   No se pudo cargar el listado de empleados.
                 </td>
               </tr>
@@ -338,35 +420,203 @@ export function ListaEmpleados({ slug }: { slug: string }) {
           </tbody>
           {estado.tipo === "listo" && (
             <StaggerTableBody>
-              {estado.empleados.map((e) => (
-                <StaggerRow key={e.id} className="border-t border-border transition-colors hover:bg-muted/50">
-                  <td className="px-4 py-2.5 font-medium text-foreground">
-                    <div className="flex items-center gap-2.5">
-                      <Avatar nombreCompleto={e.nombreCompleto} fotoUrl={e.fotoUrl} size="sm" />
-                      {e.nombreCompleto}
-                    </div>
-                  </td>
-                  <td className="max-w-[220px] truncate px-4 py-2.5 text-muted-foreground" title={e.rol}>
-                    {e.rol}
-                  </td>
-                  <td className="max-w-[180px] truncate px-4 py-2.5 text-muted-foreground">
-                    {e.departamento ?? "—"}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <span
-                      className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
-                        e.estado === "activo" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {e.estado === "activo" ? "Activo" : "Inactivo"}
-                    </span>
-                  </td>
-                </StaggerRow>
-              ))}
+              {estado.empleados.map((e) => {
+                const acceso = usuarios.find((u) => u.talentoId === e.id);
+                return (
+                  <Fragment key={e.id}>
+                    <StaggerRow className="border-t border-border transition-colors hover:bg-muted/50">
+                      <td className="px-4 py-2.5 font-medium text-foreground">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar nombreCompleto={e.nombreCompleto} fotoUrl={e.fotoUrl} size="sm" />
+                          {e.nombreCompleto}
+                        </div>
+                      </td>
+                      <td className="max-w-[220px] truncate px-4 py-2.5 text-muted-foreground" title={e.rol}>
+                        {e.rol}
+                      </td>
+                      <td className="max-w-[180px] truncate px-4 py-2.5 text-muted-foreground">
+                        {e.departamento ?? "—"}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span
+                          className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
+                            e.estado === "activo" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {e.estado === "activo" ? "Activo" : "Inactivo"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5">
+                        {acceso ? (
+                          <span className="inline-flex items-center rounded-md bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                            {acceso.passwordEstablecida ? "Con acceso" : "Invitado"}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setInvitandoTalentoId(invitandoTalentoId === e.id ? null : e.id);
+                              setFormAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO" });
+                              setAccesoExistenteError(null);
+                            }}
+                            className="text-xs font-medium text-primary hover:underline"
+                          >
+                            Dar acceso
+                          </button>
+                        )}
+                      </td>
+                    </StaggerRow>
+                    {invitandoTalentoId === e.id && (
+                      <tr className="border-t border-border bg-muted/30">
+                        <td colSpan={5} className="px-4 py-3">
+                          <div className="flex flex-wrap items-end gap-3">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                Correo *
+                              </label>
+                              <input
+                                type="email"
+                                value={formAcceso.email}
+                                onChange={(ev) => setFormAcceso((f) => ({ ...f, email: ev.target.value }))}
+                                className={CAMPO_CLASES}
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                Nombre de acceso
+                              </label>
+                              <input
+                                placeholder={e.nombreCompleto}
+                                value={formAcceso.nombreLogin}
+                                onChange={(ev) => setFormAcceso((f) => ({ ...f, nombreLogin: ev.target.value }))}
+                                className={CAMPO_CLASES}
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                Rol de acceso
+                              </label>
+                              <select
+                                value={formAcceso.rolLogin}
+                                onChange={(ev) =>
+                                  setFormAcceso((f) => ({ ...f, rolLogin: ev.target.value as RolInvitable }))
+                                }
+                                className={CAMPO_CLASES}
+                              >
+                                {ROLES_INVITABLES.map((r) => (
+                                  <option key={r.value} value={r.value}>
+                                    {r.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <button
+                              onClick={() => void handleDarAcceso(e.id, e.nombreCompleto)}
+                              disabled={guardandoAccesoId === e.id}
+                              className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                            >
+                              {guardandoAccesoId === e.id ? "Enviando..." : "Invitar"}
+                            </button>
+                            <button
+                              onClick={() => setInvitandoTalentoId(null)}
+                              className="rounded-md border border-border px-3 py-2 text-xs hover:bg-accent"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                          {accesoExistenteError && (
+                            <p className="mt-2 text-xs text-destructive">{accesoExistenteError}</p>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
             </StaggerTableBody>
           )}
         </table>
       </div>
+
+      {usuarios.length > 0 && (
+        <div className="border-t border-border">
+          <div className="px-4 py-3">
+            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Accesos de login ({usuarios.length})
+            </p>
+          </div>
+          <div className="divide-y divide-border">
+            {usuarios.map((u) => (
+              <div key={u.id} className="flex flex-col gap-2 px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{u.nombre}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {u.email} · {u.rol === "MANAGER" ? "Gerente" : "Empleado"}
+                      {!u.passwordEstablecida && (
+                        <span className="ml-1.5 rounded-full bg-warning/10 px-1.5 py-0.5 text-warning">
+                          Pendiente de activar
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      onClick={() => {
+                        setEditandoCorreoId(editandoCorreoId === u.id ? null : u.id);
+                        setNuevoCorreoValor(u.email);
+                        setCorreoError(null);
+                      }}
+                      className="flex items-center gap-1 rounded p-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                      title="Cambiar correo"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => void handleRestablecerPassword(u.id)}
+                      disabled={enviandoResetId === u.id}
+                      className="flex items-center gap-1 rounded p-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
+                      title="Enviar restablecimiento de contraseña"
+                    >
+                      <KeyRound className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {editandoCorreoId === u.id && (
+                  <div className="flex items-center gap-2 rounded-md border border-border bg-background/50 p-2">
+                    <input
+                      type="email"
+                      value={nuevoCorreoValor}
+                      onChange={(e) => setNuevoCorreoValor(e.target.value)}
+                      className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    <button
+                      onClick={() => void handleCambiarCorreo(u.id)}
+                      disabled={guardandoCorreoId === u.id}
+                      className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                    >
+                      {guardandoCorreoId === u.id ? "..." : "Guardar"}
+                    </button>
+                    <button
+                      onClick={() => { setEditandoCorreoId(null); setCorreoError(null); }}
+                      className="rounded-md border border-border px-2.5 py-1.5 text-xs hover:bg-accent"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                )}
+                {editandoCorreoId === u.id && correoError && (
+                  <p className="text-xs text-destructive">{correoError}</p>
+                )}
+                {resetOkId === u.id && <p className="text-xs text-success">Correo de restablecimiento enviado.</p>}
+                {resetErrorId === u.id && (
+                  <p className="text-xs text-destructive">No se pudo enviar el restablecimiento.</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { invitarUsuario } from '../auth/invitar-usuario.util';
+import { cambiarCorreoUsuario, enviarResetPassword } from '../auth/gestionar-usuario.util';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto';
 import { EditarEmpresaDto } from './dto/editar-empresa.dto';
 import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
@@ -327,6 +328,32 @@ export class AdminService {
     });
 
     return { usuario, invitacionEnviada: true };
+  }
+
+  async usuariosDeEmpresa(empresaId: string) {
+    await this.validarEmpresaExiste(empresaId);
+    return this.prisma.usuario.findMany({
+      where: { empresaId },
+      select: {
+        id: true,
+        email: true,
+        nombre: true,
+        rol: true,
+        activo: true,
+        passwordEstablecida: true,
+        talentoId: true,
+        ultimoLoginAt: true,
+      },
+      orderBy: { nombre: 'asc' },
+    });
+  }
+
+  async cambiarCorreoUsuario(usuarioId: string, email: string) {
+    return cambiarCorreoUsuario(this.prisma, usuarioId, email);
+  }
+
+  async restablecerPasswordUsuario(usuarioId: string) {
+    return enviarResetPassword(this.prisma, usuarioId);
   }
 
   private async validarEmpresaExiste(id: string) {

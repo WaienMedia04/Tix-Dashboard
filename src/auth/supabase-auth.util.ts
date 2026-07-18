@@ -10,11 +10,13 @@ let clienteAnon: SupabaseClient | null = null;
 let clienteServiceRole: SupabaseClient | null = null;
 
 /**
- * Cliente con la clave anon, usado solo para verificar JWTs de sesión
- * (getClaims hace la verificación localmente vía JWKS, sin round-trip de
- * red). Nunca usar este cliente para operaciones administrativas.
+ * Cliente con la clave anon — verificar JWTs de sesión (getClaims, sin
+ * round-trip de red) y operaciones que la propia clave anon ya autoriza
+ * por diseño, como resetPasswordForEmail (cualquiera que sepa un correo
+ * puede disparar un "olvidé mi contraseña", con o sin sesión). Nunca usar
+ * este cliente para operaciones que sí requieren service_role.
  */
-function obtenerClienteAnon(): SupabaseClient {
+export function obtenerClienteAnon(): SupabaseClient {
   if (!clienteAnon) {
     clienteAnon = createClient(
       process.env.SUPABASE_URL!,

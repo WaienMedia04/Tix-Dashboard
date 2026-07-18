@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bot, ChevronLeft, Copy, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
+import { Bot, ChevronLeft, Copy, Eye, EyeOff, KeyRound, Mail, Plus, Trash2, X } from "lucide-react";
 import {
   type EmpresaAdmin,
   type EmpleadoAdmin,
   type RolAdmin,
+  type UsuarioAdmin,
   AdminNoAutorizadoError,
   AdminConflictoError,
   fetchAdminDashboard,
@@ -19,6 +20,9 @@ import {
   crearUsuarioAdmin,
   cambiarEstadoEmpleadoAdmin,
   borrarEmpleadoAdmin,
+  fetchUsuariosAdmin,
+  cambiarCorreoUsuarioAdmin,
+  restablecerPasswordAdmin,
 } from "@/lib/admin-api";
 import { leerTokenAdmin, borrarTokenAdmin } from "@/lib/admin-auth";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -327,16 +331,26 @@ export default function AdminEmpresaDetallePage() {
   const [eliminandoEmpresa, setEliminandoEmpresa] = useState(false);
   const [eliminarEmpresaError, setEliminarEmpresaError] = useState<string | null>(null);
 
+  const [usuarios, setUsuarios] = useState<UsuarioAdmin[]>([]);
+  const [editandoCorreoId, setEditandoCorreoId] = useState<string | null>(null);
+  const [nuevoCorreoValor, setNuevoCorreoValor] = useState("");
+  const [guardandoCorreoId, setGuardandoCorreoId] = useState<string | null>(null);
+  const [correoError, setCorreoError] = useState<string | null>(null);
+  const [enviandoResetId, setEnviandoResetId] = useState<string | null>(null);
+  const [resetOkId, setResetOkId] = useState<string | null>(null);
+  const [resetErrorId, setResetErrorId] = useState<string | null>(null);
+
   useEffect(() => {
     const token = leerTokenAdmin();
     if (!token) { router.replace("/admin"); return; }
 
-    Promise.all([fetchAdminDashboard(token), fetchEmpleadosAdmin(token, id)])
-      .then(([dash, emps]) => {
+    Promise.all([fetchAdminDashboard(token), fetchEmpleadosAdmin(token, id), fetchUsuariosAdmin(token, id)])
+      .then(([dash, emps, usrs]) => {
         const emp = dash.empresas.find((e) => e.id === id) ?? null;
         setEmpresa(emp);
         if (emp) setEditForm({ nombre: emp.nombre, plan: emp.plan, codigoAcceso: emp.codigoAcceso ?? "" });
         setEmpleados(emps);
+        setUsuarios(usrs);
         setCargando(false);
       })
       .catch((err) => {
@@ -344,6 +358,39 @@ export default function AdminEmpresaDetallePage() {
         else setCargando(false);
       });
   }, [id, router]);
+
+  async function handleCambiarCorreo(usuarioId: string) {
+    const token = leerTokenAdmin();
+    if (!token || !nuevoCorreoValor.trim()) return;
+    setGuardandoCorreoId(usuarioId);
+    setCorreoError(null);
+    try {
+      const actualizado = await cambiarCorreoUsuarioAdmin(token, usuarioId, nuevoCorreoValor.trim());
+      setUsuarios((prev) => prev.map((u) => (u.id === usuarioId ? { ...u, email: actualizado.email } : u)));
+      setEditandoCorreoId(null);
+      setNuevoCorreoValor("");
+    } catch (err) {
+      setCorreoError(err instanceof Error ? err.message : "No se pudo cambiar el correo");
+    } finally {
+      setGuardandoCorreoId(null);
+    }
+  }
+
+  async function handleRestablecerPassword(usuarioId: string) {
+    const token = leerTokenAdmin();
+    if (!token) return;
+    setEnviandoResetId(usuarioId);
+    setResetOkId(null);
+    setResetErrorId(null);
+    try {
+      await restablecerPasswordAdmin(token, usuarioId);
+      setResetOkId(usuarioId);
+    } catch {
+      setResetErrorId(usuarioId);
+    } finally {
+      setEnviandoResetId(null);
+    }
+  }
 
   async function handleEdit(e: React.FormEvent) {
     e.preventDefault();
@@ -747,6 +794,93 @@ export default function AdminEmpresaDetallePage() {
                       </button>
                     )}
                   </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Accesos de login */}
+        <div className="rounded-xl border border-border bg-card shadow-card">
+          <div className="border-b border-border px-5 py-4">
+            <h2 className="font-display text-base font-semibold text-foreground">
+              Accesos de login ({usuarios.length})
+            </h2>
+          </div>
+
+          <div className="divide-y divide-border">
+            {usuarios.length === 0 ? (
+              <p className="px-5 py-6 text-sm text-muted-foreground">Sin accesos creados.</p>
+            ) : (
+              usuarios.map((u) => (
+                <div key={u.id} className="flex flex-col gap-2 px-5 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">{u.nombre}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {u.email} · {u.rol}
+                        {!u.passwordEstablecida && (
+                          <span className="ml-1.5 rounded-full bg-warning/10 px-1.5 py-0.5 text-warning">
+                            Pendiente de activar
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        onClick={() => {
+                          setEditandoCorreoId(editandoCorreoId === u.id ? null : u.id);
+                          setNuevoCorreoValor(u.email);
+                          setCorreoError(null);
+                        }}
+                        className="flex items-center gap-1 rounded p-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                        title="Cambiar correo"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => void handleRestablecerPassword(u.id)}
+                        disabled={enviandoResetId === u.id}
+                        className="flex items-center gap-1 rounded p-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
+                        title="Enviar restablecimiento de contraseña"
+                      >
+                        <KeyRound className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {editandoCorreoId === u.id && (
+                    <div className="flex items-center gap-2 rounded-md border border-border bg-background/50 p-2">
+                      <input
+                        type="email"
+                        value={nuevoCorreoValor}
+                        onChange={(e) => setNuevoCorreoValor(e.target.value)}
+                        className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                      <button
+                        onClick={() => void handleCambiarCorreo(u.id)}
+                        disabled={guardandoCorreoId === u.id}
+                        className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                      >
+                        {guardandoCorreoId === u.id ? "..." : "Guardar"}
+                      </button>
+                      <button
+                        onClick={() => { setEditandoCorreoId(null); setCorreoError(null); }}
+                        className="rounded-md border border-border px-2.5 py-1.5 text-xs hover:bg-accent"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                  {editandoCorreoId === u.id && correoError && (
+                    <p className="text-xs text-destructive">{correoError}</p>
+                  )}
+                  {resetOkId === u.id && (
+                    <p className="text-xs text-success">Correo de restablecimiento enviado.</p>
+                  )}
+                  {resetErrorId === u.id && (
+                    <p className="text-xs text-destructive">No se pudo enviar el restablecimiento.</p>
+                  )}
                 </div>
               ))
             )}

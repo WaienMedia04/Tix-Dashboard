@@ -214,3 +214,33 @@ export function cambiarEstadoEmpleadoAdmin(
 export function borrarEmpleadoAdmin(token: string, talentoId: string): Promise<{ ok: boolean }> {
   return adminFetch(`/admin/talentos/${talentoId}`, token, { method: "DELETE" });
 }
+
+export interface UsuarioAdmin {
+  id: string;
+  email: string;
+  nombre: string;
+  rol: RolAdmin;
+  activo: boolean;
+  passwordEstablecida: boolean;
+  talentoId: string | null;
+  ultimoLoginAt: string | null;
+}
+
+export function fetchUsuariosAdmin(token: string, empresaId: string): Promise<UsuarioAdmin[]> {
+  return adminFetch(`/admin/empresas/${empresaId}/usuarios`, token);
+}
+
+export function cambiarCorreoUsuarioAdmin(
+  token: string,
+  usuarioId: string,
+  email: string,
+): Promise<{ id: string; email: string; nombre: string; rol: RolAdmin }> {
+  return adminFetch(`/admin/usuarios/${usuarioId}/correo`, token, {
+    method: "PATCH",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function restablecerPasswordAdmin(token: string, usuarioId: string): Promise<{ ok: boolean }> {
+  return adminFetch(`/admin/usuarios/${usuarioId}/restablecer-password`, token, { method: "POST" });
+}

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { AnalisisEjecutivoService } from './analisis-ejecutivo.service';
 import { clasificarEstado } from './estado.util';
 import { invitarUsuario } from '../auth/invitar-usuario.util';
+import { cambiarCorreoUsuario, enviarResetPassword } from '../auth/gestionar-usuario.util';
 import {
   rangoAnual,
   rangoMensual,
@@ -1025,6 +1027,47 @@ export class EmpresasService {
     });
 
     return { usuario, invitacionEnviada: true };
+  }
+
+  /** Accesos que CEO/RRHH pueden gestionar desde el panel: solo su propio talento. */
+  async usuarios(slug: string, actor: Actor) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+    return this.prisma.usuario.findMany({
+      where: { empresaId: empresa.id, rol: { in: ['TALENTO', 'MANAGER'] } },
+      select: {
+        id: true,
+        email: true,
+        nombre: true,
+        rol: true,
+        activo: true,
+        passwordEstablecida: true,
+        talentoId: true,
+      },
+      orderBy: { nombre: 'asc' },
+    });
+  }
+
+  private async validarUsuarioGestionable(empresaId: string, usuarioId: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { id: usuarioId } });
+    if (!usuario || usuario.empresaId !== empresaId) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    if (usuario.rol !== 'TALENTO' && usuario.rol !== 'MANAGER') {
+      throw new ForbiddenException('No puedes gestionar este acceso desde aquí');
+    }
+    return usuario;
+  }
+
+  async cambiarCorreoUsuario(slug: string, actor: Actor, usuarioId: string, email: string) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+    await this.validarUsuarioGestionable(empresa.id, usuarioId);
+    return cambiarCorreoUsuario(this.prisma, usuarioId, email);
+  }
+
+  async restablecerPasswordUsuario(slug: string, actor: Actor, usuarioId: string) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+    await this.validarUsuarioGestionable(empresa.id, usuarioId);
+    return enviarResetPassword(this.prisma, usuarioId);
   }
 
   async rankings(slug: string, actor: Actor, query: RankingsQueryDto) {
