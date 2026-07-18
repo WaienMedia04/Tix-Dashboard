@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bot, ChevronLeft, Copy, Eye, EyeOff, KeyRound, Mail, Plus, Trash2, X } from "lucide-react";
+import { Bot, ChevronLeft, Copy, Eye, EyeOff, KeyRound, Mail, Plus, Trash2, UserCog, X } from "lucide-react";
 import {
   type EmpresaAdmin,
   type EmpleadoAdmin,
@@ -23,6 +23,7 @@ import {
   fetchUsuariosAdmin,
   cambiarCorreoUsuarioAdmin,
   restablecerPasswordAdmin,
+  cambiarRolUsuarioAdmin,
 } from "@/lib/admin-api";
 import { leerTokenAdmin, borrarTokenAdmin } from "@/lib/admin-auth";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -340,6 +341,12 @@ export default function AdminEmpresaDetallePage() {
   const [resetOkId, setResetOkId] = useState<string | null>(null);
   const [resetErrorId, setResetErrorId] = useState<string | null>(null);
 
+  const [editandoRolId, setEditandoRolId] = useState<string | null>(null);
+  const [nuevoRolValor, setNuevoRolValor] = useState<RolAdmin>("TALENTO");
+  const [nuevoTalentoIdValor, setNuevoTalentoIdValor] = useState("");
+  const [guardandoRolId, setGuardandoRolId] = useState<string | null>(null);
+  const [rolError, setRolError] = useState<string | null>(null);
+
   useEffect(() => {
     const token = leerTokenAdmin();
     if (!token) { router.replace("/admin"); return; }
@@ -389,6 +396,33 @@ export default function AdminEmpresaDetallePage() {
       setResetErrorId(usuarioId);
     } finally {
       setEnviandoResetId(null);
+    }
+  }
+
+  async function handleCambiarRol(usuarioId: string) {
+    const token = leerTokenAdmin();
+    if (!token) return;
+    if (nuevoRolValor === "TALENTO" && !nuevoTalentoIdValor) {
+      setRolError("Selecciona a qué empleado se vincula.");
+      return;
+    }
+    setGuardandoRolId(usuarioId);
+    setRolError(null);
+    try {
+      const actualizado = await cambiarRolUsuarioAdmin(
+        token,
+        usuarioId,
+        nuevoRolValor,
+        nuevoRolValor === "TALENTO" ? nuevoTalentoIdValor : undefined,
+      );
+      setUsuarios((prev) =>
+        prev.map((u) => (u.id === usuarioId ? { ...u, rol: actualizado.rol, talentoId: actualizado.talentoId } : u)),
+      );
+      setEditandoRolId(null);
+    } catch (err) {
+      setRolError(err instanceof Error ? err.message : "No se pudo cambiar el rol");
+    } finally {
+      setGuardandoRolId(null);
     }
   }
 
@@ -829,6 +863,18 @@ export default function AdminEmpresaDetallePage() {
                     <div className="flex shrink-0 items-center gap-1">
                       <button
                         onClick={() => {
+                          setEditandoRolId(editandoRolId === u.id ? null : u.id);
+                          setNuevoRolValor(u.rol);
+                          setNuevoTalentoIdValor(u.talentoId ?? "");
+                          setRolError(null);
+                        }}
+                        className="flex items-center gap-1 rounded p-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                        title="Cambiar rol"
+                      >
+                        <UserCog className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => {
                           setEditandoCorreoId(editandoCorreoId === u.id ? null : u.id);
                           setNuevoCorreoValor(u.email);
                           setCorreoError(null);
@@ -848,6 +894,55 @@ export default function AdminEmpresaDetallePage() {
                       </button>
                     </div>
                   </div>
+
+                  {editandoRolId === u.id && (
+                    <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-background/50 p-2">
+                      <select
+                        value={nuevoRolValor}
+                        onChange={(e) => setNuevoRolValor(e.target.value as RolAdmin)}
+                        className="rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                      >
+                        {ROLES_LOGIN.map((r) => (
+                          <option key={r.value} value={r.value}>
+                            {r.label}
+                          </option>
+                        ))}
+                      </select>
+                      {nuevoRolValor === "TALENTO" && (
+                        <select
+                          value={nuevoTalentoIdValor}
+                          onChange={(e) => setNuevoTalentoIdValor(e.target.value)}
+                          className="rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                        >
+                          <option value="">Vincular a...</option>
+                          {empleados
+                            .filter((emp) => {
+                              const usoActual = usuarios.find((us) => us.talentoId === emp.id);
+                              return !usoActual || usoActual.id === u.id;
+                            })
+                            .map((emp) => (
+                              <option key={emp.id} value={emp.id}>
+                                {emp.nombreCompleto}
+                              </option>
+                            ))}
+                        </select>
+                      )}
+                      <button
+                        onClick={() => void handleCambiarRol(u.id)}
+                        disabled={guardandoRolId === u.id}
+                        className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                      >
+                        {guardandoRolId === u.id ? "..." : "Guardar"}
+                      </button>
+                      <button
+                        onClick={() => { setEditandoRolId(null); setRolError(null); }}
+                        className="rounded-md border border-border px-2.5 py-1.5 text-xs hover:bg-accent"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                  {editandoRolId === u.id && rolError && <p className="text-xs text-destructive">{rolError}</p>}
 
                   {editandoCorreoId === u.id && (
                     <div className="flex items-center gap-2 rounded-md border border-border bg-background/50 p-2">

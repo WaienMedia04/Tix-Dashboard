@@ -21,6 +21,7 @@ import { CrearTalentoAdminDto } from './dto/crear-talento-admin.dto';
 import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
 import { CrearUsuarioAdminDto } from './dto/crear-usuario-admin.dto';
 import { CambiarCorreoDto } from '../auth/dto/cambiar-correo.dto';
+import { CambiarRolDto } from '../auth/dto/cambiar-rol.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -89,6 +90,12 @@ export class AdminController {
   @UseGuards(AdminGuard)
   restablecerPasswordUsuario(@Param('id') id: string) {
     return this.adminService.restablecerPasswordUsuario(id);
+  }
+
+  @Patch('usuarios/:id/rol')
+  @UseGuards(AdminGuard)
+  cambiarRolUsuario(@Param('id') id: string, @Body() dto: CambiarRolDto) {
+    return this.adminService.cambiarRolUsuario(id, dto.rol, dto.talentoId);
   }
 
   // ── Empleados por empresa ─────────────────────────────────────────────────

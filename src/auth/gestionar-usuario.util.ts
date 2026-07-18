@@ -1,4 +1,5 @@
 import { ConflictException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Rol } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { obtenerClienteAnon, obtenerClienteServiceRole } from './supabase-auth.util';
 
@@ -73,4 +74,54 @@ export async function enviarResetPassword(prisma: PrismaService, usuarioId: stri
   }
 
   return { ok: true };
+}
+
+/**
+ * Cambia el rol de un Usuario. CEO/RRHH nunca llevan talentoId (no son
+ * empleados en seguimiento — ver talentoScopeWhere), así que al mover a
+ * cualquiera de esos dos roles se desvincula automáticamente. TALENTO sí
+ * lo exige: si el usuario no tenía uno ya, hay que indicar a cuál se
+ * vincula.
+ */
+export async function cambiarRolUsuario(
+  prisma: PrismaService,
+  usuarioId: string,
+  rol: Rol,
+  talentoId?: string,
+) {
+  const usuario = await prisma.usuario.findUnique({ where: { id: usuarioId } });
+  if (!usuario) {
+    throw new NotFoundException('Usuario no encontrado');
+  }
+
+  if (rol === 'CEO' || rol === 'RRHH') {
+    return prisma.usuario.update({
+      where: { id: usuarioId },
+      data: { rol, talentoId: null },
+      select: { id: true, email: true, nombre: true, rol: true, talentoId: true },
+    });
+  }
+
+  const talentoIdFinal = talentoId ?? usuario.talentoId ?? undefined;
+
+  if (rol === 'TALENTO' && !talentoIdFinal) {
+    throw new ConflictException('talentoId es obligatorio para el rol TALENTO');
+  }
+
+  if (talentoIdFinal) {
+    const talento = await prisma.talento.findUnique({ where: { id: talentoIdFinal } });
+    if (!talento || talento.empresaId !== usuario.empresaId) {
+      throw new NotFoundException('Empleado no encontrado');
+    }
+    const otroUsuario = await prisma.usuario.findUnique({ where: { talentoId: talentoIdFinal } });
+    if (otroUsuario && otroUsuario.id !== usuarioId) {
+      throw new ConflictException('Ese talento ya tiene un acceso de login vinculado');
+    }
+  }
+
+  return prisma.usuario.update({
+    where: { id: usuarioId },
+    data: { rol, talentoId: rol === 'TALENTO' ? talentoIdFinal : (talentoId ?? usuario.talentoId) },
+    select: { id: true, email: true, nombre: true, rol: true, talentoId: true },
+  });
 }

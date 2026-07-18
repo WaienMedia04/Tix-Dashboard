@@ -244,3 +244,15 @@ export function cambiarCorreoUsuarioAdmin(
 export function restablecerPasswordAdmin(token: string, usuarioId: string): Promise<{ ok: boolean }> {
   return adminFetch(`/admin/usuarios/${usuarioId}/restablecer-password`, token, { method: "POST" });
 }
+
+export function cambiarRolUsuarioAdmin(
+  token: string,
+  usuarioId: string,
+  rol: RolAdmin,
+  talentoId?: string,
+): Promise<{ id: string; email: string; nombre: string; rol: RolAdmin; talentoId: string | null }> {
+  return adminFetch(`/admin/usuarios/${usuarioId}/rol`, token, {
+    method: "PATCH",
+    body: JSON.stringify({ rol, talentoId }),
+  });
+}
