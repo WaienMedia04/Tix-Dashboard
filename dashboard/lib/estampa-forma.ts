@@ -9,6 +9,8 @@ export function claseFormaEstampa(forma: TipoEstampaForma): string {
       return "rounded-sm";
     case "DIAMANTE":
       return "forma-diamante";
+    case "LIBRE":
+      return "";
     case "REDONDEADO":
     default:
       return "rounded-xl";
@@ -20,4 +22,5 @@ export const FORMAS_ESTAMPA: { value: TipoEstampaForma; label: string }[] = [
   { value: "CIRCULAR", label: "Circular" },
   { value: "CUADRADO", label: "Cuadrado" },
   { value: "DIAMANTE", label: "Diamante" },
+  { value: "LIBRE", label: "Libre (sin borde)" },
 ];

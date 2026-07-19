@@ -104,17 +104,28 @@ function ModalNuevaEstampa({
               </button>
             ))}
           </div>
+          {forma === "LIBRE" && (
+            <p className="text-[11px] text-muted-foreground">
+              Sube una imagen PNG o WebP con fondo transparente para que la estampa quede sin bordes.
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Imagen</label>
           <div className="flex items-center gap-3">
             <div
-              className={`flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden border border-border bg-muted ${claseFormaEstampa(forma)}`}
+              className={`flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden ${
+                forma === "LIBRE" ? "" : "border border-border bg-muted"
+              } ${claseFormaEstampa(forma)}`}
             >
               {imagenUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={imagenUrl} alt="" className="h-full w-full object-cover" />
+                <img
+                  src={imagenUrl}
+                  alt=""
+                  className={`h-full w-full ${forma === "LIBRE" ? "object-contain" : "object-cover"}`}
+                />
               ) : (
                 <Sparkles className="h-6 w-6 text-muted-foreground" />
               )}
@@ -320,12 +331,16 @@ export function EstampasCatalogo({ slug, empleados }: { slug: string; empleados:
           {definiciones.map((d) => (
             <div key={d.id} className="flex w-28 flex-col items-center gap-1.5 text-center">
               <div
-                className={`h-16 w-16 overflow-hidden border border-border bg-muted ${claseFormaEstampa(d.forma)} ${
-                  d.activo ? "" : "opacity-40"
-                }`}
+                className={`h-16 w-16 overflow-hidden ${d.forma === "LIBRE" ? "" : "border border-border bg-muted"} ${claseFormaEstampa(
+                  d.forma,
+                )} ${d.activo ? "" : "opacity-40"}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={d.imagenUrl} alt={d.nombre} className="h-full w-full object-cover" />
+                <img
+                  src={d.imagenUrl}
+                  alt={d.nombre}
+                  className={`h-full w-full ${d.forma === "LIBRE" ? "object-contain" : "object-cover"}`}
+                />
               </div>
               <p className="line-clamp-1 text-xs font-medium text-foreground">{d.nombre}</p>
               <div className="flex items-center gap-1">

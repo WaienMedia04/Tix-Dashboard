@@ -32,6 +32,7 @@ enum TipoEstampaForma {
   CIRCULAR
   CUADRADO
   DIAMANTE
+  LIBRE
 }
 
 model Empresa {

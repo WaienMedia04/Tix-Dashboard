@@ -970,7 +970,7 @@ export async function actualizarCvDatosTalento(
 
 // ── Mi Mural ────────────────────────────────────────────────────────────
 
-export type TipoEstampaForma = "REDONDEADO" | "CIRCULAR" | "CUADRADO" | "DIAMANTE";
+export type TipoEstampaForma = "REDONDEADO" | "CIRCULAR" | "CUADRADO" | "DIAMANTE" | "LIBRE";
 
 export interface PerfilMural {
   apodo: string | null;
