@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "MuralNotaAdhesiva" ADD COLUMN     "escala" DOUBLE PRECISION NOT NULL DEFAULT 1;

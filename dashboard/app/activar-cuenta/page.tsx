@@ -66,7 +66,7 @@ export default function ActivarCuentaPage() {
       }
       router.push(
         sesion.usuario.rol === "TALENTO"
-          ? `/${sesion.empresa.slug}/mi-espacio`
+          ? `/${sesion.empresa.slug}/mi-mural`
           : `/${sesion.empresa.slug}/dashboard`,
       );
     } catch {

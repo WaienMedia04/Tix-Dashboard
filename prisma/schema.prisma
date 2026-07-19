@@ -224,6 +224,7 @@ model MuralNotaAdhesiva {
   posY      Float    @default(50)
   rotacion  Float    @default(0)
   zIndex    Int      @default(0)
+  escala    Float    @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

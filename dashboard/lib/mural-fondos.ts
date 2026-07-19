@@ -18,6 +18,12 @@ export const FONDOS_MURAL: FondoMural[] = [
   { id: "lavanda", label: "Lavanda", css: "linear-gradient(135deg, #C4B5FD 0%, #818CF8 100%)", claro: true },
   { id: "grafito", label: "Grafito", css: "linear-gradient(135deg, #3F3F46 0%, #18181B 100%)", claro: false },
   { id: "blanco", label: "Blanco", css: "#FAFAFA", claro: true },
+  { id: "fuego", label: "Fuego", css: "linear-gradient(135deg, #F59E0B 0%, #EF4444 60%, #7C2D12 100%)", claro: false },
+  { id: "menta", label: "Menta", css: "linear-gradient(135deg, #6EE7B7 0%, #5EEAD4 100%)", claro: true },
+  { id: "rosado", label: "Rosado vibrante", css: "linear-gradient(135deg, #F472B6 0%, #E11D48 100%)", claro: false },
+  { id: "cielo", label: "Cielo", css: "linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%)", claro: true },
+  { id: "vino", label: "Vino", css: "linear-gradient(135deg, #7F1D1D 0%, #450A0A 100%)", claro: false },
+  { id: "dorado", label: "Dorado", css: "linear-gradient(135deg, #FDE68A 0%, #FBBF24 55%, #B45309 100%)", claro: false },
 ];
 
 export function fondoMuralCss(fondoId: string): string {
@@ -44,6 +50,10 @@ export const COLORES_NOTA: { id: string; label: string; bg: string; texto: strin
   { id: "celeste", label: "Celeste", bg: "#BAE6FD", texto: "#0C4A6E" },
   { id: "verde", label: "Verde", bg: "#BBF7D0", texto: "#14532D" },
   { id: "lila", label: "Lila", bg: "#DDD6FE", texto: "#4C1D95" },
+  { id: "naranja", label: "Naranja", bg: "#FED7AA", texto: "#7C2D12" },
+  { id: "menta", label: "Menta", bg: "#99F6E4", texto: "#134E4A" },
+  { id: "gris", label: "Gris", bg: "#E4E4E7", texto: "#3F3F46" },
+  { id: "blanco", label: "Blanco", bg: "#FFFFFF", texto: "#18181B" },
 ];
 
 export function colorNotaEstilo(colorId: string): { bg: string; texto: string } {

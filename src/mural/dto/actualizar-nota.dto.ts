@@ -42,4 +42,10 @@ export class ActualizarNotaDto {
   @IsInt()
   @IsOptional()
   zIndex?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0.7)
+  @Max(1.8)
+  escala?: number;
 }

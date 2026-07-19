@@ -989,6 +989,7 @@ export interface NotaMural {
   posY: number;
   rotacion: number;
   zIndex: number;
+  escala: number;
 }
 
 export interface EstampaOtorgadaMural {
@@ -1145,7 +1146,15 @@ export async function crearNotaMural(datos: {
 
 export async function actualizarNotaMural(
   id: string,
-  datos: Partial<{ texto: string; color: string; posX: number; posY: number; rotacion: number; zIndex: number }>,
+  datos: Partial<{
+    texto: string;
+    color: string;
+    posX: number;
+    posY: number;
+    rotacion: number;
+    zIndex: number;
+    escala: number;
+  }>,
 ): Promise<NotaMural> {
   const res = await fetch(`${API_URL}/talentos/me/mural/notas/${encodeURIComponent(id)}`, {
     method: "PATCH",

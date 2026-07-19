@@ -109,7 +109,7 @@ export default function MiMuralPage() {
           </div>
         </div>
       ) : (
-        <MiMuralView slug={slug} miTalentoId={estado.talentoId} />
+        <MiMuralView slug={slug} miTalentoId={estado.talentoId} rol={estado.rol} />
       )}
     </div>
   );

@@ -4,6 +4,10 @@ export const COLORES_NOTA_MURAL = [
   'celeste',
   'verde',
   'lila',
+  'naranja',
+  'menta',
+  'gris',
+  'blanco',
 ] as const;
 
 export type ColorNotaMural = (typeof COLORES_NOTA_MURAL)[number];

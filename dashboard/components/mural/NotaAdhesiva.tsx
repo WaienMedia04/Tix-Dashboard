@@ -1,9 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { X } from "lucide-react";
+import { Maximize2, X } from "lucide-react";
 import { type NotaMural, actualizarNotaMural, borrarNotaMural } from "@/lib/api";
 import { COLORES_NOTA, colorNotaEstilo } from "@/lib/mural-fondos";
+
+const ESCALA_MIN = 0.7;
+const ESCALA_MAX = 1.8;
 
 export function NotaAdhesiva({
   nota,
@@ -23,6 +26,7 @@ export function NotaAdhesiva({
 }) {
   const notaRef = useRef<HTMLDivElement>(null);
   const arrastrandoRef = useRef(false);
+  const redimensionandoRef = useRef(false);
   const [texto, setTexto] = useState(nota.texto);
   const [editando, setEditando] = useState(false);
   const [mostrarColores, setMostrarColores] = useState(false);
@@ -44,7 +48,7 @@ export function NotaAdhesiva({
       const x = ((ev.clientX - contenedorRect.left) / contenedorRect.width) * 100;
       const y = ((ev.clientY - contenedorRect.top) / contenedorRect.height) * 100;
       const posX = Math.min(96, Math.max(0, x));
-      const posY = Math.min(92, Math.max(0, y));
+      const posY = Math.min(96, Math.max(0, y));
       if (el) {
         el.style.left = `${posX}%`;
         el.style.top = `${posY}%`;
@@ -59,11 +63,43 @@ export function NotaAdhesiva({
       const x = ((ev.clientX - contenedorRect.left) / contenedorRect.width) * 100;
       const y = ((ev.clientY - contenedorRect.top) / contenedorRect.height) * 100;
       const posX = Math.min(96, Math.max(0, x));
-      const posY = Math.min(92, Math.max(0, y));
+      const posY = Math.min(96, Math.max(0, y));
       onActualizada({ ...nota, posX, posY });
       actualizarNotaMural(nota.id, { posX, posY }).catch(() => {
         // la posición visual ya se movió; si falla, se corrige en el próximo fetch
       });
+    }
+
+    window.addEventListener("pointermove", mover);
+    window.addEventListener("pointerup", soltar);
+  }
+
+  function handleResizePointerDown(e: React.PointerEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    const el = notaRef.current;
+    if (!el) return;
+
+    redimensionandoRef.current = true;
+    const inicioX = e.clientX;
+    const inicioY = e.clientY;
+    const escalaInicial = nota.escala;
+
+    function mover(ev: PointerEvent) {
+      if (!redimensionandoRef.current) return;
+      const delta = (ev.clientX - inicioX + (ev.clientY - inicioY)) / 200;
+      const escala = Math.min(ESCALA_MAX, Math.max(ESCALA_MIN, escalaInicial + delta));
+      if (el) el.style.setProperty("--nota-escala", String(escala));
+    }
+
+    function soltar(ev: PointerEvent) {
+      redimensionandoRef.current = false;
+      window.removeEventListener("pointermove", mover);
+      window.removeEventListener("pointerup", soltar);
+      const delta = (ev.clientX - inicioX + (ev.clientY - inicioY)) / 200;
+      const escala = Math.min(ESCALA_MAX, Math.max(ESCALA_MIN, escalaInicial + delta));
+      onActualizada({ ...nota, escala });
+      actualizarNotaMural(nota.id, { escala }).catch(() => {});
     }
 
     window.addEventListener("pointermove", mover);
@@ -107,20 +143,23 @@ export function NotaAdhesiva({
       } ${arrastrable ? "cursor-grab active:cursor-grabbing" : ""}`}
       style={
         arrastrable
-          ? {
+          ? ({
               left: `${nota.posX}%`,
               top: `${nota.posY}%`,
               background: estilo.bg,
               color: estilo.texto,
-              transform: `rotate(${nota.rotacion}deg)`,
+              "--nota-escala": nota.escala,
+              transform: `rotate(${nota.rotacion}deg) scale(var(--nota-escala))`,
+              transformOrigin: "top left",
               zIndex: nota.zIndex,
-            }
+            } as React.CSSProperties)
           : { background: estilo.bg, color: estilo.texto }
       }
     >
       {editable && (
         <div className="flex items-start justify-between gap-1 opacity-0 transition-opacity group-hover:opacity-100">
           <button
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               setMostrarColores((v) => !v);
@@ -130,6 +169,7 @@ export function NotaAdhesiva({
             aria-label="Cambiar color"
           />
           <button
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               void eliminar();
@@ -143,7 +183,10 @@ export function NotaAdhesiva({
       )}
 
       {editable && mostrarColores && (
-        <div className="absolute top-6 left-2 z-10 flex gap-1 rounded-md bg-white/90 p-1.5 shadow-elegant">
+        <div
+          onPointerDown={(e) => e.stopPropagation()}
+          className="absolute top-6 left-2 z-10 flex flex-wrap gap-1 rounded-md bg-white/90 p-1.5 shadow-elegant"
+        >
           {COLORES_NOTA.map((c) => (
             <button
               key={c.id}
@@ -182,6 +225,16 @@ export function NotaAdhesiva({
         >
           {texto}
         </p>
+      )}
+
+      {arrastrable && editable && (
+        <div
+          onPointerDown={handleResizePointerDown}
+          title="Arrastra para cambiar el tamaño"
+          className="absolute -right-1 -bottom-1 flex h-4 w-4 cursor-nwse-resize items-center justify-center rounded-full border border-black/10 bg-white/90 opacity-0 transition-opacity group-hover:opacity-100"
+        >
+          <Maximize2 className="h-2.5 w-2.5 text-foreground/70" />
+        </div>
       )}
     </div>
   );

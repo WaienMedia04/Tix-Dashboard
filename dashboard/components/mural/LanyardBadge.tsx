@@ -92,7 +92,7 @@ export function LanyardBadge({
     // alto que la caja visible) para que la cuerda quede pegada al borde
     // superior en vez de flotar en el medio.
     <div className="relative h-[26rem] w-[26rem] shrink-0 overflow-hidden sm:h-[30rem] sm:w-[28rem]">
-      <div className="absolute inset-x-0 -top-28 h-[38rem] sm:-top-32 sm:h-[44rem]">
+      <div className="absolute inset-x-0 -top-32 h-[38rem] sm:-top-36 sm:h-[44rem]">
         <LanyardScene
           position={[0, 0, 20]}
           gravity={[0, -40, 0]}

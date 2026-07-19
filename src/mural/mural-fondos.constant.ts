@@ -14,6 +14,12 @@ export const FONDOS_MURAL_IDS = [
   'lavanda',
   'grafito',
   'blanco',
+  'fuego',
+  'menta',
+  'rosado',
+  'cielo',
+  'vino',
+  'dorado',
 ] as const;
 
 export type FondoMuralId = (typeof FONDOS_MURAL_IDS)[number];

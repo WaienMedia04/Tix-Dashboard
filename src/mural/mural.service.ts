@@ -36,6 +36,7 @@ const SELECT_NOTA = {
   posY: true,
   rotacion: true,
   zIndex: true,
+  escala: true,
 } as const;
 
 const SELECT_ESTAMPA_OTORGADA = {
@@ -237,6 +238,7 @@ export class MuralService {
         ...(dto.posY !== undefined && { posY: dto.posY }),
         ...(dto.rotacion !== undefined && { rotacion: dto.rotacion }),
         ...(dto.zIndex !== undefined && { zIndex: dto.zIndex }),
+        ...(dto.escala !== undefined && { escala: dto.escala }),
       },
       select: SELECT_NOTA,
     });

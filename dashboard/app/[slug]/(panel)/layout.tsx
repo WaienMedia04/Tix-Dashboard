@@ -61,9 +61,9 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
           if (!cancelado) router.replace(estadoMfa === "enroll" ? "/mfa-enroll" : "/mfa-challenge");
           return;
         }
-        // Un TALENTO no usa el panel completo — su vista vive en /mi-espacio.
+        // Un TALENTO no usa el panel completo — su vista vive fuera de este layout.
         if (sesion.usuario.rol === "TALENTO" && !pathname.startsWith(`/${slug}/mi-espacio`)) {
-          if (!cancelado) router.replace(`/${slug}/mi-espacio`);
+          if (!cancelado) router.replace(`/${slug}/mi-mural`);
           return;
         }
         const data = await fetchDashboard(slug);

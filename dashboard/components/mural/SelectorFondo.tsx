@@ -45,7 +45,7 @@ export function SelectorFondo({
         >
           {fondoId === f.id && (
             <span className="absolute inset-0 flex items-center justify-center">
-              <Check className="h-4 w-4 text-white drop-shadow" />
+              <Check className={`h-4 w-4 drop-shadow ${f.claro ? "text-black/70" : "text-white"}`} />
             </span>
           )}
         </button>
