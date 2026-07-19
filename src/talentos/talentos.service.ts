@@ -19,6 +19,7 @@ import {
 import { Actor } from '../auth/actor.types';
 import { CvExtractionService, type CvExtraido } from './cv-extraction.service';
 import { WorklogsService } from '../worklogs/worklogs.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 
 @Injectable()
 export class TalentosService {
@@ -28,6 +29,7 @@ export class TalentosService {
     private readonly prisma: PrismaService,
     private readonly cvExtraction: CvExtractionService,
     private readonly worklogs: WorklogsService,
+    private readonly notificaciones: NotificacionesService,
   ) {}
 
   private async resolverTalento(talentoId: string, actor: Actor) {
@@ -132,7 +134,7 @@ export class TalentosService {
    * (fase Configuración) muestre "revisar manualmente".
    */
   async actualizarCv(talentoId: string, actor: Actor, dto: ActualizarCvDto) {
-    await this.resolverTalento(talentoId, actor);
+    const talento = await this.resolverTalento(talentoId, actor);
 
     const extraido = await this.cvExtraction.extraerDesdeUrl(dto.cvUrl);
     if (!extraido) {
@@ -141,7 +143,7 @@ export class TalentosService {
       );
     }
 
-    return this.prisma.talento.update({
+    const actualizado = await this.prisma.talento.update({
       where: { id: talentoId },
       data: { cvUrl: dto.cvUrl, cvDatosExtraidos: extraido ?? Prisma.JsonNull },
       select: {
@@ -151,6 +153,20 @@ export class TalentosService {
         cvDatosExtraidos: true,
       },
     });
+
+    if (extraido) {
+      await this.notificaciones.crearBroadcast({
+        empresaId: talento.empresaId,
+        tipo: 'CV_LISTO_PARA_REVISAR',
+        titulo: '📄 CV listo para revisar',
+        mensaje: `El CV de ${talento.nombreCompleto} ya fue procesado por IA.`,
+        roles: ['CEO', 'RRHH'],
+        talentoId: talento.id,
+        enlace: `/empleados/${talento.id}`,
+      });
+    }
+
+    return actualizado;
   }
 
   /**

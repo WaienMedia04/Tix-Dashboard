@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Actor } from '../auth/actor.types';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { CrearEstampaDefinicionDto } from './dto/crear-estampa-definicion.dto';
 import { ActualizarEstampaDefinicionDto } from './dto/actualizar-estampa-definicion.dto';
 import { OtorgarEstampaDto } from './dto/otorgar-estampa.dto';
@@ -41,7 +42,10 @@ function serializar(definicion: {
 
 @Injectable()
 export class EstampasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificaciones: NotificacionesService,
+  ) {}
 
   private async resolverEmpresa(slug: string, actor: Actor) {
     const empresa = await this.prisma.empresa.findUnique({ where: { slug } });
@@ -138,7 +142,7 @@ export class EstampasService {
       throw new NotFoundException('Empleado no encontrado');
     }
 
-    return this.prisma.estampaOtorgada.create({
+    const otorgada = await this.prisma.estampaOtorgada.create({
       data: {
         empresaId: empresa.id,
         talentoId: dto.talentoId,
@@ -154,5 +158,16 @@ export class EstampasService {
         createdAt: true,
       },
     });
+
+    await this.notificaciones.crearPersonal({
+      empresaId: empresa.id,
+      talentoId: dto.talentoId,
+      tipo: 'ESTAMPA_RECIBIDA',
+      titulo: '🎁 Nueva estampa',
+      mensaje: `¡Te regalaron la estampa "${definicion.nombre}"!`,
+      enlace: '/mi-mural',
+    });
+
+    return otorgada;
   }
 }

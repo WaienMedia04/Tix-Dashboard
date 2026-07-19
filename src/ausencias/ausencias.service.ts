@@ -8,6 +8,7 @@ import { TipoAusencia } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Actor } from '../auth/actor.types';
 import { talentoScopeWhere } from '../auth/talento-scope.util';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { CrearAusenciaDto } from './dto/crear-ausencia.dto';
 import { AusenciasQueryDto } from './dto/ausencias-query.dto';
 
@@ -69,7 +70,10 @@ function enumerarFechas(inicio: Date, fin: Date): Date[] {
 
 @Injectable()
 export class AusenciasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificaciones: NotificacionesService,
+  ) {}
 
   private async resolverEmpresa(slug: string, actor: Actor) {
     const empresa = await this.prisma.empresa.findUnique({ where: { slug } });
@@ -157,6 +161,16 @@ export class AusenciasService {
         creadoPorUsuarioId: actor.usuario.id,
       },
       select: SELECT_AUSENCIA,
+    });
+
+    await this.notificaciones.crearBroadcast({
+      empresaId: empresa.id,
+      tipo: 'AUSENCIA_REGISTRADA',
+      titulo: '📋 Ausencia registrada',
+      mensaje: `${MARCADOR_AUSENCIA[dto.tipo]}: ${talento.nombreCompleto}`,
+      roles: ['CEO', 'RRHH'],
+      talentoId: talento.id,
+      enlace: '/empleados',
     });
 
     return { ausencia: serializar(ausencia), fechasOmitidas };

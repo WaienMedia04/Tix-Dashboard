@@ -1309,3 +1309,74 @@ export async function otorgarEstampa(
     throw new Error("No se pudo regalar la estampa");
   }
 }
+
+export type TipoNotificacion =
+  | "ESTAMPA_RECIBIDA"
+  | "CUMPLEANOS"
+  | "AUSENCIA_REGISTRADA"
+  | "NOVEDAD_PUBLICADA"
+  | "CV_LISTO_PARA_REVISAR";
+
+export interface Notificacion {
+  id: string;
+  tipo: TipoNotificacion;
+  titulo: string;
+  mensaje: string;
+  enlace: string | null;
+  createdAt: string;
+  leida: boolean;
+}
+
+export async function fetchNotificaciones(slug: string): Promise<Notificacion[]> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/notificaciones`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar las notificaciones");
+  }
+  return res.json();
+}
+
+export async function fetchContadorNotificaciones(slug: string): Promise<{ noLeidas: number }> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/notificaciones/contador`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el contador de notificaciones");
+  }
+  return res.json();
+}
+
+export async function marcarNotificacionLeida(slug: string, id: string): Promise<void> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/notificaciones/${encodeURIComponent(id)}/leer`,
+    { method: "POST", headers: await authHeaders() },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo marcar la notificación como leída");
+  }
+}
+
+export async function marcarTodasNotificacionesLeidas(slug: string): Promise<void> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/notificaciones/leer-todas`, {
+    method: "POST",
+    headers: await authHeaders(),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron marcar las notificaciones como leídas");
+  }
+}

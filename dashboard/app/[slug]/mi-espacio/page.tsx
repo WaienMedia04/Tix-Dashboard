@@ -16,6 +16,7 @@ import {
 } from "@/lib/api";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { BrandMark } from "@/components/BrandMark";
+import { CampanaNotificaciones } from "@/components/notificaciones/CampanaNotificaciones";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { ErrorScreen } from "@/components/ErrorScreen";
 import { MetricCard } from "@/components/MetricCard";
@@ -359,6 +360,7 @@ export default function MiEspacioPage() {
             <Cake className="h-4 w-4" />
             Cumpleaños
           </Link>
+          <CampanaNotificaciones slug={slug} />
           <ThemeToggle />
           <button
             onClick={handleLogout}

@@ -3,9 +3,10 @@ import { TalentosController } from './talentos.controller';
 import { TalentosService } from './talentos.service';
 import { CvExtractionService } from './cv-extraction.service';
 import { WorklogsModule } from '../worklogs/worklogs.module';
+import { NotificacionesModule } from '../notificaciones/notificaciones.module';
 
 @Module({
-  imports: [WorklogsModule],
+  imports: [WorklogsModule, NotificacionesModule],
   controllers: [TalentosController],
   providers: [TalentosService, CvExtractionService],
 })

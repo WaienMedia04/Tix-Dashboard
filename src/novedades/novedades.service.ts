@@ -3,11 +3,21 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { TipoNovedad } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Actor } from '../auth/actor.types';
 import { talentoScopeWhere } from '../auth/talento-scope.util';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { CrearNovedadDto } from './dto/crear-novedad.dto';
 import { NovedadesQueryDto } from './dto/novedades-query.dto';
+
+const ETIQUETA_NOVEDAD: Record<TipoNovedad, string> = {
+  LOGRO: '🏆 Logro',
+  BUENA_ACCION: '💛 Buena acción',
+  AUSENCIA: 'Ausencia',
+  ERROR: '⚠️ Error',
+  SITUACION: 'Situación',
+};
 
 const SELECT_NOVEDAD = {
   id: true,
@@ -45,7 +55,10 @@ function serializar(novedad: {
 
 @Injectable()
 export class NovedadesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificaciones: NotificacionesService,
+  ) {}
 
   private async resolverEmpresa(slug: string, actor: Actor) {
     const empresa = await this.prisma.empresa.findUnique({ where: { slug } });
@@ -97,6 +110,16 @@ export class NovedadesService {
         creadoPorUsuarioId: actor.usuario.id,
       },
       select: SELECT_NOVEDAD,
+    });
+
+    await this.notificaciones.crearBroadcast({
+      empresaId: empresa.id,
+      tipo: 'NOVEDAD_PUBLICADA',
+      titulo: 'Nueva novedad',
+      mensaje: `${ETIQUETA_NOVEDAD[dto.tipo]}: ${talento.nombreCompleto}`,
+      roles: ['CEO', 'RRHH'],
+      talentoId: talento.id,
+      enlace: '/novedades',
     });
 
     return serializar(novedad);

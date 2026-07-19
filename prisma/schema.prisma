@@ -35,6 +35,14 @@ enum TipoEstampaForma {
   LIBRE
 }
 
+enum TipoNotificacion {
+  ESTAMPA_RECIBIDA
+  CUMPLEANOS
+  AUSENCIA_REGISTRADA
+  NOVEDAD_PUBLICADA
+  CV_LISTO_PARA_REVISAR
+}
+
 model Empresa {
   id                String               @id @default(cuid())
   nombre            String
@@ -54,6 +62,7 @@ model Empresa {
   notasMural        MuralNotaAdhesiva[]
   estampasDefinidas EstampaDefinicion[]
   estampasOtorgadas EstampaOtorgada[]
+  notificaciones    Notificacion[]
 }
 
 model Talento {
@@ -85,6 +94,7 @@ model Talento {
   perfilMural       TalentoPerfilMural?
   notasMural        MuralNotaAdhesiva[]
   estampasRecibidas EstampaOtorgada[]
+  notificaciones    Notificacion[]
 
   @@index([empresaId])
   @@index([empresaId, managerUsuarioId])
@@ -107,10 +117,11 @@ model Usuario {
   empresa           Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   talento           Talento?            @relation("UsuarioTalento", fields: [talentoId], references: [id])
   equipoGestionado  Talento[]           @relation("ManagerEquipo")
-  novedadesCreadas  Novedad[]
-  ausenciasCreadas  Ausencia[]
-  estampasCreadas   EstampaDefinicion[]
-  estampasOtorgadas EstampaOtorgada[]
+  novedadesCreadas     Novedad[]
+  ausenciasCreadas     Ausencia[]
+  estampasCreadas      EstampaDefinicion[]
+  estampasOtorgadas    EstampaOtorgada[]
+  notificacionesLeidas NotificacionLectura[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
@@ -260,4 +271,45 @@ model EstampaOtorgada {
   @@index([empresaId])
   @@index([empresaId, talentoId])
   @@index([estampaDefinicionId])
+}
+
+/**
+ * Si `personal` es true, solo la ve el usuario asociado a `talentoId`.
+ * Si es false, es un aviso general: lo ve todo el que tenga uno de los
+ * roles en `rolesDestino` (vacío = todos los roles). `talentoId` en ese
+ * caso es solo una referencia informativa (ej. de quién es el cumpleaños),
+ * no restringe quién la ve.
+ */
+model Notificacion {
+  id           String           @id @default(cuid())
+  empresaId    String
+  tipo         TipoNotificacion
+  titulo       String
+  mensaje      String
+  personal     Boolean          @default(false)
+  rolesDestino Rol[]
+  talentoId    String?
+  enlace       String?
+  createdAt    DateTime         @default(now())
+
+  empresa  Empresa               @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento  Talento?              @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+  lecturas NotificacionLectura[]
+
+  @@index([empresaId])
+  @@index([empresaId, talentoId])
+  @@index([empresaId, createdAt])
+}
+
+model NotificacionLectura {
+  id             String   @id @default(cuid())
+  notificacionId String
+  usuarioId      String
+  leidoAt        DateTime @default(now())
+
+  notificacion Notificacion @relation(fields: [notificacionId], references: [id], onDelete: Cascade)
+  usuario      Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([notificacionId, usuarioId])
+  @@index([usuarioId])
 }
