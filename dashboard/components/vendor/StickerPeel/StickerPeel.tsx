@@ -19,13 +19,13 @@ interface StickerPeelProps {
   width?: number;
   shadowIntensity?: number;
   lightingIntensity?: number;
-  initialPosition?: "center" | { x: number; y: number };
   peelDirection?: number;
   className?: string;
+  /** Adaptado: posición de reposo en % del contenedor (nodo padre en el DOM) — vive en CSS, no en un cálculo en JS. */
+  posX?: number;
+  posY?: number;
   /** Adaptado: notifica la posición final (% relativos al contenedor) al soltar. */
   onPositionChange?: (pos: { posX: number; posY: number }) => void;
-  /** Adaptado: límites del arrastre — si se omite, usa el nodo padre en el DOM (comportamiento original). */
-  boundsRef?: { current: HTMLElement | null };
 }
 
 const StickerPeel = ({
@@ -38,11 +38,11 @@ const StickerPeel = ({
   width = 200,
   shadowIntensity = 0.6,
   lightingIntensity = 0.1,
-  initialPosition = "center",
+  posX = 50,
+  posY = 50,
   peelDirection = 0,
   className = "",
   onPositionChange,
-  boundsRef,
 }: StickerPeelProps) => {
   const containerRef = useRef(null);
   const dragTargetRef = useRef(null);
@@ -54,26 +54,7 @@ const StickerPeel = ({
 
   useEffect(() => {
     const target = dragTargetRef.current;
-    if (!target) return;
-
-    let startX = 0,
-      startY = 0;
-
-    if (initialPosition === "center") {
-      return;
-    }
-
-    if (typeof initialPosition === "object" && initialPosition.x !== undefined && initialPosition.y !== undefined) {
-      startX = initialPosition.x;
-      startY = initialPosition.y;
-    }
-
-    gsap.set(target, { x: startX, y: startY });
-  }, [initialPosition]);
-
-  useEffect(() => {
-    const target = dragTargetRef.current;
-    const boundsEl = boundsRef?.current ?? target.parentNode;
+    const boundsEl = target.parentNode;
 
     draggableInstanceRef.current = Draggable.create(target, {
       type: "x,y",
@@ -197,8 +178,24 @@ const StickerPeel = ({
       "--sticker-shadow-opacity": shadowIntensity,
       "--sticker-lighting-constant": lightingIntensity,
       "--peel-direction": `${peelDirection}deg`,
+      // Posición de reposo en CSS puro — así nunca depende de una medición en
+      // JS que pudiera quedar desactualizada (ver EstampaPeel.tsx).
+      left: `${posX}%`,
+      top: `${posY}%`,
     }),
-    [rotate, peelBackHoverPct, peelBackActivePct, peelEasing, peelHoverEasing, width, shadowIntensity, lightingIntensity, peelDirection],
+    [
+      rotate,
+      peelBackHoverPct,
+      peelBackActivePct,
+      peelEasing,
+      peelHoverEasing,
+      width,
+      shadowIntensity,
+      lightingIntensity,
+      peelDirection,
+      posX,
+      posY,
+    ],
   );
 
   return (

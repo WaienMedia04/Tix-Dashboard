@@ -79,7 +79,7 @@ export function MuralCanvas({
           />
         ))}
         {estampas.map((estampa) => (
-          <EstampaPeel key={estampa.id} estampa={estampa} arrastrable contenedorRef={contenedorRef} />
+          <EstampaPeel key={estampa.id} estampa={estampa} arrastrable />
         ))}
 
         {editable && (
@@ -123,7 +123,7 @@ export function MuralCanvas({
       {estampas.length > 0 && (
         <div className="mt-3 flex flex-wrap justify-center gap-2">
           {estampas.map((estampa) => (
-            <EstampaPeel key={estampa.id} estampa={estampa} arrastrable={false} contenedorRef={contenedorRef} />
+            <EstampaPeel key={estampa.id} estampa={estampa} arrastrable={false} />
           ))}
         </div>
       )}
