@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { Rol } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -29,6 +33,7 @@ export class AdminService {
           activo: true,
           codigoAcceso: true,
           botToken: true,
+          logoUrl: true,
           createdAt: true,
           _count: { select: { talentos: true, worklogs: true } },
         },
@@ -54,6 +59,7 @@ export class AdminService {
         activo: e.activo,
         codigoAcceso: e.codigoAcceso,
         botToken: e.botToken,
+        logoUrl: e.logoUrl,
         createdAt: e.createdAt,
         totalEmpleados: e._count.talentos,
         totalBitacoras: e._count.worklogs,
@@ -117,6 +123,7 @@ export class AdminService {
         ...(dto.nombre && { nombre: dto.nombre.trim() }),
         ...(dto.plan && { plan: dto.plan }),
         ...(dto.codigoAcceso && { codigoAcceso: dto.codigoAcceso.trim() }),
+        ...(dto.logoUrl !== undefined && { logoUrl: dto.logoUrl }),
       },
       select: {
         id: true,
@@ -126,6 +133,7 @@ export class AdminService {
         activo: true,
         codigoAcceso: true,
         botToken: true,
+        logoUrl: true,
         createdAt: true,
       },
     });

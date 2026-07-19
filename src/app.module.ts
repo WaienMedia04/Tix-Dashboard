@@ -11,6 +11,8 @@ import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { NovedadesModule } from './novedades/novedades.module';
 import { AusenciasModule } from './ausencias/ausencias.module';
+import { EstampasModule } from './estampas/estampas.module';
+import { MuralModule } from './mural/mural.module';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { AusenciasModule } from './ausencias/ausencias.module';
     AdminModule,
     NovedadesModule,
     AusenciasModule,
+    EstampasModule,
+    MuralModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

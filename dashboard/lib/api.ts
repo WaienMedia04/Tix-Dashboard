@@ -68,7 +68,7 @@ export interface RankingsResponse {
 }
 
 export interface DashboardData {
-  empresa: { nombre: string; slug: string; plan: string };
+  empresa: { nombre: string; slug: string; plan: string; logoUrl: string | null };
   metricas: {
     totalBitacoras: number;
     enviadas: number;
@@ -178,6 +178,7 @@ export interface EmpleadoDetalle {
     departamento: string | null;
     estado: string;
     fotoUrl: string | null;
+    carnetFotoUrl: string | null;
     cedula: string | null;
     correo: string | null;
     telefono: string | null;
@@ -963,4 +964,311 @@ export async function actualizarCvDatosTalento(
     throw new Error("No se pudo actualizar los datos del CV");
   }
   return res.json();
+}
+
+// ── Mi Mural ────────────────────────────────────────────────────────────
+
+export type TipoEstampaForma = "REDONDEADO" | "CIRCULAR" | "CUADRADO" | "DIAMANTE";
+
+export interface PerfilMural {
+  apodo: string | null;
+  meGusta: string | null;
+  noMeGusta: string | null;
+  cancionFavorita: string | null;
+  superpoder: string | null;
+  fondoId: string;
+}
+
+export interface NotaMural {
+  id: string;
+  texto: string;
+  color: string;
+  posX: number;
+  posY: number;
+  rotacion: number;
+  zIndex: number;
+}
+
+export interface EstampaOtorgadaMural {
+  id: string;
+  estampaDefinicionId: string;
+  nombre: string;
+  imagenUrl: string;
+  forma: TipoEstampaForma;
+  mensaje: string | null;
+  posX: number;
+  posY: number;
+  zIndex: number;
+  createdAt: string;
+}
+
+export interface MuralPropio {
+  perfil: PerfilMural;
+  notas: NotaMural[];
+  estampasRecibidas: EstampaOtorgadaMural[];
+  talento: {
+    nombreCompleto: string;
+    rol: string;
+    departamento: string | null;
+    fotoUrl: string | null;
+    carnetFotoUrl: string | null;
+  };
+  empresa: { logoUrl: string | null };
+}
+
+/** 403 cuando la cuenta autenticada no tiene un Talento vinculado (ej. CEO/RRHH sin ficha propia). */
+export class SinPerfilMuralError extends Error {}
+
+async function manejarErrorMural(res: Response): Promise<never> {
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 403) {
+    throw new SinPerfilMuralError("Esta cuenta no tiene un perfil de empleado asociado");
+  }
+  throw new Error("No se pudo completar la operación en Mi Mural");
+}
+
+export async function fetchMuralPropio(): Promise<MuralPropio> {
+  const res = await fetch(`${API_URL}/talentos/me/mural`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
+/** Vista de solo lectura del mural de cualquier empleado de la empresa. */
+export async function fetchMuralDeTalento(slug: string, talentoId: string): Promise<MuralPropio> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/empleados/${encodeURIComponent(talentoId)}/mural`,
+    { headers: await authHeaders(), cache: "no-store" },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError("Empleado no encontrado");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el mural");
+  }
+  return res.json();
+}
+
+export interface MuralDirectorioItem {
+  id: string;
+  nombreCompleto: string;
+  rol: string;
+  fotoUrl: string | null;
+}
+
+/** Directorio de compañeros para navegar entre murales — abierto a toda la empresa. */
+export async function fetchMuralDirectorio(slug: string): Promise<MuralDirectorioItem[]> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/mural-directorio`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el directorio");
+  }
+  return res.json();
+}
+
+export async function actualizarPerfilMural(datos: Partial<PerfilMural>): Promise<PerfilMural> {
+  const res = await fetch(`${API_URL}/talentos/me/mural/perfil`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
+export async function crearNotaMural(datos: {
+  texto: string;
+  color?: string;
+  posX?: number;
+  posY?: number;
+}): Promise<NotaMural> {
+  const res = await fetch(`${API_URL}/talentos/me/mural/notas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
+export async function actualizarNotaMural(
+  id: string,
+  datos: Partial<{ texto: string; color: string; posX: number; posY: number; rotacion: number; zIndex: number }>,
+): Promise<NotaMural> {
+  const res = await fetch(`${API_URL}/talentos/me/mural/notas/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
+export async function borrarNotaMural(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/talentos/me/mural/notas/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: await authHeaders(),
+  });
+  if (!res.ok) await manejarErrorMural(res);
+}
+
+export async function actualizarPosicionEstampa(
+  id: string,
+  datos: Partial<{ posX: number; posY: number; zIndex: number }>,
+): Promise<EstampaOtorgadaMural> {
+  const res = await fetch(`${API_URL}/talentos/me/mural/estampas/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
+export async function actualizarCarnetTalento(
+  talentoId: string,
+  carnetFotoUrl: string | null,
+): Promise<{ id: string; nombreCompleto: string; carnetFotoUrl: string | null }> {
+  const res = await fetch(`${API_URL}/talentos/${encodeURIComponent(talentoId)}/carnet`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify({ carnetFotoUrl }),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError("Empleado no encontrado");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo actualizar la imagen del carnet");
+  }
+  return res.json();
+}
+
+export async function actualizarLogoEmpresa(slug: string, logoUrl: string): Promise<{ slug: string; logoUrl: string | null }> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/logo`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify({ logoUrl }),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo actualizar el logo de la empresa");
+  }
+  return res.json();
+}
+
+// ── Estampas (catálogo CEO/RRHH) ───────────────────────────────────────
+
+export interface EstampaDefinicion {
+  id: string;
+  nombre: string;
+  imagenUrl: string;
+  forma: TipoEstampaForma;
+  activo: boolean;
+  creadoPorNombre: string;
+  createdAt: string;
+}
+
+export async function fetchEstampas(slug: string): Promise<EstampaDefinicion[]> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/estampas`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar las estampas");
+  }
+  return res.json();
+}
+
+export async function crearEstampaDefinicion(
+  slug: string,
+  datos: { nombre: string; imagenUrl: string; forma: TipoEstampaForma },
+): Promise<EstampaDefinicion> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/estampas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo crear la estampa");
+  }
+  return res.json();
+}
+
+export async function actualizarEstampaDefinicion(
+  slug: string,
+  id: string,
+  datos: { activo: boolean },
+): Promise<EstampaDefinicion> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/estampas/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo actualizar la estampa");
+  }
+  return res.json();
+}
+
+export async function otorgarEstampa(
+  slug: string,
+  estampaDefinicionId: string,
+  talentoId: string,
+  mensaje?: string,
+): Promise<void> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/estampas/${encodeURIComponent(estampaDefinicionId)}/otorgar`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ talentoId, mensaje }),
+    },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError("Empleado o estampa no encontrados");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo regalar la estampa");
+  }
 }

@@ -14,6 +14,7 @@ import {
   Calendar,
   Building2,
   Pencil,
+  PenSquare,
 } from "lucide-react";
 import {
   type BitacoraItem,
@@ -29,6 +30,7 @@ import { WorklogDetalleModal, bitacoraItemADetalle } from "../bitacoras/WorklogD
 import { PuntajeIAChart } from "./PuntajeIAChart";
 import { CumplimientoTareasChart } from "./CumplimientoTareasChart";
 import { FotoTalento } from "./FotoTalento";
+import { CarnetFotoTalento } from "./CarnetFotoTalento";
 import { CvTalento } from "./CvTalento";
 import { AusenciaForm } from "./AusenciaForm";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
@@ -291,6 +293,10 @@ function EmpleadoDetalleResultado({
     setEstado({ tipo: "listo", detalle: { ...detalle, talento: { ...detalle.talento, ...campos } } });
   }
 
+  function handleCarnetActualizado(carnetFotoUrl: string | null) {
+    setEstado({ tipo: "listo", detalle: { ...detalle, talento: { ...detalle.talento, carnetFotoUrl } } });
+  }
+
   function handleCvActualizado(campos: { cvUrl: string | null; cvDatosExtraidos: EmpleadoDetalle["talento"]["cvDatosExtraidos"] }) {
     setEstado({ tipo: "listo", detalle: { ...detalle, talento: { ...detalle.talento, ...campos } } });
   }
@@ -322,6 +328,13 @@ function EmpleadoDetalleResultado({
             >
               {activo ? "Activo" : "Inactivo"}
             </span>
+            <Link
+              href={`/${slug}/mi-mural/${detalle.talento.id}`}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+            >
+              <PenSquare className="h-3.5 w-3.5" />
+              Ver mural
+            </Link>
             <button
               onClick={alternarEstado}
               disabled={actualizando}
@@ -334,6 +347,13 @@ function EmpleadoDetalleResultado({
       </div>
 
       <InfoRRHH talento={detalle.talento} editable={puedeEditar} onActualizada={handleInfoActualizada} />
+
+      <CarnetFotoTalento
+        talentoId={detalle.talento.id}
+        carnetFotoUrl={detalle.talento.carnetFotoUrl}
+        editable={puedeEditar}
+        onActualizado={handleCarnetActualizado}
+      />
 
       {puedeEditar && <AusenciaForm slug={slug} talentoId={detalle.talento.id} />}
 

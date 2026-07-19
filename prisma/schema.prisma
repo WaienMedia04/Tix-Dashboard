@@ -27,47 +27,63 @@ enum TipoAusencia {
   VACACIONES
 }
 
+enum TipoEstampaForma {
+  REDONDEADO
+  CIRCULAR
+  CUADRADO
+  DIAMANTE
+}
+
 model Empresa {
-  id           String    @id @default(cuid())
-  nombre       String
-  slug         String    @unique
-  plan         String
-  codigoAcceso String
-  botToken     String?   @unique
-  activo       Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  talentos     Talento[]
-  worklogs     Worklog[]
-  usuarios     Usuario[]
-  novedades    Novedad[]
-  ausencias    Ausencia[]
+  id                String               @id @default(cuid())
+  nombre            String
+  slug              String               @unique
+  plan              String
+  codigoAcceso      String
+  botToken          String?              @unique
+  logoUrl           String?
+  activo            Boolean              @default(true)
+  createdAt         DateTime             @default(now())
+  talentos          Talento[]
+  worklogs          Worklog[]
+  usuarios          Usuario[]
+  novedades         Novedad[]
+  ausencias         Ausencia[]
+  perfilesMural     TalentoPerfilMural[]
+  notasMural        MuralNotaAdhesiva[]
+  estampasDefinidas EstampaDefinicion[]
+  estampasOtorgadas EstampaOtorgada[]
 }
 
 model Talento {
-  id               String    @id @default(cuid())
-  empresaId        String
-  nombreCompleto   String
-  apellido         String?
-  rol              String
-  departamento     String?
-  estado           String
-  cedula           String?
-  correo           String?
-  telefono         String?
-  fechaIngreso     DateTime?
-  fechaNacimiento  DateTime?
-  direccion        String?
-  notas            String?
-  fotoUrl          String?
-  cvUrl            String?
-  cvDatosExtraidos Json?
-  managerUsuarioId String?
-  empresa          Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  manager          Usuario?  @relation("ManagerEquipo", fields: [managerUsuarioId], references: [id])
-  usuario          Usuario?  @relation("UsuarioTalento")
-  worklogs         Worklog[]
-  novedades        Novedad[]
-  ausencias        Ausencia[]
+  id                String              @id @default(cuid())
+  empresaId         String
+  nombreCompleto    String
+  apellido          String?
+  rol               String
+  departamento      String?
+  estado            String
+  cedula            String?
+  correo            String?
+  telefono          String?
+  fechaIngreso      DateTime?
+  fechaNacimiento   DateTime?
+  direccion         String?
+  notas             String?
+  fotoUrl           String?
+  carnetFotoUrl     String?
+  cvUrl             String?
+  cvDatosExtraidos  Json?
+  managerUsuarioId  String?
+  empresa           Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  manager           Usuario?            @relation("ManagerEquipo", fields: [managerUsuarioId], references: [id])
+  usuario           Usuario?            @relation("UsuarioTalento")
+  worklogs          Worklog[]
+  novedades         Novedad[]
+  ausencias         Ausencia[]
+  perfilMural       TalentoPerfilMural?
+  notasMural        MuralNotaAdhesiva[]
+  estampasRecibidas EstampaOtorgada[]
 
   @@index([empresaId])
   @@index([empresaId, managerUsuarioId])
@@ -87,11 +103,13 @@ model Usuario {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  empresa            Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  talento            Talento?  @relation("UsuarioTalento", fields: [talentoId], references: [id])
-  equipoGestionado   Talento[] @relation("ManagerEquipo")
-  novedadesCreadas   Novedad[]
-  ausenciasCreadas   Ausencia[]
+  empresa           Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento           Talento?            @relation("UsuarioTalento", fields: [talentoId], references: [id])
+  equipoGestionado  Talento[]           @relation("ManagerEquipo")
+  novedadesCreadas  Novedad[]
+  ausenciasCreadas  Ausencia[]
+  estampasCreadas   EstampaDefinicion[]
+  estampasOtorgadas EstampaOtorgada[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
@@ -163,4 +181,82 @@ model Ausencia {
 
   @@index([empresaId])
   @@index([empresaId, talentoId])
+}
+
+model TalentoPerfilMural {
+  id              String   @id @default(cuid())
+  empresaId       String
+  talentoId       String   @unique
+  apodo           String?
+  meGusta         String?
+  noMeGusta       String?
+  cancionFavorita String?
+  superpoder      String?
+  fondoId         String   @default("aurora")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId])
+}
+
+model MuralNotaAdhesiva {
+  id        String   @id @default(cuid())
+  empresaId String
+  talentoId String
+  texto     String
+  color     String   @default("amarillo")
+  posX      Float    @default(50)
+  posY      Float    @default(50)
+  rotacion  Float    @default(0)
+  zIndex    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId])
+  @@index([empresaId, talentoId])
+}
+
+model EstampaDefinicion {
+  id                 String           @id @default(cuid())
+  empresaId          String
+  nombre             String
+  imagenUrl          String
+  forma              TipoEstampaForma
+  activo             Boolean          @default(true)
+  creadoPorUsuarioId String
+  createdAt          DateTime         @default(now())
+
+  empresa   Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  creadoPor Usuario           @relation(fields: [creadoPorUsuarioId], references: [id])
+  grants    EstampaOtorgada[]
+
+  @@index([empresaId])
+}
+
+model EstampaOtorgada {
+  id                   String   @id @default(cuid())
+  empresaId            String
+  talentoId            String
+  estampaDefinicionId  String
+  otorgadoPorUsuarioId String
+  mensaje              String?
+  posX                 Float    @default(50)
+  posY                 Float    @default(50)
+  zIndex               Int      @default(0)
+  createdAt            DateTime @default(now())
+
+  empresa           Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento           Talento           @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+  estampaDefinicion EstampaDefinicion @relation(fields: [estampaDefinicionId], references: [id], onDelete: Cascade)
+  otorgadoPor       Usuario           @relation(fields: [otorgadoPorUsuarioId], references: [id])
+
+  @@index([empresaId])
+  @@index([empresaId, talentoId])
+  @@index([estampaDefinicionId])
 }

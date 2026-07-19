@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUrl } from 'class-validator';
 
 export class EditarEmpresaDto {
   @IsString()
@@ -13,4 +13,8 @@ export class EditarEmpresaDto {
   @IsString()
   @IsOptional()
   codigoAcceso?: string;
+
+  @IsUrl()
+  @IsOptional()
+  logoUrl?: string;
 }

@@ -1,0 +1,13 @@
+.lanyard-wrapper {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  /* Adaptado: 100% del contenedor en vez de 100vh — aquí el Lanyard vive
+     dentro de una tarjeta de tamaño fijo, no como hero de página completa. */
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: scale(1);
+  transform-origin: center;
+}

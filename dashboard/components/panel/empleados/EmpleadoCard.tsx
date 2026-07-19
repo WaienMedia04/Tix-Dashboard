@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { PenSquare } from "lucide-react";
 import type { EmpleadoResumen } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
 import { Modal } from "@/components/Modal";
@@ -22,6 +24,7 @@ const TITULOS: Record<Metrica, string> = {
 };
 
 export function EmpleadoCard({ slug, empleado }: { slug: string; empleado: EmpleadoResumen }) {
+  const router = useRouter();
   const activo = empleado.estado === "activo";
   const [metricaAbierta, setMetricaAbierta] = useState<Metrica | null>(null);
 
@@ -29,6 +32,12 @@ export function EmpleadoCard({ slug, empleado }: { slug: string; empleado: Emple
     e.preventDefault();
     e.stopPropagation();
     setMetricaAbierta(metrica);
+  }
+
+  function irAlMural(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/${slug}/mi-mural/${empleado.id}`);
   }
 
   return (
@@ -50,13 +59,24 @@ export function EmpleadoCard({ slug, empleado }: { slug: string; empleado: Emple
               <p className="mt-0.5 truncate text-[11px] text-muted-foreground/80">{empleado.departamento}</p>
             )}
           </div>
-          <span
-            className={`inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-medium ${
-              activo ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {activo ? "Activo" : "Inactivo"}
-          </span>
+          <div className="flex shrink-0 flex-col items-end gap-1.5">
+            <span
+              className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${
+                activo ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {activo ? "Activo" : "Inactivo"}
+            </span>
+            <button
+              type="button"
+              onClick={irAlMural}
+              title="Ver mural"
+              aria-label="Ver mural"
+              className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
+            >
+              <PenSquare className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3">

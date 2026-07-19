@@ -13,6 +13,14 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    // Componentes vendorizados verbatim de React Bits — no se les aplican
+    // nuestras convenciones de lint/tipado, se tratan como una dependencia.
+    files: ["components/vendor/**"],
+    rules: {
+      "@typescript-eslint/ban-ts-comment": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

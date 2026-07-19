@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { Menu, PenSquare } from "lucide-react";
+import { usePanel } from "./PanelContext";
 
 export function Header({
   empresaNombre,
@@ -12,6 +14,7 @@ export function Header({
   plan: string;
   onAbrirMenu?: () => void;
 }) {
+  const { slug } = usePanel();
   const pathname = usePathname();
   const segmento = pathname.split("/").filter(Boolean)[1] ?? "dashboard";
 
@@ -46,9 +49,19 @@ export function Header({
           <p className="hidden truncate text-sm text-muted-foreground sm:block">{seccion.subtitulo}</p>
         </div>
       </div>
-      <div className="shrink-0 text-right">
-        <p className="max-w-[40vw] truncate text-sm font-medium text-foreground">{empresaNombre}</p>
-        <p className="text-xs text-muted-foreground capitalize">Plan {plan}</p>
+      <div className="flex shrink-0 items-center gap-3">
+        <Link
+          href={`/${slug}/mi-mural`}
+          aria-label="Mi Mural"
+          title="Mi Mural"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <PenSquare className="h-4.5 w-4.5" />
+        </Link>
+        <div className="text-right">
+          <p className="max-w-[40vw] truncate text-sm font-medium text-foreground">{empresaNombre}</p>
+          <p className="text-xs text-muted-foreground capitalize">Plan {plan}</p>
+        </div>
       </div>
     </header>
   );

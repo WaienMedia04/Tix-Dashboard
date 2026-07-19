@@ -12,10 +12,15 @@ import { ReportesQueryDto } from './dto/reportes-query.dto';
 import { CrearTalentoDto } from './dto/crear-talento.dto';
 import { CrearUsuarioEmpresaDto } from './dto/crear-usuario-empresa.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
+import { ActualizarLogoEmpresaDto } from './dto/actualizar-logo-empresa.dto';
+import { MuralService } from '../mural/mural.service';
 import { AnalisisEjecutivoService } from './analisis-ejecutivo.service';
 import { clasificarEstado, esAusenciaAutorizada } from './estado.util';
 import { invitarUsuario } from '../auth/invitar-usuario.util';
-import { cambiarCorreoUsuario, enviarResetPassword } from '../auth/gestionar-usuario.util';
+import {
+  cambiarCorreoUsuario,
+  enviarResetPassword,
+} from '../auth/gestionar-usuario.util';
 import {
   rangoAnual,
   rangoMensual,
@@ -30,7 +35,9 @@ import {
 } from '../auth/talento-scope.util';
 
 /** Días de ausencia autorizada quedan fuera del numerador y denominador. */
-function excluirAusencias<T extends { estadoEnvio: string }>(registros: T[]): T[] {
+function excluirAusencias<T extends { estadoEnvio: string }>(
+  registros: T[],
+): T[] {
   return registros.filter((w) => !esAusenciaAutorizada(w.estadoEnvio));
 }
 
@@ -56,6 +63,7 @@ export class EmpresasService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly analisisEjecutivo: AnalisisEjecutivoService,
+    private readonly mural: MuralService,
   ) {}
 
   listar() {
@@ -77,6 +85,51 @@ export class EmpresasService {
       throw new NotFoundException(`Empresa "${slug}" no encontrada`);
     }
     return empresa;
+  }
+
+  /** Logo de la empresa — cara trasera del Lanyard en Mi Mural. */
+  async actualizarLogo(
+    slug: string,
+    actor: Actor,
+    dto: ActualizarLogoEmpresaDto,
+  ) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+
+    return this.prisma.empresa.update({
+      where: { id: empresa.id },
+      data: { logoUrl: dto.logoUrl },
+      select: { slug: true, logoUrl: true },
+    });
+  }
+
+  /**
+   * Directorio para "Mi Mural": a diferencia de empleados() (que usa
+   * talentoScopeWhere y restringe a MANAGER/TALENTO a su propio alcance),
+   * este listado es intencionalmente abierto a toda la empresa — el mural
+   * es un espacio social, no un dato sensible de desempeño.
+   */
+  async muralDirectorio(slug: string, actor: Actor) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+
+    return this.prisma.talento.findMany({
+      where: { empresaId: empresa.id, estado: 'activo' },
+      select: { id: true, nombreCompleto: true, rol: true, fotoUrl: true },
+      orderBy: { nombreCompleto: 'asc' },
+    });
+  }
+
+  /** Vista de solo lectura del mural de cualquier talento de la empresa. */
+  async muralDeTalento(slug: string, actor: Actor, talentoId: string) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+
+    const talento = await this.prisma.talento.findUnique({
+      where: { id: talentoId },
+    });
+    if (!talento || talento.empresaId !== empresa.id) {
+      throw new NotFoundException('Empleado no encontrado');
+    }
+
+    return this.mural.obtenerMuralDeTalento(talento.id, empresa.id);
   }
 
   async dashboard(slug: string, actor: Actor) {
@@ -240,6 +293,7 @@ export class EmpresasService {
         nombre: empresa.nombre,
         slug: empresa.slug,
         plan: empresa.plan,
+        logoUrl: empresa.logoUrl,
       },
       metricas: {
         totalBitacoras,
@@ -475,6 +529,7 @@ export class EmpresasService {
         departamento: talento.departamento,
         estado: talento.estado,
         fotoUrl: talento.fotoUrl,
+        carnetFotoUrl: talento.carnetFotoUrl,
         cedula: talento.cedula,
         correo: talento.correo,
         telefono: talento.telefono,
@@ -602,7 +657,12 @@ export class EmpresasService {
           talentoId: talentoIdFiltro,
           fecha: { gte: semanas[0].inicio, lte: semanas[7].fin },
         },
-        select: { talentoId: true, fecha: true, estadoEnvio: true, puntajeIA: true },
+        select: {
+          talentoId: true,
+          fecha: true,
+          estadoEnvio: true,
+          puntajeIA: true,
+        },
       }),
       this.prisma.worklog.findMany({
         where: {
@@ -627,7 +687,11 @@ export class EmpresasService {
       }),
       this.prisma.talento.findMany({ where: talentoActivoScopeWhere(actor) }),
       this.prisma.worklog.findMany({
-        where: { empresaId: empresa.id, talentoId: talentoIdFiltro, fecha: hoy },
+        where: {
+          empresaId: empresa.id,
+          talentoId: talentoIdFiltro,
+          fecha: hoy,
+        },
         select: { talentoId: true, estadoEnvio: true },
       }),
     ]);
@@ -818,7 +882,9 @@ export class EmpresasService {
     const porcentajeCumplimientoPromedio =
       worklogsPeriodoEvaluables.length === 0
         ? null
-        : Math.round((enviadasPeriodo / worklogsPeriodoEvaluables.length) * 1000) / 10;
+        : Math.round(
+            (enviadasPeriodo / worklogsPeriodoEvaluables.length) * 1000,
+          ) / 10;
 
     const empleadoDestacado =
       kpisPorEmpleado.length > 0 && kpisPorEmpleado[0].puntajeProm !== null
@@ -945,7 +1011,8 @@ export class EmpresasService {
         const propioCumplimiento =
           propiosEvaluables.length === 0
             ? null
-            : Math.round((propiasEnviadas / propiosEvaluables.length) * 1000) / 10;
+            : Math.round((propiasEnviadas / propiosEvaluables.length) * 1000) /
+              10;
         const propiosConCumplimientoTareas = propios.filter(
           (w) => w.cumplimientoTareas !== null,
         );
@@ -1098,24 +1165,40 @@ export class EmpresasService {
     });
   }
 
-  private async validarUsuarioGestionable(empresaId: string, usuarioId: string) {
-    const usuario = await this.prisma.usuario.findUnique({ where: { id: usuarioId } });
+  private async validarUsuarioGestionable(
+    empresaId: string,
+    usuarioId: string,
+  ) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: usuarioId },
+    });
     if (!usuario || usuario.empresaId !== empresaId) {
       throw new NotFoundException('Usuario no encontrado');
     }
     if (usuario.rol !== 'TALENTO' && usuario.rol !== 'MANAGER') {
-      throw new ForbiddenException('No puedes gestionar este acceso desde aquí');
+      throw new ForbiddenException(
+        'No puedes gestionar este acceso desde aquí',
+      );
     }
     return usuario;
   }
 
-  async cambiarCorreoUsuario(slug: string, actor: Actor, usuarioId: string, email: string) {
+  async cambiarCorreoUsuario(
+    slug: string,
+    actor: Actor,
+    usuarioId: string,
+    email: string,
+  ) {
     const empresa = await this.resolverEmpresa(slug, actor);
     await this.validarUsuarioGestionable(empresa.id, usuarioId);
     return cambiarCorreoUsuario(this.prisma, usuarioId, email);
   }
 
-  async restablecerPasswordUsuario(slug: string, actor: Actor, usuarioId: string) {
+  async restablecerPasswordUsuario(
+    slug: string,
+    actor: Actor,
+    usuarioId: string,
+  ) {
     const empresa = await this.resolverEmpresa(slug, actor);
     await this.validarUsuarioGestionable(empresa.id, usuarioId);
     return enviarResetPassword(this.prisma, usuarioId);

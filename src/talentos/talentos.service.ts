@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ActualizarTalentoDto } from './dto/actualizar-talento.dto';
 import { ActualizarFotoDto } from './dto/actualizar-foto.dto';
+import { ActualizarCarnetDto } from './dto/actualizar-carnet.dto';
 import { ActualizarCvDto } from './dto/actualizar-cv.dto';
 import { ActualizarCvDatosDto } from './dto/actualizar-cv-datos.dto';
 import {
@@ -96,6 +97,24 @@ export class TalentosService {
       where: { id: talentoId },
       data: { fotoUrl: dto.fotoUrl },
       select: { id: true, nombreCompleto: true, fotoUrl: true },
+    });
+  }
+
+  /** Imagen de carnet para la cara frontal del Lanyard — opcional, distinta de fotoUrl. */
+  async actualizarCarnet(
+    talentoId: string,
+    actor: Actor,
+    dto: ActualizarCarnetDto,
+  ) {
+    await this.resolverTalento(talentoId, actor);
+
+    return this.prisma.talento.update({
+      where: { id: talentoId },
+      data: {
+        carnetFotoUrl:
+          dto.carnetFotoUrl === undefined ? null : dto.carnetFotoUrl,
+      },
+      select: { id: true, nombreCompleto: true, carnetFotoUrl: true },
     });
   }
 

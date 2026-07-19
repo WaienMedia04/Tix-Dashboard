@@ -19,3 +19,21 @@ export async function exigirRolAdministrativo(request: Request): Promise<void> {
     throw new Error("No autorizado");
   }
 }
+
+/**
+ * Verifica, del lado del servidor (Route Handler), que el `x-admin-token`
+ * de la request sea válido — delegando al propio backend (que ya lo
+ * compara contra ADMIN_TOKEN vía AdminGuard) en vez de duplicar el
+ * secreto en el servidor de Next. Usado por las subidas del panel
+ * super-admin (ej. logo de empresa).
+ */
+export async function exigirTokenAdmin(request: Request): Promise<void> {
+  const tokenAdmin = request.headers.get("x-admin-token") ?? "";
+  const res = await fetch(`${API_URL}/admin/dashboard`, {
+    headers: { "x-admin-token": tokenAdmin },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error("No autorizado");
+  }
+}

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { CheckCircle2, ClipboardList, LogOut, Moon, Sparkles, Sun } from "lucide-react";
+import { CheckCircle2, ClipboardList, LogOut, Moon, PenSquare, Sparkles, Sun } from "lucide-react";
 import {
   EmpresaNoEncontradaError,
   SesionInvalidaError,
@@ -344,6 +345,13 @@ export default function MiEspacioPage() {
       <header className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-8">
         <BrandMark />
         <div className="flex items-center gap-2">
+          <Link
+            href={`/${slug}/mi-mural`}
+            className="flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <PenSquare className="h-4 w-4" />
+            Mi Mural
+          </Link>
           <ThemeToggle />
           <button
             onClick={handleLogout}

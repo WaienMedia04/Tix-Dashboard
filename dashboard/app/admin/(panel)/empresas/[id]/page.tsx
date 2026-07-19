@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { upload } from "@vercel/blob/client";
 import { Bot, ChevronLeft, Copy, Eye, EyeOff, KeyRound, Mail, Plus, Trash2, UserCog, X } from "lucide-react";
 import {
   type EmpresaAdmin,
@@ -292,6 +293,80 @@ function ModalEliminarEmpresa({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Logo de la empresa ──────────────────────────────────────────────────────
+
+function LogoEmpresaAdmin({
+  empresaId,
+  logoUrl,
+  onActualizado,
+}: {
+  empresaId: string;
+  logoUrl: string | null | undefined;
+  onActualizado: (logoUrl: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [subiendo, setSubiendo] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleFile(file: File) {
+    const token = leerTokenAdmin();
+    if (!token) return;
+    setError(null);
+    setSubiendo(true);
+    try {
+      const blob = await upload(`empresas/${empresaId}/logo-${file.name}`, file, {
+        access: "public",
+        handleUploadUrl: `/api/admin/empresas/${empresaId}/logo`,
+        headers: { "x-admin-token": token },
+      });
+      const actualizada = await editarEmpresa(token, empresaId, { logoUrl: blob.url });
+      onActualizado(actualizada.logoUrl ?? blob.url);
+    } catch {
+      setError("No se pudo subir el logo. Intenta de nuevo.");
+    } finally {
+      setSubiendo(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-6 shadow-card">
+      <h2 className="font-display mb-4 text-base font-semibold text-foreground">Logo de la empresa</h2>
+      <div className="flex items-center gap-4">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="Logo de la empresa" className="h-full w-full object-contain" />
+          ) : (
+            <span className="text-xs text-muted-foreground">Sin logo</span>
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={subiendo}
+            className="inline-flex w-fit items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+          >
+            {subiendo ? "Subiendo..." : logoUrl ? "Cambiar logo" : "Subir logo"}
+          </button>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void handleFile(file);
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 }
@@ -639,6 +714,12 @@ export default function AdminEmpresaDetallePage() {
             </button>
           </form>
         </div>
+
+        <LogoEmpresaAdmin
+          empresaId={empresa.id}
+          logoUrl={empresa.logoUrl}
+          onActualizado={(logoUrl) => setEmpresa((prev) => (prev ? { ...prev, logoUrl } : prev))}
+        />
 
         {/* Empleados */}
         <div className="rounded-xl border border-border bg-card shadow-card">

@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { Building2 } from "lucide-react";
 import { usePanel } from "../PanelContext";
 import { ListaEmpleados } from "./ListaEmpleados";
+import { LogoEmpresa } from "./LogoEmpresa";
 
 export function ConfiguracionView() {
   const { slug, empresa } = usePanel();
+  const [logoUrl, setLogoUrl] = useState(empresa.logoUrl);
 
   return (
     <div className="space-y-4">
@@ -31,6 +34,8 @@ export function ConfiguracionView() {
           </div>
         </dl>
       </div>
+
+      <LogoEmpresa slug={slug} logoUrl={logoUrl} onActualizado={setLogoUrl} />
 
       <ListaEmpleados slug={slug} />
     </div>

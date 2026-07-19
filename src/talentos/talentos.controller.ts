@@ -11,6 +11,7 @@ import {
 import { TalentosService } from './talentos.service';
 import { ActualizarTalentoDto } from './dto/actualizar-talento.dto';
 import { ActualizarFotoDto } from './dto/actualizar-foto.dto';
+import { ActualizarCarnetDto } from './dto/actualizar-carnet.dto';
 import { ActualizarCvDto } from './dto/actualizar-cv.dto';
 import { ActualizarCvDatosDto } from './dto/actualizar-cv-datos.dto';
 import { RegistrarWorklogPropioDto } from './dto/registrar-worklog-propio.dto';
@@ -54,6 +55,17 @@ export class TalentosController {
     @Req() req: RequestConActor,
   ) {
     return this.talentosService.actualizarFoto(talentoId, req.actor!, dto);
+  }
+
+  @Patch(':talentoId/carnet')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  actualizarCarnet(
+    @Param('talentoId') talentoId: string,
+    @Body() dto: ActualizarCarnetDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.talentosService.actualizarCarnet(talentoId, req.actor!, dto);
   }
 
   /**

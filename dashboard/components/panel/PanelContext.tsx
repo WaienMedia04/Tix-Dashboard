@@ -8,7 +8,7 @@ export interface PanelContextValue {
   rol: Rol;
   usuarioId: string;
   usuarioNombre: string;
-  empresa: { nombre: string; slug: string; plan: string };
+  empresa: { nombre: string; slug: string; plan: string; logoUrl: string | null };
   dashboardInicial: DashboardData;
 }
 

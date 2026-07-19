@@ -15,6 +15,7 @@ export interface EmpresaAdmin {
   activo: boolean;
   codigoAcceso?: string;
   botToken?: string;
+  logoUrl?: string | null;
   createdAt: string;
   totalEmpleados: number;
   totalBitacoras: number;
@@ -124,7 +125,7 @@ export function crearEmpresa(
 export function editarEmpresa(
   token: string,
   id: string,
-  data: { nombre?: string; plan?: string; codigoAcceso?: string },
+  data: { nombre?: string; plan?: string; codigoAcceso?: string; logoUrl?: string },
 ): Promise<EmpresaAdmin> {
   return adminFetch<EmpresaAdmin>(`/admin/empresas/${id}`, token, {
     method: "PUT",

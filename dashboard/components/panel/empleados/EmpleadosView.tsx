@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { type EmpleadoResumen, fetchEmpleados } from "@/lib/api";
 import { usePanel } from "../PanelContext";
 import { EmpleadoCard } from "./EmpleadoCard";
+import { EstampasCatalogo } from "./EstampasCatalogo";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { SkeletonCardGrid } from "@/components/motion/Skeleton";
 
@@ -13,8 +14,9 @@ type Estado =
   | { tipo: "listo"; empleados: EmpleadoResumen[] };
 
 export function EmpleadosView() {
-  const { slug } = usePanel();
+  const { slug, rol } = usePanel();
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
+  const puedeGestionarEstampas = rol === "CEO" || rol === "RRHH";
 
   useEffect(() => {
     let cancelado = false;
@@ -36,17 +38,22 @@ export function EmpleadosView() {
   if (estado.tipo === "error") {
     return <p className="text-sm text-destructive">No se pudo cargar el listado de empleados.</p>;
   }
-  if (estado.empleados.length === 0) {
-    return <p className="text-sm text-muted-foreground">No hay empleados registrados.</p>;
-  }
 
   return (
-    <StaggerGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {estado.empleados.map((empleado) => (
-        <StaggerItem key={empleado.id}>
-          <EmpleadoCard slug={slug} empleado={empleado} />
-        </StaggerItem>
-      ))}
-    </StaggerGroup>
+    <div className="space-y-4">
+      {puedeGestionarEstampas && <EstampasCatalogo slug={slug} empleados={estado.empleados} />}
+
+      {estado.empleados.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No hay empleados registrados.</p>
+      ) : (
+        <StaggerGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {estado.empleados.map((empleado) => (
+            <StaggerItem key={empleado.id}>
+              <EmpleadoCard slug={slug} empleado={empleado} />
+            </StaggerItem>
+          ))}
+        </StaggerGroup>
+      )}
+    </div>
   );
 }

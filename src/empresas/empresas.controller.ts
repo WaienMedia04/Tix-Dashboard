@@ -19,6 +19,7 @@ import { ReportesQueryDto } from './dto/reportes-query.dto';
 import { CrearTalentoDto } from './dto/crear-talento.dto';
 import { CrearUsuarioEmpresaDto } from './dto/crear-usuario-empresa.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
+import { ActualizarLogoEmpresaDto } from './dto/actualizar-logo-empresa.dto';
 import { CambiarCorreoDto } from '../auth/dto/cambiar-correo.dto';
 import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -74,6 +75,33 @@ export class EmpresasController {
       query.page ?? 1,
       query.limit ?? 20,
     );
+  }
+
+  @Patch(':slug/logo')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  actualizarLogo(
+    @Param('slug') slug: string,
+    @Body() dto: ActualizarLogoEmpresaDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.actualizarLogo(slug, req.actor!, dto);
+  }
+
+  @Get(':slug/mural-directorio')
+  @UseGuards(CompanyAccessGuard)
+  muralDirectorio(@Param('slug') slug: string, @Req() req: RequestConActor) {
+    return this.empresasService.muralDirectorio(slug, req.actor!);
+  }
+
+  @Get(':slug/empleados/:talentoId/mural')
+  @UseGuards(CompanyAccessGuard)
+  muralDeTalento(
+    @Param('slug') slug: string,
+    @Param('talentoId') talentoId: string,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.muralDeTalento(slug, req.actor!, talentoId);
   }
 
   @Get(':slug/kpis')
@@ -164,7 +192,12 @@ export class EmpresasController {
     @Body() dto: CambiarCorreoDto,
     @Req() req: RequestConActor,
   ) {
-    return this.empresasService.cambiarCorreoUsuario(slug, req.actor!, usuarioId, dto.email);
+    return this.empresasService.cambiarCorreoUsuario(
+      slug,
+      req.actor!,
+      usuarioId,
+      dto.email,
+    );
   }
 
   @Post(':slug/usuarios/:usuarioId/restablecer-password')
@@ -175,6 +208,10 @@ export class EmpresasController {
     @Param('usuarioId') usuarioId: string,
     @Req() req: RequestConActor,
   ) {
-    return this.empresasService.restablecerPasswordUsuario(slug, req.actor!, usuarioId);
+    return this.empresasService.restablecerPasswordUsuario(
+      slug,
+      req.actor!,
+      usuarioId,
+    );
   }
 }

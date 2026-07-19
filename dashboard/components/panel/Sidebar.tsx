@@ -24,6 +24,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { type Rol } from "@/lib/api";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 import { useEsMobile } from "@/lib/use-es-mobile";
@@ -31,7 +32,7 @@ import { useEsMobile } from "@/lib/use-es-mobile";
 interface ItemGrupo {
   href: string;
   label: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   /** Si se omite, el item es visible para todos los roles. */
   rolesPermitidos?: Rol[];
 }
@@ -81,7 +82,7 @@ function ItemNav({
 }: {
   href: string;
   label: string;
-  Icon: React.ElementType;
+  Icon: LucideIcon;
   activo: boolean;
   colapsado: boolean;
   onNavegar?: () => void;
