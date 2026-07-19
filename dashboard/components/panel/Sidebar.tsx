@@ -13,6 +13,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   FileBarChart,
+  Images,
   LayoutDashboard,
   LogOut,
   Megaphone,
@@ -44,6 +45,7 @@ const GRUPOS: { titulo: string; items: ItemGrupo[] }[] = [
       { href: "dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "bitacoras", label: "Bitácoras", icon: NotebookPen },
       { href: "empleados", label: "Empleados", icon: Users },
+      { href: "murales", label: "Murales", icon: Images, rolesPermitidos: ["CEO", "RRHH", "MANAGER"] },
     ],
   },
   {
