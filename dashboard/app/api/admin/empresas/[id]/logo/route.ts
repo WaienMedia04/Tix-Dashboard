@@ -20,6 +20,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(jsonResponse);
   } catch (error) {
+    console.error("[api/admin/empresas/[id]/logo] subida rechazada:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "No se pudo procesar la subida" },
       { status: 401 },
