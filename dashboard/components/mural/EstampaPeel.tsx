@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { type EstampaOtorgadaMural, actualizarPosicionEstampa } from "@/lib/api";
 
@@ -22,21 +21,6 @@ export function EstampaPeel({
   arrastrable: boolean;
   contenedorRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  const [posicionInicialPx, setPosicionInicialPx] = useState<{ x: number; y: number } | null>(null);
-
-  useEffect(() => {
-    if (!arrastrable) return;
-    const contenedor = contenedorRef.current;
-    if (!contenedor) return;
-    const rect = contenedor.getBoundingClientRect();
-    setPosicionInicialPx({
-      x: (estampa.posX / 100) * rect.width,
-      y: (estampa.posY / 100) * rect.height,
-    });
-    // Solo se calcula una vez al montar — el drag maneja su propia posición después.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [arrastrable, contenedorRef]);
-
   if (!arrastrable) {
     return (
       <div className="flex h-20 w-20 shrink-0 items-center justify-center" title={estampa.mensaje ?? estampa.nombre}>
@@ -51,17 +35,22 @@ export function EstampaPeel({
     );
   }
 
-  if (!posicionInicialPx) return null;
-
   return (
-    <StickerPeelVendor
-      imageSrc={estampa.imagenUrl}
-      width={96}
-      rotate={rotacionEstable(estampa.id)}
-      initialPosition={posicionInicialPx}
-      onPositionChange={({ posX, posY }: { posX: number; posY: number }) => {
-        actualizarPosicionEstampa(estampa.id, { posX, posY }).catch(() => {});
-      }}
-    />
+    // La posición de reposo vive en CSS (%), no en un cálculo en px hecho una
+    // sola vez al montar — así nunca queda "vieja" si el contenedor todavía
+    // no tenía su tamaño final (fuentes/imágenes cargando) en ese momento.
+    // El arrastre (GSAP) solo aplica un delta encima de esta posición base.
+    <div className="absolute" style={{ left: `${estampa.posX}%`, top: `${estampa.posY}%`, zIndex: estampa.zIndex }}>
+      <StickerPeelVendor
+        imageSrc={estampa.imagenUrl}
+        width={96}
+        rotate={rotacionEstable(estampa.id)}
+        initialPosition={{ x: 0, y: 0 }}
+        boundsRef={contenedorRef}
+        onPositionChange={({ posX, posY }: { posX: number; posY: number }) => {
+          actualizarPosicionEstampa(estampa.id, { posX, posY }).catch(() => {});
+        }}
+      />
+    </div>
   );
 }

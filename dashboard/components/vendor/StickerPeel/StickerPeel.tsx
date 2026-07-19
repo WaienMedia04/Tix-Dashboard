@@ -24,6 +24,8 @@ interface StickerPeelProps {
   className?: string;
   /** Adaptado: notifica la posición final (% relativos al contenedor) al soltar. */
   onPositionChange?: (pos: { posX: number; posY: number }) => void;
+  /** Adaptado: límites del arrastre — si se omite, usa el nodo padre en el DOM (comportamiento original). */
+  boundsRef?: { current: HTMLElement | null };
 }
 
 const StickerPeel = ({
@@ -40,6 +42,7 @@ const StickerPeel = ({
   peelDirection = 0,
   className = "",
   onPositionChange,
+  boundsRef,
 }: StickerPeelProps) => {
   const containerRef = useRef(null);
   const dragTargetRef = useRef(null);
@@ -70,7 +73,7 @@ const StickerPeel = ({
 
   useEffect(() => {
     const target = dragTargetRef.current;
-    const boundsEl = target.parentNode;
+    const boundsEl = boundsRef?.current ?? target.parentNode;
 
     draggableInstanceRef.current = Draggable.create(target, {
       type: "x,y",
