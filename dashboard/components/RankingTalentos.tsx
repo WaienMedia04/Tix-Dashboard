@@ -4,6 +4,7 @@ import { Crown } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { TalentoRanking } from "@/lib/api";
 import { Avatar } from "./Avatar";
+import { Galaxy } from "./Galaxy";
 import { useCountUp } from "@/hooks/useCountUp";
 import { StaggerGroup, StaggerItem } from "./motion/Stagger";
 
@@ -92,55 +93,70 @@ export function RankingTalentos({
   talentos,
   titulo = "Ranking de talentos",
   subtitulo = "Ordenado por puntaje IA promedio",
+  fondoGalaxia = false,
 }: {
   talentos: TalentoRanking[];
   titulo?: string;
   subtitulo?: string;
+  /** Fondo animado de estrellas (componente Galaxy) — pensado solo para el widget del Dashboard. */
+  fondoGalaxia?: boolean;
 }) {
   const [primero, segundo, tercero, ...resto] = talentos;
 
   return (
-    <div className="flex h-full select-none flex-col rounded-xl border border-border bg-card shadow-card">
-      <div className="border-b border-border px-4 py-3">
-        <h2 className="font-display text-base font-semibold text-foreground">{titulo}</h2>
-        <p className="text-xs text-muted-foreground">{subtitulo}</p>
-      </div>
-
-      {talentos.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-muted-foreground">
-          Todavía no hay bitácoras para armar el ranking.
+    <div
+      className={`relative flex h-full select-none flex-col overflow-hidden rounded-xl border border-border shadow-card ${
+        fondoGalaxia ? "dark bg-black" : "bg-card"
+      }`}
+    >
+      {fondoGalaxia && (
+        <div className="absolute inset-0 z-0">
+          <Galaxy density={1.2} hueShift={220} saturation={0.6} glowIntensity={0.4} twinkleIntensity={0.5} />
         </div>
-      ) : (
-        <>
-          <div className="flex items-end justify-center gap-3 px-4 pt-6 pb-2 sm:gap-6">
-            {segundo && <PodioSecundario talento={segundo} posicion={2} />}
-            <PodioPrimero talento={primero} />
-            {tercero && <PodioSecundario talento={tercero} posicion={3} />}
-          </div>
-
-          {resto.length > 0 && (
-            <StaggerGroup className="flex-1 divide-y divide-border overflow-y-auto border-t border-border">
-              {resto.map((t, idx) => (
-                <StaggerItem key={t.talentoId}>
-                  <div className="flex items-center gap-3 px-4 py-2.5">
-                    <span className="w-4 shrink-0 text-xs font-medium text-muted-foreground tabular-nums">{idx + 4}</span>
-                    <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="md" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">{t.nombreCompleto}</p>
-                      <p className="truncate text-xs text-muted-foreground" title={t.rol}>
-                        {t.rol}
-                      </p>
-                    </div>
-                    <span className={`shrink-0 text-sm font-semibold tabular-nums ${colorPuntaje(t.puntajeIAPromedio)}`}>
-                      {t.puntajeIAPromedio === null ? "—" : t.puntajeIAPromedio.toFixed(1)}
-                    </span>
-                  </div>
-                </StaggerItem>
-              ))}
-            </StaggerGroup>
-          )}
-        </>
       )}
+
+      <div className="relative z-10 flex h-full flex-col">
+        <div className="border-b border-border px-4 py-3">
+          <h2 className="font-display text-base font-semibold text-foreground">{titulo}</h2>
+          <p className="text-xs text-muted-foreground">{subtitulo}</p>
+        </div>
+
+        {talentos.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-muted-foreground">
+            Todavía no hay bitácoras para armar el ranking.
+          </div>
+        ) : (
+          <>
+            <div className="flex items-end justify-center gap-3 px-4 pt-6 pb-2 sm:gap-6">
+              {segundo && <PodioSecundario talento={segundo} posicion={2} />}
+              <PodioPrimero talento={primero} />
+              {tercero && <PodioSecundario talento={tercero} posicion={3} />}
+            </div>
+
+            {resto.length > 0 && (
+              <StaggerGroup className="flex-1 divide-y divide-border overflow-y-auto border-t border-border">
+                {resto.map((t, idx) => (
+                  <StaggerItem key={t.talentoId}>
+                    <div className="flex items-center gap-3 px-4 py-2.5">
+                      <span className="w-4 shrink-0 text-xs font-medium text-muted-foreground tabular-nums">{idx + 4}</span>
+                      <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="md" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">{t.nombreCompleto}</p>
+                        <p className="truncate text-xs text-muted-foreground" title={t.rol}>
+                          {t.rol}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 text-sm font-semibold tabular-nums ${colorPuntaje(t.puntajeIAPromedio)}`}>
+                        {t.puntajeIAPromedio === null ? "—" : t.puntajeIAPromedio.toFixed(1)}
+                      </span>
+                    </div>
+                  </StaggerItem>
+                ))}
+              </StaggerGroup>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

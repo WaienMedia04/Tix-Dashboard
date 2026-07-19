@@ -77,7 +77,7 @@ export function DashboardResumen() {
 
       <StaggerItem>
         <div className="min-h-[24rem]">
-          <RankingTalentos talentos={data.rankingTalentos} />
+          <RankingTalentos talentos={data.rankingTalentos} fondoGalaxia />
         </div>
       </StaggerItem>
 
