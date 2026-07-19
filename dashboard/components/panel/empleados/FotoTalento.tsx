@@ -6,6 +6,7 @@ import { Camera, Loader2 } from "lucide-react";
 import { actualizarFotoTalento, authHeaders } from "@/lib/api";
 import { mensajeError } from "@/lib/errores";
 import { Avatar } from "@/components/Avatar";
+import { AjustarFotoModal } from "./AjustarFotoModal";
 
 const TIPOS_PERMITIDOS = ["image/png", "image/jpeg", "image/webp"];
 
@@ -25,22 +26,25 @@ export function FotoTalento({
   const inputRef = useRef<HTMLInputElement>(null);
   const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imagenParaAjustar, setImagenParaAjustar] = useState<string | null>(null);
 
-  async function handleFile(file: File) {
-    if (!TIPOS_PERMITIDOS.includes(file.type)) {
-      setError("Solo se aceptan imágenes PNG, JPEG o WebP.");
-      return;
-    }
+  function cerrarAjuste() {
+    if (imagenParaAjustar) URL.revokeObjectURL(imagenParaAjustar);
+    setImagenParaAjustar(null);
+  }
+
+  async function subirBlob(blob: Blob) {
     setError(null);
     setSubiendo(true);
     try {
-      const blob = await upload(`talentos/${talentoId}/foto-${file.name}`, file, {
+      const archivo = new File([blob], "foto.jpg", { type: "image/jpeg" });
+      const subida = await upload(`talentos/${talentoId}/foto-${archivo.name}`, archivo, {
         access: "public",
         handleUploadUrl: `/api/talentos/${talentoId}/foto`,
         headers: await authHeaders(),
       });
-      const actualizado = await actualizarFotoTalento(talentoId, blob.url);
-      onActualizada(actualizado.fotoUrl ?? blob.url);
+      const actualizado = await actualizarFotoTalento(talentoId, subida.url);
+      onActualizada(actualizado.fotoUrl ?? subida.url);
     } catch (err) {
       setError(mensajeError(err, "No se pudo subir la foto. Intenta de nuevo."));
     } finally {
@@ -68,13 +72,29 @@ export function FotoTalento({
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) void handleFile(file);
               e.target.value = "";
+              if (!file) return;
+              if (!TIPOS_PERMITIDOS.includes(file.type)) {
+                setError("Solo se aceptan imágenes PNG, JPEG o WebP.");
+                return;
+              }
+              setError(null);
+              setImagenParaAjustar(URL.createObjectURL(file));
             }}
           />
         </>
       )}
       {error && <p className="absolute top-full left-0 mt-1 w-40 text-xs text-destructive">{error}</p>}
+      {imagenParaAjustar && (
+        <AjustarFotoModal
+          imagenSrc={imagenParaAjustar}
+          onCancelar={cerrarAjuste}
+          onGuardar={(blob) => {
+            cerrarAjuste();
+            void subirBlob(blob);
+          }}
+        />
+      )}
     </div>
   );
 }
