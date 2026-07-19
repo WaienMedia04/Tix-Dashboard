@@ -69,6 +69,11 @@ export class TalentosService {
         ...(dto.fechaIngreso !== undefined && {
           fechaIngreso: dto.fechaIngreso ? new Date(dto.fechaIngreso) : null,
         }),
+        ...(dto.fechaNacimiento !== undefined && {
+          fechaNacimiento: dto.fechaNacimiento
+            ? new Date(dto.fechaNacimiento)
+            : null,
+        }),
       },
       select: {
         id: true,
@@ -81,6 +86,7 @@ export class TalentosService {
         correo: true,
         telefono: true,
         fechaIngreso: true,
+        fechaNacimiento: true,
         fotoUrl: true,
       },
     });

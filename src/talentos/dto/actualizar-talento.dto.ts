@@ -45,4 +45,9 @@ export class ActualizarTalentoDto {
   @IsOptional()
   @IsString()
   fechaIngreso?: string;
+
+  /** Mismo criterio que fechaIngreso — string vacío borra la fecha. */
+  @IsOptional()
+  @IsString()
+  fechaNacimiento?: string;
 }

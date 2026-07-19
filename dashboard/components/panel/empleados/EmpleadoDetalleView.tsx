@@ -12,6 +12,7 @@ import {
   Mail,
   Phone,
   Calendar,
+  Cake,
   Building2,
   Pencil,
   PenSquare,
@@ -87,6 +88,7 @@ interface FormRRHH {
   correo: string;
   telefono: string;
   fechaIngreso: string;
+  fechaNacimiento: string;
 }
 
 function formularioDesde(talento: EmpleadoDetalle["talento"]): FormRRHH {
@@ -96,6 +98,7 @@ function formularioDesde(talento: EmpleadoDetalle["talento"]): FormRRHH {
     correo: talento.correo ?? "",
     telefono: talento.telefono ?? "",
     fechaIngreso: talento.fechaIngreso ? talento.fechaIngreso.slice(0, 10) : "",
+    fechaNacimiento: talento.fechaNacimiento ? talento.fechaNacimiento.slice(0, 10) : "",
   };
 }
 
@@ -168,7 +171,16 @@ function InfoRRHH({
             value={form.fechaIngreso}
             onChange={(v) => campo("fechaIngreso", v)}
           />
+          <CampoEditable
+            label="Fecha de nacimiento"
+            type="date"
+            value={form.fechaNacimiento}
+            onChange={(v) => campo("fechaNacimiento", v)}
+          />
         </div>
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          La fecha de nacimiento se usa para mostrar a este empleado en la sección Cumpleaños.
+        </p>
       </div>
     );
   }
@@ -184,6 +196,11 @@ function InfoRRHH({
       valor: talento.fechaIngreso ? formatearFecha(talento.fechaIngreso) : null,
     },
     { icon: Calendar, label: "Tiempo en la empresa", valor: tiempoEnEmpresa(talento.fechaIngreso) },
+    {
+      icon: Cake,
+      label: "Fecha de nacimiento",
+      valor: talento.fechaNacimiento ? formatearFecha(talento.fechaNacimiento) : null,
+    },
   ];
 
   return (

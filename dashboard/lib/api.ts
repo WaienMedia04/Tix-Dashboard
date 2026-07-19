@@ -183,6 +183,7 @@ export interface EmpleadoDetalle {
     correo: string | null;
     telefono: string | null;
     fechaIngreso: string | null;
+    fechaNacimiento: string | null;
     cvUrl: string | null;
     cvDatosExtraidos: CvDatosExtraidos | null;
   };
@@ -482,6 +483,7 @@ export interface DatosTalentoEditable {
   correo?: string;
   telefono?: string;
   fechaIngreso?: string;
+  fechaNacimiento?: string;
 }
 
 export async function actualizarTalento(
@@ -1077,6 +1079,41 @@ export async function fetchMuralDirectorio(slug: string): Promise<MuralDirectori
   }
   if (!res.ok) {
     throw new Error("No se pudo cargar el directorio");
+  }
+  return res.json();
+}
+
+export interface CumpleanosHoyItem {
+  id: string;
+  nombreCompleto: string;
+  fotoUrl: string | null;
+  departamento: string | null;
+  rol: string;
+}
+
+export interface CumpleanosMesItem extends CumpleanosHoyItem {
+  dia: number;
+}
+
+export interface CumpleanosResponse {
+  hoy: CumpleanosHoyItem[];
+  esteMes: CumpleanosMesItem[];
+}
+
+/** Cumpleaños de hoy y del resto del mes en curso — visible para toda la empresa. */
+export async function fetchCumpleanos(slug: string): Promise<CumpleanosResponse> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/cumpleanos`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar los cumpleaños");
   }
   return res.json();
 }

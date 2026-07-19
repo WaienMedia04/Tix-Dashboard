@@ -10,6 +10,7 @@ import {
   BarChart3,
   BookOpen,
   BrainCircuit,
+  Cake,
   ChevronsLeft,
   ChevronsRight,
   FileBarChart,
@@ -46,6 +47,7 @@ const GRUPOS: { titulo: string; items: ItemGrupo[] }[] = [
       { href: "bitacoras", label: "Bitácoras", icon: NotebookPen },
       { href: "empleados", label: "Empleados", icon: Users },
       { href: "murales", label: "Murales", icon: Images, rolesPermitidos: ["CEO", "RRHH", "MANAGER"] },
+      { href: "cumpleanos", label: "Cumpleaños", icon: Cake },
     ],
   },
   {

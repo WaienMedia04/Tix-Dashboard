@@ -132,6 +132,57 @@ export class EmpresasService {
     return this.mural.obtenerMuralDeTalento(talento.id, empresa.id);
   }
 
+  /**
+   * Cumpleaños de hoy y del resto del mes en curso — visible para toda la
+   * empresa (sin @Roles), como el directorio de murales. La fecha "hoy" se
+   * calcula en huso horario de RD, igual que WorklogsService.hoyISO(), para
+   * no desincronizarse por el huso del servidor.
+   */
+  async cumpleanos(slug: string, actor: Actor) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+
+    const talentos = await this.prisma.talento.findMany({
+      where: {
+        empresaId: empresa.id,
+        estado: 'activo',
+        fechaNacimiento: { not: null },
+      },
+      select: {
+        id: true,
+        nombreCompleto: true,
+        fotoUrl: true,
+        departamento: true,
+        rol: true,
+        fechaNacimiento: true,
+      },
+    });
+
+    const hoyISO = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Santo_Domingo',
+    }).format(new Date());
+    const [, mesHoyStr, diaHoyStr] = hoyISO.split('-');
+    const mesHoy = Number(mesHoyStr);
+    const diaHoy = Number(diaHoyStr);
+
+    const conMesDia = talentos.map((t) => ({
+      id: t.id,
+      nombreCompleto: t.nombreCompleto,
+      fotoUrl: t.fotoUrl,
+      departamento: t.departamento,
+      rol: t.rol,
+      dia: t.fechaNacimiento!.getUTCDate(),
+      mes: t.fechaNacimiento!.getUTCMonth() + 1,
+    }));
+
+    const hoy = conMesDia.filter((t) => t.mes === mesHoy && t.dia === diaHoy);
+    const idsHoy = new Set(hoy.map((t) => t.id));
+    const esteMes = conMesDia
+      .filter((t) => t.mes === mesHoy && !idsHoy.has(t.id))
+      .sort((a, b) => a.dia - b.dia);
+
+    return { hoy, esteMes };
+  }
+
   async dashboard(slug: string, actor: Actor) {
     const empresa = await this.resolverEmpresa(slug, actor);
 
@@ -534,6 +585,7 @@ export class EmpresasService {
         correo: talento.correo,
         telefono: talento.telefono,
         fechaIngreso: talento.fechaIngreso,
+        fechaNacimiento: talento.fechaNacimiento,
         cvUrl: talento.cvUrl,
         cvDatosExtraidos: talento.cvDatosExtraidos,
       },

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { CheckCircle2, ClipboardList, LogOut, Moon, PenSquare, Sparkles, Sun } from "lucide-react";
+import { Cake, CheckCircle2, ClipboardList, LogOut, Moon, PenSquare, Sparkles, Sun } from "lucide-react";
 import {
   EmpresaNoEncontradaError,
   SesionInvalidaError,
@@ -351,6 +351,13 @@ export default function MiEspacioPage() {
           >
             <PenSquare className="h-4 w-4" />
             Mi Mural
+          </Link>
+          <Link
+            href={`/${slug}/cumpleanos`}
+            className="flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Cake className="h-4 w-4" />
+            Cumpleaños
           </Link>
           <ThemeToggle />
           <button

@@ -104,6 +104,12 @@ export class EmpresasController {
     return this.empresasService.muralDeTalento(slug, req.actor!, talentoId);
   }
 
+  @Get(':slug/cumpleanos')
+  @UseGuards(CompanyAccessGuard)
+  cumpleanos(@Param('slug') slug: string, @Req() req: RequestConActor) {
+    return this.empresasService.cumpleanos(slug, req.actor!);
+  }
+
   @Get(':slug/kpis')
   @UseGuards(CompanyAccessGuard)
   kpis(
