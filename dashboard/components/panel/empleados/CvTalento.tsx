@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { ExternalLink, FileText, Loader2, Pencil, Sparkles, Upload } from "lucide-react";
 import { actualizarCvDatosTalento, actualizarCvTalento, authHeaders, type CvDatosExtraidos } from "@/lib/api";
+import { mensajeError } from "@/lib/errores";
 
 const CAMPO_CLASES =
   "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring";
@@ -41,8 +42,8 @@ function SubidaCv({
       });
       const actualizado = await actualizarCvTalento(talentoId, blob.url);
       onSubido(actualizado);
-    } catch {
-      setError("No se pudo subir el CV. Intenta de nuevo.");
+    } catch (err) {
+      setError(mensajeError(err, "No se pudo subir el CV. Intenta de nuevo."));
     } finally {
       setSubiendo(false);
     }

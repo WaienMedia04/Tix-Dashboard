@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { Camera, Loader2 } from "lucide-react";
 import { actualizarFotoTalento, authHeaders } from "@/lib/api";
+import { mensajeError } from "@/lib/errores";
 import { Avatar } from "@/components/Avatar";
 
 const TIPOS_PERMITIDOS = ["image/png", "image/jpeg", "image/webp"];
@@ -40,8 +41,8 @@ export function FotoTalento({
       });
       const actualizado = await actualizarFotoTalento(talentoId, blob.url);
       onActualizada(actualizado.fotoUrl ?? blob.url);
-    } catch {
-      setError("No se pudo subir la foto. Intenta de nuevo.");
+    } catch (err) {
+      setError(mensajeError(err, "No se pudo subir la foto. Intenta de nuevo."));
     } finally {
       setSubiendo(false);
     }

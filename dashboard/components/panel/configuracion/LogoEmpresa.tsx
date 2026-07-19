@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { Image as ImageIcon, Loader2, Upload } from "lucide-react";
 import { actualizarLogoEmpresa, authHeaders } from "@/lib/api";
+import { mensajeError } from "@/lib/errores";
 
 const TIPOS_PERMITIDOS = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 
@@ -35,8 +36,8 @@ export function LogoEmpresa({
       });
       const actualizado = await actualizarLogoEmpresa(slug, blob.url);
       onActualizado(actualizado.logoUrl ?? blob.url);
-    } catch {
-      setError("No se pudo subir el logo. Intenta de nuevo.");
+    } catch (err) {
+      setError(mensajeError(err, "No se pudo subir el logo. Intenta de nuevo."));
     } finally {
       setSubiendo(false);
     }

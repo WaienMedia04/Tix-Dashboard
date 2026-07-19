@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { IdCard, Loader2, Upload, X } from "lucide-react";
 import { actualizarCarnetTalento, authHeaders } from "@/lib/api";
+import { mensajeError } from "@/lib/errores";
 
 const TIPOS_PERMITIDOS = ["image/png", "image/jpeg", "image/webp"];
 
@@ -38,8 +39,8 @@ export function CarnetFotoTalento({
       });
       const actualizado = await actualizarCarnetTalento(talentoId, blob.url);
       onActualizado(actualizado.carnetFotoUrl);
-    } catch {
-      setError("No se pudo subir la imagen del carnet. Intenta de nuevo.");
+    } catch (err) {
+      setError(mensajeError(err, "No se pudo subir la imagen del carnet. Intenta de nuevo."));
     } finally {
       setSubiendo(false);
     }
@@ -51,8 +52,8 @@ export function CarnetFotoTalento({
     try {
       const actualizado = await actualizarCarnetTalento(talentoId, null);
       onActualizado(actualizado.carnetFotoUrl);
-    } catch {
-      setError("No se pudo quitar la imagen del carnet. Intenta de nuevo.");
+    } catch (err) {
+      setError(mensajeError(err, "No se pudo quitar la imagen del carnet. Intenta de nuevo."));
     } finally {
       setQuitando(false);
     }

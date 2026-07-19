@@ -109,7 +109,25 @@ Agrégala para los entornos **Production** y **Preview**. Sin esta variable el
 dashboard intentará hablar con `http://localhost:3000` y todo fallará en
 producción.
 
-### 2.3 Dominio personalizado del dashboard
+### 2.3 Vercel Blob (subida de archivos)
+
+Fotos de perfil, CVs, la imagen del carnet, el logo de la empresa y las
+estampas se suben con [Vercel Blob](https://vercel.com/docs/storage/vercel-blob).
+Esto requiere un **Blob store** conectado al proyecto — si no lo creas, **toda**
+subida de archivo falla (el usuario ve un error genérico tipo "No se pudo subir
+la imagen. Intenta de nuevo.", sin más detalle).
+
+1. En el proyecto de Vercel, ve a **Storage → Create Database → Blob**.
+2. Crea el store y **conéctalo a este proyecto** (Vercel te lo ofrece en el mismo
+   flujo). Al conectarlo, Vercel inyecta automáticamente la variable
+   `BLOB_READ_WRITE_TOKEN` en **Production** y **Preview** — no hace falta
+   copiarla ni pegarla a mano.
+3. Vuelve a desplegar (**Deployments → ⋯ → Redeploy**) para que el nuevo entorno
+   incluya la variable.
+4. Verifica subiendo una foto de perfil desde `Empleados → (empleado) → editar` —
+   si el store no está conectado, verás el error de subida mencionado arriba.
+
+### 2.4 Dominio personalizado del dashboard
 
 1. En **Settings → Domains**, agrega `panel.talentix.com.do`.
 2. Vercel te mostrará el registro a crear en tu DNS — normalmente un **CNAME** a
@@ -117,7 +135,7 @@ producción.
    subdominio fuera el dominio raíz pediría un registro `A`, pero `panel.` es un
    subdominio así que será CNAME).
 
-### 2.4 Verificación
+### 2.5 Verificación
 
 Visita `https://panel.talentix.com.do/iagil-bots-ia`, ingresa el código de acceso y
 confirma que el dashboard carga datos reales (no debe haber errores de CORS en la
@@ -248,7 +266,7 @@ configurar HTTPS manualmente en ninguno de los dos.
 2. Desplegar el dashboard en Vercel (sección 2) usando temporalmente la URL
    `*.up.railway.app` de Railway en `NEXT_PUBLIC_API_URL`, y confirmar que el panel
    funciona end-to-end con esa URL temporal.
-3. Agregar los dominios personalizados en ambos (secciones 1.3 y 2.3).
+3. Agregar los dominios personalizados en ambos (secciones 1.3 y 2.4).
 4. Crear los registros DNS (sección 4).
 5. Una vez el DNS propague y los dominios se verifiquen, actualizar
    `CORS_ORIGIN` (Railway) y `NEXT_PUBLIC_API_URL` (Vercel) a los dominios finales
@@ -278,3 +296,6 @@ existe, y permite probar todo el flujo antes de tocar el DNS real.
 - [ ] Verificar que `npm run build` pasa sin errores en ambos proyectos justo antes
       de cada deploy (ya verificado en este momento del desarrollo, pero conviene
       repetirlo si hay cambios posteriores).
+- [ ] Confirmar que el Blob store de Vercel está creado y conectado al proyecto
+      (`BLOB_READ_WRITE_TOKEN` presente en Production) — ver sección 2.3. Sin esto,
+      ninguna subida de archivo (fotos, CVs, carnet, logo, estampas) funciona.

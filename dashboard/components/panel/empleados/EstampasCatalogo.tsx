@@ -14,6 +14,7 @@ import {
   otorgarEstampa,
 } from "@/lib/api";
 import { claseFormaEstampa, FORMAS_ESTAMPA } from "@/lib/estampa-forma";
+import { mensajeError } from "@/lib/errores";
 import { Modal } from "@/components/Modal";
 
 const TIPOS_PERMITIDOS = ["image/png", "image/jpeg", "image/webp"];
@@ -49,8 +50,8 @@ function ModalNuevaEstampa({
         headers: await authHeaders(),
       });
       setImagenUrl(blob.url);
-    } catch {
-      setError("No se pudo subir la imagen. Intenta de nuevo.");
+    } catch (err) {
+      setError(mensajeError(err, "No se pudo subir la imagen. Intenta de nuevo."));
     } finally {
       setSubiendo(false);
     }

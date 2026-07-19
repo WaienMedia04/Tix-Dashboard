@@ -29,6 +29,7 @@ import {
 import { leerTokenAdmin, borrarTokenAdmin } from "@/lib/admin-auth";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { API_URL } from "@/lib/api";
+import { mensajeError } from "@/lib/errores";
 
 const PLANES = ["starter", "pro", "enterprise"] as const;
 
@@ -325,8 +326,8 @@ function LogoEmpresaAdmin({
       });
       const actualizada = await editarEmpresa(token, empresaId, { logoUrl: blob.url });
       onActualizado(actualizada.logoUrl ?? blob.url);
-    } catch {
-      setError("No se pudo subir el logo. Intenta de nuevo.");
+    } catch (err) {
+      setError(mensajeError(err, "No se pudo subir el logo. Intenta de nuevo."));
     } finally {
       setSubiendo(false);
     }
