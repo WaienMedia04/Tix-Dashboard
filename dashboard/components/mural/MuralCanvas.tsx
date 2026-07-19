@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { StickyNote } from "lucide-react";
 import { type EstampaOtorgadaMural, type NotaMural, crearNotaMural } from "@/lib/api";
+import { fondoMuralTexto } from "@/lib/mural-fondos";
 import { useEsMobile } from "@/lib/use-es-mobile";
 import { NotaAdhesiva } from "./NotaAdhesiva";
 import { EstampaPeel } from "./EstampaPeel";
@@ -13,22 +14,25 @@ export function MuralCanvas({
   notas,
   estampas,
   editable,
+  fondoId,
   onNotasChange,
 }: {
   notas: NotaMural[];
   estampas: EstampaOtorgadaMural[];
   /** false cuando se está visitando el mural de otro empleado — solo lectura, sin drag. */
   editable: boolean;
+  fondoId: string;
   onNotasChange: (notas: NotaMural[]) => void;
 }) {
   const contenedorRef = useRef<HTMLDivElement>(null);
   const esMobile = useEsMobile();
   const arrastrable = editable && !esMobile;
+  const textoVacio = fondoMuralTexto(fondoId);
 
   async function agregarNota() {
     const color = COLORES_ALEATORIOS[Math.floor(Math.random() * COLORES_ALEATORIOS.length)];
     const posX = 10 + Math.random() * 70;
-    const posY = 10 + Math.random() * 60;
+    const posY = 10 + Math.random() * 70;
     try {
       const nota = await crearNotaMural({ texto: "Escribe algo aquí...", color, posX, posY });
       onNotasChange([...notas, nota]);
@@ -46,35 +50,15 @@ export function MuralCanvas({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-card">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
-            <StickyNote className="h-4 w-4" />
-          </span>
-          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            {editable ? "Mi mural" : "Mural"}
-          </p>
-        </div>
-        {editable && (
-          <button
-            onClick={() => void agregarNota()}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
-          >
-            <StickyNote className="h-3.5 w-3.5" />
-            Nueva nota
-          </button>
-        )}
-      </div>
-
+    <div className="relative">
       {arrastrable ? (
-        <div
-          ref={contenedorRef}
-          className="relative mt-3 min-h-80 overflow-hidden rounded-md border border-dashed border-border/70 bg-black/5 dark:bg-white/5"
-        >
+        <div ref={contenedorRef} className="relative min-h-[65vh] w-full">
           {notas.length === 0 && estampas.length === 0 && (
-            <p className="flex h-80 items-center justify-center text-center text-xs text-muted-foreground">
-              Agrega notas y arrástralas donde quieras. Las estampas que te regalen también aparecen aquí.
+            <p
+              className="flex h-[65vh] items-center justify-center px-4 text-center text-sm font-medium"
+              style={{ color: textoVacio.color, textShadow: textoVacio.sombra }}
+            >
+              Tu mural está en blanco — agrega una nota o pide una estampa de regalo.
             </p>
           )}
           {notas.map((nota) => (
@@ -91,18 +75,29 @@ export function MuralCanvas({
           {estampas.map((estampa) => (
             <EstampaPeel key={estampa.id} estampa={estampa} arrastrable contenedorRef={contenedorRef} />
           ))}
+
+          {editable && (
+            <button
+              onClick={() => void agregarNota()}
+              className="fixed right-5 bottom-5 z-30 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-elegant transition-transform hover:scale-105"
+            >
+              <StickyNote className="h-4 w-4" />
+              Nueva nota
+            </button>
+          )}
         </div>
       ) : (
-        <div className="mt-3 space-y-3">
+        <div className="px-4 pb-10">
           {notas.length === 0 && estampas.length === 0 && (
-            <p className="py-6 text-center text-xs text-muted-foreground">
-              {editable
-                ? "Agrega notas desde tu celular — en pantallas grandes puedes arrastrarlas."
-                : "Todavía no hay nada en este mural."}
+            <p
+              className="py-10 text-center text-sm font-medium"
+              style={{ color: textoVacio.color, textShadow: textoVacio.sombra }}
+            >
+              {editable ? "Agrega notas desde el botón de abajo." : "Todavía no hay nada en este mural."}
             </p>
           )}
           {notas.length > 0 && (
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap justify-center gap-3">
               {notas.map((nota) => (
                 <NotaAdhesiva
                   key={nota.id}
@@ -117,11 +112,20 @@ export function MuralCanvas({
             </div>
           )}
           {estampas.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
               {estampas.map((estampa) => (
                 <EstampaPeel key={estampa.id} estampa={estampa} arrastrable={false} contenedorRef={contenedorRef} />
               ))}
             </div>
+          )}
+          {editable && (
+            <button
+              onClick={() => void agregarNota()}
+              className="fixed right-5 bottom-5 z-30 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-elegant"
+            >
+              <StickyNote className="h-4 w-4" />
+              Nueva nota
+            </button>
           )}
         </div>
       )}

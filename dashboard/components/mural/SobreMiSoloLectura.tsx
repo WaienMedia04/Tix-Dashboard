@@ -17,30 +17,21 @@ const CAMPOS: {
 export function SobreMiSoloLectura({ perfil }: { perfil: PerfilMural }) {
   const campos = CAMPOS.filter((c) => perfil[c.key]);
 
-  return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-card">
-      <div className="flex items-center gap-2">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
-          <Sparkles className="h-4 w-4" />
-        </span>
-        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Sobre esta persona</p>
-      </div>
+  if (campos.length === 0) {
+    return <p className="text-sm text-muted-foreground">Todavía no completó su perfil divertido.</p>;
+  }
 
-      {campos.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">Todavía no completó su perfil divertido.</p>
-      ) : (
-        <dl className="mt-3 space-y-2.5">
-          {campos.map((campo) => (
-            <div key={campo.key} className="flex items-start gap-2 text-sm">
-              <campo.icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <div>
-                <dt className="text-xs text-muted-foreground">{campo.label}</dt>
-                <dd className="text-foreground">{perfil[campo.key]}</dd>
-              </div>
-            </div>
-          ))}
-        </dl>
-      )}
-    </div>
+  return (
+    <dl className="space-y-2.5">
+      {campos.map((campo) => (
+        <div key={campo.key} className="flex items-start gap-2 text-sm">
+          <campo.icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <div>
+            <dt className="text-xs text-muted-foreground">{campo.label}</dt>
+            <dd className="text-foreground">{perfil[campo.key]}</dd>
+          </div>
+        </div>
+      ))}
+    </dl>
   );
 }

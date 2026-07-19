@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Building2 } from "lucide-react";
+import { Building2, Palette, Sparkles } from "lucide-react";
 import { type MuralPropio, fetchMuralDeTalento, fetchMuralPropio } from "@/lib/api";
-import { fondoMuralCss } from "@/lib/mural-fondos";
+import { fondoMuralCss, fondoMuralTexto } from "@/lib/mural-fondos";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { Modal } from "@/components/Modal";
 import { LanyardBadge } from "./LanyardBadge";
 import { PerfilDivertidoForm } from "./PerfilDivertidoForm";
 import { SobreMiSoloLectura } from "./SobreMiSoloLectura";
@@ -26,6 +27,8 @@ export function MiMuralView({
   const editable = talentoId === undefined;
   const [mural, setMural] = useState<MuralPropio | null>(null);
   const [error, setError] = useState(false);
+  const [mostrarSobreMi, setMostrarSobreMi] = useState(false);
+  const [mostrarFondo, setMostrarFondo] = useState(false);
 
   useEffect(() => {
     let cancelado = false;
@@ -60,68 +63,105 @@ export function MiMuralView({
   }
 
   const nombreCompleto = mural.talento.nombreCompleto;
+  const texto = fondoMuralTexto(mural.perfil.fondoId);
 
   return (
     <div
       className="min-h-[calc(100vh-73px)] transition-[background] duration-500"
       style={{ background: fondoMuralCss(mural.perfil.fondoId) }}
     >
-      <div className="mx-auto max-w-3xl space-y-4 px-4 py-8 sm:px-8">
-        <div className="rounded-lg border border-border bg-card/90 p-4 shadow-elegant backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:gap-6">
-            <LanyardBadge
-              nombreCompleto={nombreCompleto}
-              frontImage={mural.talento.carnetFotoUrl ?? mural.talento.fotoUrl}
-              logoUrl={mural.empresa.logoUrl}
-            />
-            <div className="flex-1 text-center sm:pt-4 sm:text-left">
-              <h1 className="font-display text-xl font-semibold text-foreground">
-                {mural.perfil.apodo ? `${nombreCompleto} · "${mural.perfil.apodo}"` : nombreCompleto}
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">{mural.talento.rol}</p>
-              {mural.talento.departamento && (
-                <p className="mt-0.5 flex items-center justify-center gap-1 text-xs text-muted-foreground sm:justify-start">
-                  <Building2 className="h-3.5 w-3.5" />
-                  {mural.talento.departamento}
-                </p>
-              )}
-              <p className="mt-3 text-xs text-muted-foreground/80">
-                {editable
-                  ? "Estos datos los administra tu empresa. Debajo puedes personalizar tu perfil."
-                  : "Estás viendo el mural de un compañero."}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {editable ? (
-            <PerfilDivertidoForm
-              perfil={mural.perfil}
-              onActualizado={(perfil) => setMural((prev) => (prev ? { ...prev, perfil } : prev))}
-            />
-          ) : (
-            <SobreMiSoloLectura perfil={mural.perfil} />
-          )}
-          {editable && (
-            <SelectorFondo
-              fondoId={mural.perfil.fondoId}
-              onCambiado={(fondoId) =>
-                setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, fondoId } } : prev))
-              }
-            />
-          )}
-        </div>
-
-        <MuralCanvas
-          notas={mural.notas}
-          estampas={mural.estampasRecibidas}
-          editable={editable}
-          onNotasChange={(notas) => setMural((prev) => (prev ? { ...prev, notas } : prev))}
+      {/* Encabezado: carnet grande y centrado, nombre y rol debajo */}
+      <div className="flex flex-col items-center px-4 pt-8 pb-4 text-center">
+        <LanyardBadge
+          nombreCompleto={nombreCompleto}
+          frontImage={mural.talento.carnetFotoUrl ?? mural.talento.fotoUrl}
+          logoUrl={mural.empresa.logoUrl}
         />
+        <h1
+          className="font-display mt-4 text-3xl font-bold sm:text-4xl"
+          style={{ color: texto.color, textShadow: texto.sombra }}
+        >
+          {nombreCompleto}
+        </h1>
+        {mural.perfil.apodo && (
+          <p className="mt-1 text-lg font-medium italic" style={{ color: texto.color, textShadow: texto.sombra }}>
+            &ldquo;{mural.perfil.apodo}&rdquo;
+          </p>
+        )}
+        <p className="mt-1 text-xl font-medium" style={{ color: texto.color, textShadow: texto.sombra }}>
+          {mural.talento.rol}
+        </p>
+        {mural.talento.departamento && (
+          <p
+            className="mt-1 flex items-center justify-center gap-1.5 text-sm opacity-90"
+            style={{ color: texto.color, textShadow: texto.sombra }}
+          >
+            <Building2 className="h-4 w-4" />
+            {mural.talento.departamento}
+          </p>
+        )}
 
-        {editable && <DirectorioCompaneros slug={slug} propioTalentoId={miTalentoId} />}
+        {/* Botones flotantes: abren en modal para no ocupar espacio del muro */}
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+          <button
+            onClick={() => setMostrarSobreMi(true)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-card/90 px-4 py-2 text-xs font-medium text-foreground shadow-elegant backdrop-blur-sm transition-transform hover:scale-105"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            {editable ? "Sobre mí" : "Sobre esta persona"}
+          </button>
+          {editable && (
+            <button
+              onClick={() => setMostrarFondo(true)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-card/90 px-4 py-2 text-xs font-medium text-foreground shadow-elegant backdrop-blur-sm transition-transform hover:scale-105"
+            >
+              <Palette className="h-3.5 w-3.5" />
+              Fondo
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Muro libre: sin bordes ni límites, notas y estampas van donde quieras */}
+      <MuralCanvas
+        notas={mural.notas}
+        estampas={mural.estampasRecibidas}
+        editable={editable}
+        fondoId={mural.perfil.fondoId}
+        onNotasChange={(notas) => setMural((prev) => (prev ? { ...prev, notas } : prev))}
+      />
+
+      {editable && (
+        <div className="mx-auto max-w-3xl px-4 pb-10">
+          <DirectorioCompaneros slug={slug} propioTalentoId={miTalentoId} />
+        </div>
+      )}
+
+      <Modal
+        open={mostrarSobreMi}
+        onClose={() => setMostrarSobreMi(false)}
+        title={editable ? "Sobre mí" : `Sobre ${nombreCompleto.split(" ")[0]}`}
+      >
+        {editable ? (
+          <PerfilDivertidoForm
+            perfil={mural.perfil}
+            onActualizado={(perfil) => setMural((prev) => (prev ? { ...prev, perfil } : prev))}
+          />
+        ) : (
+          <SobreMiSoloLectura perfil={mural.perfil} />
+        )}
+      </Modal>
+
+      {editable && (
+        <Modal open={mostrarFondo} onClose={() => setMostrarFondo(false)} title="Fondo del mural">
+          <SelectorFondo
+            fondoId={mural.perfil.fondoId}
+            onCambiado={(fondoId) =>
+              setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, fondoId } } : prev))
+            }
+          />
+        </Modal>
+      )}
     </div>
   );
 }

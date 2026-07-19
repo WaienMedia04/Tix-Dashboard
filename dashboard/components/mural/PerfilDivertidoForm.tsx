@@ -56,42 +56,33 @@ export function PerfilDivertidoForm({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 shadow-card">
-      <div className="flex items-center gap-2">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
-          <Sparkles className="h-4 w-4" />
-        </span>
-        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Sobre mí</p>
-      </div>
+    <form onSubmit={(e) => void handleSubmit(e)} className="space-y-3">
+      {CAMPOS.map((campo) => (
+        <label key={campo.key} className="flex flex-col gap-1">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <campo.icon className="h-3.5 w-3.5" />
+            {campo.label}
+          </span>
+          <input
+            value={form[campo.key]}
+            onChange={(e) => setForm((f) => ({ ...f, [campo.key]: e.target.value }))}
+            placeholder={campo.placeholder}
+            maxLength={120}
+            className={CAMPO_CLASES}
+          />
+        </label>
+      ))}
 
-      <form onSubmit={(e) => void handleSubmit(e)} className="mt-3 space-y-3">
-        {CAMPOS.map((campo) => (
-          <label key={campo.key} className="flex flex-col gap-1">
-            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <campo.icon className="h-3.5 w-3.5" />
-              {campo.label}
-            </span>
-            <input
-              value={form[campo.key]}
-              onChange={(e) => setForm((f) => ({ ...f, [campo.key]: e.target.value }))}
-              placeholder={campo.placeholder}
-              maxLength={120}
-              className={CAMPO_CLASES}
-            />
-          </label>
-        ))}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      {guardadoOk && <p className="text-xs text-success">¡Guardado!</p>}
 
-        {error && <p className="text-xs text-destructive">{error}</p>}
-        {guardadoOk && <p className="text-xs text-success">¡Guardado!</p>}
-
-        <button
-          type="submit"
-          disabled={guardando}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {guardando ? "Guardando..." : "Guardar"}
-        </button>
-      </form>
-    </div>
+      <button
+        type="submit"
+        disabled={guardando}
+        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {guardando ? "Guardando..." : "Guardar"}
+      </button>
+    </form>
   );
 }

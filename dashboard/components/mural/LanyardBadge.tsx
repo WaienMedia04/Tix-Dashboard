@@ -10,7 +10,7 @@ import { useEsMobile } from "@/lib/use-es-mobile";
 // y se carga solo dentro de la ruta Mi Mural en escritorio/tablet.
 const LanyardScene = dynamic(() => import("@/components/vendor/Lanyard/Lanyard"), {
   ssr: false,
-  loading: () => <div className="h-64 w-56 animate-pulse rounded-2xl bg-muted" />,
+  loading: () => <div className="h-[26rem] w-[22rem] animate-pulse rounded-2xl bg-muted" />,
 });
 
 function CarnetFlipCard({
@@ -26,11 +26,11 @@ function CarnetFlipCard({
 
   return (
     <div className="flex flex-col items-center gap-2 py-4">
-      <div className="h-10 w-2 rounded-b-full bg-foreground/15" />
+      <div className="h-12 w-2.5 rounded-b-full bg-foreground/15" />
       <button
         onClick={() => setVolteada((v) => !v)}
         aria-label="Voltear carnet"
-        className="h-56 w-40 shrink-0 [perspective:1200px]"
+        className="h-72 w-52 shrink-0 [perspective:1200px]"
       >
         <div
           className="relative h-full w-full rounded-2xl shadow-elegant transition-transform duration-500 [transform-style:preserve-3d]"
@@ -46,19 +46,19 @@ function CarnetFlipCard({
                 <Avatar nombreCompleto={nombreCompleto} size="xl" />
               </div>
             )}
-            <div className="absolute inset-x-0 bottom-0 bg-black/55 px-2 py-1.5 backdrop-blur-sm">
-              <p className="truncate text-center text-xs font-medium text-white">{nombreCompleto}</p>
+            <div className="absolute inset-x-0 bottom-0 bg-black/55 px-3 py-2 backdrop-blur-sm">
+              <p className="truncate text-center text-sm font-medium text-white">{nombreCompleto}</p>
             </div>
           </div>
 
           {/* Reverso: logo de la empresa */}
           <div
-            className="absolute inset-0 flex items-center justify-center rounded-2xl border border-border bg-card p-5 [backface-visibility:hidden]"
+            className="absolute inset-0 flex items-center justify-center rounded-2xl border border-border bg-card p-6 [backface-visibility:hidden]"
             style={{ transform: "rotateY(180deg)" }}
           >
             {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt="Logo de la empresa" className="max-h-24 max-w-full object-contain" />
+              <img src={logoUrl} alt="Logo de la empresa" className="max-h-32 max-w-full object-contain" />
             ) : (
               <p className="text-center text-xs text-muted-foreground">Sin logo de empresa todavía</p>
             )}
@@ -86,7 +86,7 @@ export function LanyardBadge({
   }
 
   return (
-    <div className="h-72 w-64 shrink-0">
+    <div className="h-[30rem] w-[26rem] shrink-0 sm:h-[34rem] sm:w-[28rem]">
       <LanyardScene
         position={[0, 0, 24]}
         gravity={[0, -40, 0]}
