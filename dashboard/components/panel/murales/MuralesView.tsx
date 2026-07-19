@@ -51,7 +51,7 @@ export function MuralesView() {
             className="flex flex-col items-center gap-2 rounded-lg border border-border bg-card p-4 text-center shadow-card transition-colors hover:border-primary/40"
           >
             <Avatar nombreCompleto={talento.nombreCompleto} fotoUrl={talento.fotoUrl} size="lg" />
-            <div className="min-w-0">
+            <div className="w-full min-w-0">
               <p className="font-display truncate text-sm font-semibold text-foreground">
                 {talento.nombreCompleto}
               </p>
