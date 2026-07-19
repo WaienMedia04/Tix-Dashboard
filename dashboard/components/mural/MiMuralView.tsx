@@ -71,7 +71,7 @@ export function MiMuralView({
       style={{ background: fondoMuralCss(mural.perfil.fondoId) }}
     >
       {/* Encabezado: carnet grande y centrado, nombre y rol debajo */}
-      <div className="flex flex-col items-center px-4 pt-8 pb-4 text-center">
+      <div className="flex flex-col items-center px-4 pt-2 pb-4 text-center">
         <LanyardBadge
           nombreCompleto={nombreCompleto}
           frontImage={mural.talento.carnetFotoUrl ?? mural.talento.fotoUrl}
