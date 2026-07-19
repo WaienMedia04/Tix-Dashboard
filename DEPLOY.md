@@ -43,13 +43,26 @@ En **Variables**, agrega:
 
 | Variable | Valor | Notas |
 |---|---|---|
-| `DATABASE_URL` | connection string de Neon, **host con `-pooler`** | la misma que usas en local, en `.env` |
+| `DATABASE_URL` | connection string de Neon, **host SIN `-pooler`** (conexión directa) | ver nota abajo — con `-pooler` falla `prisma migrate deploy` |
 | `CORS_ORIGIN` | `https://panel.talentix.com.do` | dominio exacto del dashboard en producción (sin slash final) |
 | `ADMIN_TOKEN` | un valor aleatorio largo | genera uno con `openssl rand -hex 32`. Protege `GET /empresas` |
 | `MISTRAL_API_KEY` | tu API key de [console.mistral.ai](https://console.mistral.ai) | extracción de datos de CVs por IA. Sin esta variable, la subida de CV se guarda igual pero `cvDatosExtraidos` queda en `null` |
 
 `PORT` no hace falta configurarlo: Railway lo inyecta automáticamente y el código ya
 usa `process.env.PORT ?? 3000`.
+
+**Por qué `DATABASE_URL` debe ser la conexión directa de Neon (sin `-pooler`):**
+`src/prisma/prisma.service.ts` usa el driver adapter `@prisma/adapter-pg`
+(`PrismaPg`), que ya trae su propio pool de conexiones (vía `pg.Pool`) — el
+pooler de Neon (PgBouncer en modo *transaction*) es redundante encima de eso y,
+peor, rompe `prisma migrate deploy`: el Release Command necesita un advisory
+lock a nivel de sesión (`pg_advisory_lock`) para evitar que dos deploys
+apliquen migraciones a la vez, y PgBouncer en modo transaction no garantiza
+que las consultas de una misma "sesión" lógica caigan en la misma conexión
+real — el resultado es `Error: P1002 ... Timed out trying to acquire a
+postgres advisory lock`. En el dashboard de Neon, la connection string sin
+`-pooler` en el host es la conexión directa; úsala tanto en local (`.env`)
+como en Railway.
 
 ### 1.3 Dominio personalizado de la API
 
