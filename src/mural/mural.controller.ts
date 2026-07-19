@@ -54,6 +54,11 @@ export class MuralController {
     return this.muralService.borrarNota(req.actor!, id);
   }
 
+  @Get('estampas')
+  listarMisEstampas(@Req() req: RequestConActor) {
+    return this.muralService.listarMisEstampas(req.actor!);
+  }
+
   @Patch('estampas/:id')
   actualizarPosicionEstampa(
     @Param('id') id: string,

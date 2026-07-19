@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Building2, NotebookPen, Palette, Sparkles, Users } from "lucide-react";
+import { Building2, Gift, NotebookPen, Palette, Sparkles, Users } from "lucide-react";
 import { type MuralPropio, fetchMuralDeTalento, fetchMuralPropio } from "@/lib/api";
 import { fondoMuralCss, fondoMuralTexto } from "@/lib/mural-fondos";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -13,6 +13,7 @@ import { SobreMiSoloLectura } from "./SobreMiSoloLectura";
 import { SelectorFondo } from "./SelectorFondo";
 import { MuralCanvas } from "./MuralCanvas";
 import { DirectorioCompaneros } from "./DirectorioCompaneros";
+import { MisEstampasModal } from "./MisEstampasModal";
 
 export function MiMuralView({
   slug,
@@ -34,6 +35,7 @@ export function MiMuralView({
   const [mostrarSobreMi, setMostrarSobreMi] = useState(false);
   const [mostrarFondo, setMostrarFondo] = useState(false);
   const [mostrarCompaneros, setMostrarCompaneros] = useState(false);
+  const [mostrarEstampas, setMostrarEstampas] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -147,6 +149,15 @@ export function MiMuralView({
                 Compañeros
               </button>
             )}
+            {editable && (
+              <button
+                onClick={() => setMostrarEstampas(true)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-card/90 px-4 py-2 text-xs font-medium text-foreground shadow-elegant backdrop-blur-sm transition-transform hover:scale-105"
+              >
+                <Gift className="h-3.5 w-3.5" />
+                Mis Estampas
+              </button>
+            )}
           </div>
         </div>
 
@@ -196,6 +207,28 @@ export function MiMuralView({
         >
           <DirectorioCompaneros slug={slug} propioTalentoId={miTalentoId} />
         </Modal>
+      )}
+
+      {editable && (
+        <MisEstampasModal
+          open={mostrarEstampas}
+          onClose={() => setMostrarEstampas(false)}
+          onCambio={(estampa) =>
+            setMural((prev) => {
+              if (!prev) return prev;
+              const yaEstaba = prev.estampasRecibidas.some((e) => e.id === estampa.id);
+              if (estampa.enMural) {
+                return {
+                  ...prev,
+                  estampasRecibidas: yaEstaba
+                    ? prev.estampasRecibidas.map((e) => (e.id === estampa.id ? estampa : e))
+                    : [...prev.estampasRecibidas, estampa],
+                };
+              }
+              return { ...prev, estampasRecibidas: prev.estampasRecibidas.filter((e) => e.id !== estampa.id) };
+            })
+          }
+        />
       )}
     </div>
   );

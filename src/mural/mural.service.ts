@@ -45,6 +45,7 @@ const SELECT_ESTAMPA_OTORGADA = {
   posX: true,
   posY: true,
   zIndex: true,
+  enMural: true,
   createdAt: true,
   estampaDefinicion: {
     select: { id: true, nombre: true, imagenUrl: true, forma: true },
@@ -57,6 +58,7 @@ function serializarEstampaOtorgada(otorgada: {
   posX: number;
   posY: number;
   zIndex: number;
+  enMural: boolean;
   createdAt: Date;
   estampaDefinicion: {
     id: string;
@@ -75,6 +77,7 @@ function serializarEstampaOtorgada(otorgada: {
     posX: otorgada.posX,
     posY: otorgada.posY,
     zIndex: otorgada.zIndex,
+    enMural: otorgada.enMural,
     createdAt: otorgada.createdAt,
   };
 }
@@ -141,7 +144,7 @@ export class MuralService {
           orderBy: { createdAt: 'asc' },
         }),
         this.prisma.estampaOtorgada.findMany({
-          where: { talentoId },
+          where: { talentoId, enMural: true },
           select: SELECT_ESTAMPA_OTORGADA,
           orderBy: { createdAt: 'asc' },
         }),
@@ -250,6 +253,19 @@ export class MuralService {
     return { id: notaId };
   }
 
+  /** Todas las estampas que tiene el propio talento, estén o no visibles en el mural ahora mismo. */
+  async listarMisEstampas(actor: Actor) {
+    const { talentoId } = this.exigirTalentoId(actor);
+
+    const estampas = await this.prisma.estampaOtorgada.findMany({
+      where: { talentoId },
+      select: SELECT_ESTAMPA_OTORGADA,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return estampas.map(serializarEstampaOtorgada);
+  }
+
   async actualizarPosicionEstampa(
     actor: Actor,
     estampaOtorgadaId: string,
@@ -270,6 +286,7 @@ export class MuralService {
         ...(dto.posX !== undefined && { posX: dto.posX }),
         ...(dto.posY !== undefined && { posY: dto.posY }),
         ...(dto.zIndex !== undefined && { zIndex: dto.zIndex }),
+        ...(dto.enMural !== undefined && { enMural: dto.enMural }),
       },
       select: SELECT_ESTAMPA_OTORGADA,
     });

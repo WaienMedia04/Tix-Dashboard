@@ -262,6 +262,7 @@ model EstampaOtorgada {
   posX                 Float    @default(50)
   posY                 Float    @default(50)
   zIndex               Int      @default(0)
+  enMural              Boolean  @default(true)
   createdAt            DateTime @default(now())
 
   empresa           Empresa           @relation(fields: [empresaId], references: [id], onDelete: Cascade)

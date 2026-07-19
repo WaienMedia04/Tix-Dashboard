@@ -1002,6 +1002,7 @@ export interface EstampaOtorgadaMural {
   posX: number;
   posY: number;
   zIndex: number;
+  enMural: boolean;
   createdAt: string;
 }
 
@@ -1175,12 +1176,21 @@ export async function borrarNotaMural(id: string): Promise<void> {
 
 export async function actualizarPosicionEstampa(
   id: string,
-  datos: Partial<{ posX: number; posY: number; zIndex: number }>,
+  datos: Partial<{ posX: number; posY: number; zIndex: number; enMural: boolean }>,
 ): Promise<EstampaOtorgadaMural> {
   const res = await fetch(`${API_URL}/talentos/me/mural/estampas/${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...(await authHeaders()) },
     body: JSON.stringify(datos),
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
+export async function fetchMisEstampas(): Promise<EstampaOtorgadaMural[]> {
+  const res = await fetch(`${API_URL}/talentos/me/mural/estampas`, {
+    headers: await authHeaders(),
+    cache: "no-store",
   });
   if (!res.ok) await manejarErrorMural(res);
   return res.json();

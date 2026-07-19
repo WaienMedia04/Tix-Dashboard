@@ -1,4 +1,11 @@
-import { IsInt, IsNumber, IsOptional, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class ActualizarPosicionEstampaDto {
   @IsNumber()
@@ -16,4 +23,9 @@ export class ActualizarPosicionEstampaDto {
   @IsInt()
   @IsOptional()
   zIndex?: number;
+
+  /** Si está en el mural (visible) o guardada aparte — el talento la agrega/quita desde "Mis Estampas". */
+  @IsBoolean()
+  @IsOptional()
+  enMural?: boolean;
 }
