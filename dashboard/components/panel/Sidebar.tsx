@@ -35,6 +35,8 @@ interface ItemGrupo {
   href: string;
   label: string;
   icon: LucideIcon;
+  /** Clase Tailwind de color aplicada directamente al ícono. */
+  color: string;
   /** Si se omite, el item es visible para todos los roles. */
   rolesPermitidos?: Rol[];
 }
@@ -43,31 +45,62 @@ const GRUPOS: { titulo: string; items: ItemGrupo[] }[] = [
   {
     titulo: "Operación",
     items: [
-      { href: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "bitacoras", label: "Bitácoras", icon: NotebookPen },
-      { href: "empleados", label: "Empleados", icon: Users },
-      { href: "murales", label: "Murales", icon: Images, rolesPermitidos: ["CEO", "RRHH", "MANAGER"] },
-      { href: "cumpleanos", label: "Cumpleaños", icon: Cake },
+      { href: "dashboard", label: "Dashboard", icon: LayoutDashboard, color: "text-violet-400" },
+      { href: "bitacoras", label: "Bitácoras", icon: NotebookPen, color: "text-cyan-400" },
+      { href: "empleados", label: "Empleados", icon: Users, color: "text-emerald-400" },
+      {
+        href: "murales",
+        label: "Murales",
+        icon: Images,
+        color: "text-fuchsia-400",
+        rolesPermitidos: ["CEO", "RRHH", "MANAGER"],
+      },
+      { href: "cumpleanos", label: "Cumpleaños", icon: Cake, color: "text-rose-400" },
     ],
   },
   {
     titulo: "Administración",
     items: [
-      { href: "kpis", label: "KPIs", icon: BarChart3 },
-      { href: "reportes", label: "Reportes", icon: FileBarChart },
-      { href: "configuracion", label: "Configuración", icon: Settings, rolesPermitidos: ["CEO", "RRHH"] },
+      { href: "kpis", label: "KPIs", icon: BarChart3, color: "text-blue-400" },
+      { href: "reportes", label: "Reportes", icon: FileBarChart, color: "text-amber-400" },
+      {
+        href: "configuracion",
+        label: "Configuración",
+        icon: Settings,
+        color: "text-slate-400",
+        rolesPermitidos: ["CEO", "RRHH"],
+      },
     ],
   },
   {
     titulo: "Inteligencia",
     items: [
-      { href: "rankings", label: "Rankings", icon: Trophy, rolesPermitidos: ["CEO", "RRHH", "MANAGER"] },
-      { href: "alertas", label: "Alertas", icon: AlertTriangle, rolesPermitidos: ["CEO", "RRHH", "MANAGER"] },
-      { href: "novedades", label: "Novedades", icon: Megaphone, rolesPermitidos: ["CEO", "RRHH"] },
+      {
+        href: "rankings",
+        label: "Rankings",
+        icon: Trophy,
+        color: "text-yellow-400",
+        rolesPermitidos: ["CEO", "RRHH", "MANAGER"],
+      },
+      {
+        href: "alertas",
+        label: "Alertas",
+        icon: AlertTriangle,
+        color: "text-red-400",
+        rolesPermitidos: ["CEO", "RRHH", "MANAGER"],
+      },
+      {
+        href: "novedades",
+        label: "Novedades",
+        icon: Megaphone,
+        color: "text-sky-400",
+        rolesPermitidos: ["CEO", "RRHH"],
+      },
       {
         href: "reportes-ejecutivos",
         label: "Reportes Ejecutivos",
         icon: BrainCircuit,
+        color: "text-purple-400",
         rolesPermitidos: ["CEO", "RRHH"],
       },
     ],
@@ -80,6 +113,7 @@ function ItemNav({
   href,
   label,
   Icon,
+  color,
   activo,
   colapsado,
   onNavegar,
@@ -87,6 +121,7 @@ function ItemNav({
   href: string;
   label: string;
   Icon: LucideIcon;
+  color: string;
   activo: boolean;
   colapsado: boolean;
   onNavegar?: () => void;
@@ -113,7 +148,7 @@ function ItemNav({
           transition={{ duration: 0.25, ease: "easeOut" }}
         />
       )}
-      <Icon className="relative z-10 h-4 w-4 shrink-0" />
+      <Icon className={`relative z-10 h-4 w-4 shrink-0 ${color}`} />
       {!colapsado && <span className="relative z-10 truncate">{label}</span>}
       {colapsado && (
         <span className="pointer-events-none absolute left-full z-20 ml-2 -translate-x-1 rounded-md bg-foreground px-2 py-1 text-xs font-medium whitespace-nowrap text-background opacity-0 shadow-elegant transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100">
@@ -250,6 +285,7 @@ export function Sidebar({
                         href={href}
                         label={item.label}
                         Icon={item.icon}
+                        color={item.color}
                         activo={activo}
                         colapsado={colapsadoVisual}
                         onNavegar={esMobile ? onCerrar : undefined}
@@ -263,7 +299,14 @@ export function Sidebar({
         </nav>
 
         <div className="space-y-1 border-t border-sidebar-border px-3 py-4">
-          <ItemNav href="/docs" label="Documentación" Icon={BookOpen} activo={false} colapsado={colapsadoVisual} />
+          <ItemNav
+            href="/docs"
+            label="Documentación"
+            Icon={BookOpen}
+            color="text-teal-400"
+            activo={false}
+            colapsado={colapsadoVisual}
+          />
           <button
             onClick={() => setTheme(esOscuro ? "light" : "dark")}
             aria-label={esOscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
@@ -271,7 +314,11 @@ export function Sidebar({
               colapsadoVisual ? "justify-center px-0" : "px-3"
             }`}
           >
-            {esOscuro ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
+            {esOscuro ? (
+              <Sun className="h-4 w-4 shrink-0 text-amber-400" />
+            ) : (
+              <Moon className="h-4 w-4 shrink-0 text-indigo-400" />
+            )}
             {!colapsadoVisual && <span className="truncate">{esOscuro ? "Modo claro" : "Modo oscuro"}</span>}
             {colapsadoVisual && (
               <span className="pointer-events-none absolute left-full z-20 ml-2 -translate-x-1 rounded-md bg-foreground px-2 py-1 text-xs font-medium whitespace-nowrap text-background opacity-0 shadow-elegant transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100">
@@ -285,7 +332,7 @@ export function Sidebar({
               colapsadoVisual ? "justify-center px-0" : "px-3"
             }`}
           >
-            <LogOut className="h-4 w-4 shrink-0" />
+            <LogOut className="h-4 w-4 shrink-0 text-red-400" />
             {!colapsadoVisual && <span className="truncate">Cerrar sesión</span>}
             {colapsadoVisual && (
               <span className="pointer-events-none absolute left-full z-20 ml-2 -translate-x-1 rounded-md bg-foreground px-2 py-1 text-xs font-medium whitespace-nowrap text-background opacity-0 shadow-elegant transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100">
