@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
-import { Gift, Loader2, Sparkles, Upload } from "lucide-react";
+import { Gift, Loader2, Sparkles, Upload, Users } from "lucide-react";
 import {
   type EmpleadoResumen,
   type EstampaDefinicion,
@@ -188,20 +188,43 @@ function ModalRegalarEstampa({
   empleados: EmpleadoResumen[];
   onClose: () => void;
 }) {
-  const [talentoId, setTalentoId] = useState("");
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
   const [mensaje, setMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [enviado, setEnviado] = useState(false);
+  const [enviado, setEnviado] = useState<number | null>(null);
+
+  const activos = empleados.filter((e) => e.estado === "activo");
+  const todosActivosSeleccionados = activos.length > 0 && activos.every((e) => seleccionados.has(e.id));
+
+  function alternar(id: string) {
+    setSeleccionados((prev) => {
+      const siguiente = new Set(prev);
+      if (siguiente.has(id)) siguiente.delete(id);
+      else siguiente.add(id);
+      return siguiente;
+    });
+  }
+
+  function alternarTodosActivos() {
+    setSeleccionados((prev) => {
+      if (todosActivosSeleccionados) {
+        const siguiente = new Set(prev);
+        activos.forEach((e) => siguiente.delete(e.id));
+        return siguiente;
+      }
+      return new Set([...prev, ...activos.map((e) => e.id)]);
+    });
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!talentoId) return;
+    if (seleccionados.size === 0) return;
     setError(null);
     setEnviando(true);
     try {
-      await otorgarEstampa(slug, definicion.id, talentoId, mensaje.trim() || undefined);
-      setEnviado(true);
+      const { otorgadas } = await otorgarEstampa(slug, definicion.id, [...seleccionados], mensaje.trim() || undefined);
+      setEnviado(otorgadas);
     } catch {
       setError("No se pudo regalar la estampa. Intenta de nuevo.");
     } finally {
@@ -210,10 +233,17 @@ function ModalRegalarEstampa({
   }
 
   return (
-    <Modal open onClose={onClose} title={`Regalar "${definicion.nombre}"`} description="Aparecerá en el mural del empleado.">
-      {enviado ? (
+    <Modal
+      open
+      onClose={onClose}
+      title={`Regalar "${definicion.nombre}"`}
+      description="Aparecerá en el mural de cada empleado seleccionado."
+    >
+      {enviado !== null ? (
         <div className="space-y-3">
-          <p className="text-sm text-success">¡Estampa regalada!</p>
+          <p className="text-sm text-success">
+            ¡Estampa regalada a {enviado} {enviado === 1 ? "persona" : "personas"}!
+          </p>
           <button
             onClick={onClose}
             className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent"
@@ -224,20 +254,40 @@ function ModalRegalarEstampa({
       ) : (
         <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Empleado</label>
-            <select
-              value={talentoId}
-              onChange={(e) => setTalentoId(e.target.value)}
-              required
-              className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="">Selecciona...</option>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Empleados {seleccionados.size > 0 && `(${seleccionados.size})`}
+              </label>
+              <button
+                type="button"
+                onClick={alternarTodosActivos}
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                <Users className="h-3 w-3" />
+                {todosActivosSeleccionados ? "Quitar todos los activos" : "Todos los activos"}
+              </button>
+            </div>
+            <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-border p-2">
               {empleados.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.nombreCompleto}
-                </option>
+                <label
+                  key={e.id}
+                  className="flex items-center gap-2 rounded px-1.5 py-1 text-sm hover:bg-accent"
+                >
+                  <input
+                    type="checkbox"
+                    checked={seleccionados.has(e.id)}
+                    onChange={() => alternar(e.id)}
+                    className="accent-primary"
+                  />
+                  <span className={e.estado === "activo" ? "text-foreground" : "text-muted-foreground"}>
+                    {e.nombreCompleto}
+                  </span>
+                  {e.estado !== "activo" && (
+                    <span className="text-[10px] tracking-wide text-muted-foreground uppercase">Inactivo</span>
+                  )}
+                </label>
               ))}
-            </select>
+            </div>
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -254,10 +304,14 @@ function ModalRegalarEstampa({
           <div className="flex items-center gap-2">
             <button
               type="submit"
-              disabled={enviando || !talentoId}
+              disabled={enviando || seleccionados.size === 0}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {enviando ? "Enviando..." : "Regalar"}
+              {enviando
+                ? "Enviando..."
+                : seleccionados.size > 1
+                  ? `Regalar a ${seleccionados.size}`
+                  : "Regalar"}
             </button>
             <button
               type="button"

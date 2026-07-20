@@ -135,39 +135,35 @@ export class EstampasService {
       throw new NotFoundException('Estampa no encontrada');
     }
 
-    const talento = await this.prisma.talento.findUnique({
-      where: { id: dto.talentoId },
+    const talentoIds = [...new Set(dto.talentoIds)];
+    const talentos = await this.prisma.talento.findMany({
+      where: { id: { in: talentoIds }, empresaId: empresa.id },
+      select: { id: true },
     });
-    if (!talento || talento.empresaId !== empresa.id) {
-      throw new NotFoundException('Empleado no encontrado');
+    if (talentos.length !== talentoIds.length) {
+      throw new NotFoundException('Uno o más empleados no fueron encontrados');
     }
 
-    const otorgada = await this.prisma.estampaOtorgada.create({
-      data: {
+    const mensaje = dto.mensaje?.trim() || null;
+    await this.prisma.estampaOtorgada.createMany({
+      data: talentoIds.map((talentoId) => ({
         empresaId: empresa.id,
-        talentoId: dto.talentoId,
+        talentoId,
         estampaDefinicionId: id,
         otorgadoPorUsuarioId: actor.usuario.id,
-        mensaje: dto.mensaje?.trim() || null,
-      },
-      select: {
-        id: true,
-        talentoId: true,
-        estampaDefinicionId: true,
-        mensaje: true,
-        createdAt: true,
-      },
+        mensaje,
+      })),
     });
 
-    await this.notificaciones.crearPersonal({
+    await this.notificaciones.crearPersonalMasivo({
       empresaId: empresa.id,
-      talentoId: dto.talentoId,
+      talentoIds,
       tipo: 'ESTAMPA_RECIBIDA',
       titulo: '🎁 Nueva estampa',
       mensaje: `¡Te regalaron la estampa "${definicion.nombre}"!`,
       enlace: '/mi-mural',
     });
 
-    return otorgada;
+    return { otorgadas: talentoIds.length };
   }
 }

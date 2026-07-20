@@ -1,9 +1,18 @@
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  ArrayMinSize,
+  ArrayUnique,
+  IsArray,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class OtorgarEstampaDto {
-  @IsString()
-  @IsNotEmpty()
-  talentoId!: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayUnique()
+  @IsString({ each: true })
+  talentoIds!: string[];
 
   @IsString()
   @IsOptional()

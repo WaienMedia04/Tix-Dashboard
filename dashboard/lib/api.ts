@@ -1307,26 +1307,27 @@ export async function actualizarEstampaDefinicion(
 export async function otorgarEstampa(
   slug: string,
   estampaDefinicionId: string,
-  talentoId: string,
+  talentoIds: string[],
   mensaje?: string,
-): Promise<void> {
+): Promise<{ otorgadas: number }> {
   const res = await fetch(
     `${API_URL}/empresas/${encodeURIComponent(slug)}/estampas/${encodeURIComponent(estampaDefinicionId)}/otorgar`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-      body: JSON.stringify({ talentoId, mensaje }),
+      body: JSON.stringify({ talentoIds, mensaje }),
     },
   );
   if (res.status === 401) {
     throw new SesionInvalidaError("Sesión inválida o expirada");
   }
   if (res.status === 404) {
-    throw new EmpresaNoEncontradaError("Empleado o estampa no encontrados");
+    throw new EmpresaNoEncontradaError("Uno o más empleados o la estampa no fueron encontrados");
   }
   if (!res.ok) {
     throw new Error("No se pudo regalar la estampa");
   }
+  return res.json();
 }
 
 export type TipoNotificacion =

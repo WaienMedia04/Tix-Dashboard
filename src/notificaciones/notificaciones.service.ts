@@ -213,6 +213,30 @@ export class NotificacionesService {
     });
   }
 
+  /** Igual que `crearPersonal` pero para varios talentos a la vez (ej. estampa regalada a todo un grupo). */
+  async crearPersonalMasivo(params: {
+    empresaId: string;
+    talentoIds: string[];
+    tipo: 'ESTAMPA_RECIBIDA';
+    titulo: string;
+    mensaje: string;
+    enlace?: string;
+  }) {
+    if (params.talentoIds.length === 0) return;
+    await this.prisma.notificacion.createMany({
+      data: params.talentoIds.map((talentoId) => ({
+        empresaId: params.empresaId,
+        talentoId,
+        tipo: params.tipo,
+        titulo: params.titulo,
+        mensaje: params.mensaje,
+        enlace: params.enlace,
+        personal: true,
+        rolesDestino: [],
+      })),
+    });
+  }
+
   /** Aviso general — lo ve cualquiera con uno de `roles` (vacío = todos los roles). */
   async crearBroadcast(params: {
     empresaId: string;
