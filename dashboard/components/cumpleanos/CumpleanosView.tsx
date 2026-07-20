@@ -1,16 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import { Cake, PartyPopper } from "lucide-react";
 import { type CumpleanosResponse, fetchCumpleanos } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useEsMobile } from "@/lib/use-es-mobile";
+import { BouncingBalls } from "@/components/cumpleanos/BouncingBalls";
 
-const Ballpit = dynamic(() => import("@/components/vendor/Ballpit/Ballpit"), { ssr: false });
-
-const COLORES_GLOBOS = [0xff477e, 0xffd23f, 0x06d6a0, 0x118ab2, 0xef476f, 0xffa62b, 0x9b5de5, 0xf72585];
+const COLORES_GLOBOS = ["#FF477E", "#FFD23F", "#06D6A0", "#118AB2", "#EF476F", "#FFA62B", "#9B5DE5", "#F72585"];
 
 function mesActualLabel(): string {
   const texto = new Intl.DateTimeFormat("es-DO", { month: "long", timeZone: "America/Santo_Domingo" }).format(
@@ -49,8 +47,8 @@ export function CumpleanosView({ slug }: { slug: string }) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-8">
-      {/* Bloque: cumpleaños de hoy — fondo blanco, cada tarjeta trae su propio Ballpit */}
-      <section className="relative overflow-hidden rounded-2xl border border-border bg-white shadow-elegant">
+      {/* Bloque: cumpleaños de hoy — fondo negro, cada tarjeta trae sus propias bolitas (Canvas 2D) */}
+      <section className="dark relative overflow-hidden rounded-2xl border border-border bg-black shadow-elegant">
         <div className="relative min-h-[22rem] sm:min-h-[26rem]">
           <div className="relative z-10 flex flex-col items-center px-4 py-8 text-center">
             <PartyPopper className="h-7 w-7 text-warning" />
@@ -63,16 +61,16 @@ export function CumpleanosView({ slug }: { slug: string }) {
                 {hoy.map((t) => (
                   <div
                     key={t.id}
-                    className="relative flex w-44 flex-col items-center gap-2 overflow-hidden rounded-xl border border-border bg-white p-4 shadow-elegant"
+                    className="relative flex w-44 flex-col items-center gap-2 overflow-hidden rounded-xl border border-white/15 bg-black p-4 shadow-elegant"
                   >
                     {!esMobile && (
                       <div className="absolute inset-0 z-0">
-                        <Ballpit count={60} gravity={0.35} friction={0.9925} wallBounce={0.9} followCursor colors={COLORES_GLOBOS} />
+                        <BouncingBalls count={26} gravity={0.35} friction={0.99} wallBounce={0.85} followCursor colors={COLORES_GLOBOS} />
                       </div>
                     )}
 
-                    <div className="relative z-10 flex w-full flex-col items-center gap-2 rounded-lg bg-white/70 px-2 py-2 backdrop-blur-sm">
-                      <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="xl" className="ring-4 ring-white/60" />
+                    <div className="relative z-10 flex w-full flex-col items-center gap-2 rounded-lg bg-black/40 px-2 py-2 backdrop-blur-sm">
+                      <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="xl" className="ring-4 ring-white/20" />
                       <p className="font-display mt-1 text-base font-semibold text-foreground">{t.nombreCompleto}</p>
                       {t.departamento && <p className="text-xs text-muted-foreground">{t.departamento}</p>}
                       <p className="w-full truncate text-center text-xs text-muted-foreground" title={t.rol}>
