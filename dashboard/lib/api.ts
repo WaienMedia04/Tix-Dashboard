@@ -1331,6 +1331,23 @@ export async function actualizarEstampaDefinicion(
   return res.json();
 }
 
+export async function eliminarEstampaDefinicion(slug: string, id: string): Promise<{ id: string }> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/estampas/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: await authHeaders(),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError("La estampa no fue encontrada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo eliminar la estampa");
+  }
+  return res.json();
+}
+
 export async function otorgarEstampa(
   slug: string,
   estampaDefinicionId: string,

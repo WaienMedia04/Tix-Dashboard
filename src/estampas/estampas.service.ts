@@ -115,6 +115,23 @@ export class EstampasService {
     return serializar(actualizada);
   }
 
+  async eliminar(slug: string, actor: Actor, id: string) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+
+    const definicion = await this.prisma.estampaDefinicion.findUnique({
+      where: { id },
+    });
+    if (!definicion || definicion.empresaId !== empresa.id) {
+      throw new NotFoundException('Estampa no encontrada');
+    }
+
+    // Cascade en el schema: al borrar la definición se borran también todas
+    // las EstampaOtorgada asociadas (desaparece del mural de quien la tenía).
+    await this.prisma.estampaDefinicion.delete({ where: { id } });
+
+    return { id };
+  }
+
   async otorgar(
     slug: string,
     actor: Actor,

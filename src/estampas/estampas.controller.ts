@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -45,6 +46,15 @@ export class EstampasController {
     @Req() req: RequestConActor,
   ) {
     return this.estampasService.actualizar(slug, req.actor!, id, dto);
+  }
+
+  @Delete(':id')
+  eliminar(
+    @Param('slug') slug: string,
+    @Param('id') id: string,
+    @Req() req: RequestConActor,
+  ) {
+    return this.estampasService.eliminar(slug, req.actor!, id);
   }
 
   @Post(':id/otorgar')

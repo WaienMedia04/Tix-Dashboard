@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
-import { Gift, Loader2, Sparkles, Upload, Users } from "lucide-react";
+import { Gift, Loader2, Sparkles, Trash2, Upload, Users } from "lucide-react";
 import {
   type EmpleadoResumen,
   type EstampaDefinicion,
@@ -10,6 +10,7 @@ import {
   actualizarEstampaDefinicion,
   authHeaders,
   crearEstampaDefinicion,
+  eliminarEstampaDefinicion,
   fetchEstampas,
   otorgarEstampa,
 } from "@/lib/api";
@@ -331,6 +332,7 @@ export function EstampasCatalogo({ slug, empleados }: { slug: string; empleados:
   const [definiciones, setDefiniciones] = useState<EstampaDefinicion[] | null>(null);
   const [mostrarNueva, setMostrarNueva] = useState(false);
   const [regalando, setRegalando] = useState<EstampaDefinicion | null>(null);
+  const [eliminandoId, setEliminandoId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelado = false;
@@ -352,6 +354,25 @@ export function EstampasCatalogo({ slug, empleados }: { slug: string; empleados:
       setDefiniciones((prev) => prev?.map((d) => (d.id === definicion.id ? actualizada : d)) ?? prev);
     } catch {
       // sin cambios visibles si falla
+    }
+  }
+
+  async function handleEliminar(definicion: EstampaDefinicion) {
+    if (
+      !window.confirm(
+        `¿Eliminar la estampa "${definicion.nombre}"? También desaparecerá del mural de quienes la tengan.`,
+      )
+    ) {
+      return;
+    }
+    setEliminandoId(definicion.id);
+    try {
+      await eliminarEstampaDefinicion(slug, definicion.id);
+      setDefiniciones((prev) => prev?.filter((d) => d.id !== definicion.id) ?? prev);
+    } catch {
+      // sin cambios visibles si falla
+    } finally {
+      setEliminandoId(null);
     }
   }
 
@@ -412,6 +433,18 @@ export function EstampasCatalogo({ slug, empleados }: { slug: string; empleados:
                   className="text-[10px] font-medium text-muted-foreground hover:text-foreground"
                 >
                   {d.activo ? "Desactivar" : "Activar"}
+                </button>
+                <button
+                  onClick={() => void handleEliminar(d)}
+                  disabled={eliminandoId === d.id}
+                  title="Eliminar"
+                  className="flex h-6 w-6 items-center justify-center rounded text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {eliminandoId === d.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
                 </button>
               </div>
             </div>
