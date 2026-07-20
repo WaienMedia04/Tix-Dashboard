@@ -194,7 +194,7 @@ export class NotificacionesService {
   async crearPersonal(params: {
     empresaId: string;
     talentoId: string;
-    tipo: 'ESTAMPA_RECIBIDA';
+    tipo: 'ESTAMPA_RECIBIDA' | 'NOTA_RECIBIDA';
     titulo: string;
     mensaje: string;
     enlace?: string;
@@ -217,7 +217,7 @@ export class NotificacionesService {
   async crearPersonalMasivo(params: {
     empresaId: string;
     talentoIds: string[];
-    tipo: 'ESTAMPA_RECIBIDA';
+    tipo: 'ESTAMPA_RECIBIDA' | 'NOTA_RECIBIDA';
     titulo: string;
     mensaje: string;
     enlace?: string;

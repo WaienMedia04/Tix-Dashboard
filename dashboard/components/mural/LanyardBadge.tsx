@@ -93,7 +93,7 @@ export function LanyardBadge({
     // quede pegado al borde superior del marco en vez de flotar en el medio.
     <div className="h-[36rem] w-[30rem] shrink-0 sm:h-[40rem] sm:w-[34rem]">
       <LanyardScene
-        position={[0, 0, 24]}
+        position={[0, 0, 20]}
         frontImage={frontImage ?? undefined}
         backImage={logoUrl ?? undefined}
         imageFit="cover"

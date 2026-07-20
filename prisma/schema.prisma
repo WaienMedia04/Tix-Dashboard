@@ -41,6 +41,7 @@ enum TipoNotificacion {
   AUSENCIA_REGISTRADA
   NOVEDAD_PUBLICADA
   CV_LISTO_PARA_REVISAR
+  NOTA_RECIBIDA
 }
 
 model Empresa {
@@ -114,14 +115,15 @@ model Usuario {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  empresa           Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  talento           Talento?            @relation("UsuarioTalento", fields: [talentoId], references: [id])
-  equipoGestionado  Talento[]           @relation("ManagerEquipo")
+  empresa              Empresa               @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento              Talento?              @relation("UsuarioTalento", fields: [talentoId], references: [id])
+  equipoGestionado     Talento[]             @relation("ManagerEquipo")
   novedadesCreadas     Novedad[]
   ausenciasCreadas     Ausencia[]
   estampasCreadas      EstampaDefinicion[]
   estampasOtorgadas    EstampaOtorgada[]
   notificacionesLeidas NotificacionLectura[]
+  notasMuralEnviadas   MuralNotaAdhesiva[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
@@ -204,7 +206,7 @@ model TalentoPerfilMural {
   noMeGusta       String?
   cancionFavorita String?
   superpoder      String?
-  fondoId         String   @default("aurora")
+  fondoId         String   @default("corcho")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -215,21 +217,24 @@ model TalentoPerfilMural {
 }
 
 model MuralNotaAdhesiva {
-  id        String   @id @default(cuid())
-  empresaId String
-  talentoId String
-  texto     String
-  color     String   @default("amarillo")
-  posX      Float    @default(50)
-  posY      Float    @default(50)
-  rotacion  Float    @default(0)
-  zIndex    Int      @default(0)
-  escala    Float    @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  empresaId           String
+  talentoId           String
+  texto               String
+  color               String   @default("amarillo")
+  posX                Float    @default(50)
+  posY                Float    @default(50)
+  rotacion            Float    @default(0)
+  zIndex              Int      @default(0)
+  escala              Float    @default(1)
+  /// Si no es null, la nota la escribió otro compañero (no el dueño del mural) — se muestra "De: {nombre}".
+  enviadaPorUsuarioId String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  talento Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+  empresa    Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento    Talento  @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+  enviadaPor Usuario? @relation(fields: [enviadaPorUsuarioId], references: [id])
 
   @@index([empresaId])
   @@index([empresaId, talentoId])

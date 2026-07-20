@@ -20,6 +20,7 @@ import { CrearTalentoDto } from './dto/crear-talento.dto';
 import { CrearUsuarioEmpresaDto } from './dto/crear-usuario-empresa.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { ActualizarLogoEmpresaDto } from './dto/actualizar-logo-empresa.dto';
+import { EnviarNotaDto } from '../mural/dto/enviar-nota.dto';
 import { CambiarCorreoDto } from '../auth/dto/cambiar-correo.dto';
 import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -102,6 +103,22 @@ export class EmpresasController {
     @Req() req: RequestConActor,
   ) {
     return this.empresasService.muralDeTalento(slug, req.actor!, talentoId);
+  }
+
+  @Post(':slug/empleados/:talentoId/mural/notas')
+  @UseGuards(CompanyAccessGuard)
+  enviarNotaAMural(
+    @Param('slug') slug: string,
+    @Param('talentoId') talentoId: string,
+    @Body() dto: EnviarNotaDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.enviarNotaAMural(
+      slug,
+      req.actor!,
+      talentoId,
+      dto,
+    );
   }
 
   @Get(':slug/cumpleanos')

@@ -8,6 +8,12 @@ export interface FondoMural {
 }
 
 export const FONDOS_MURAL: FondoMural[] = [
+  {
+    id: "corcho",
+    label: "Corcho",
+    css: "radial-gradient(circle at 22% 18%, rgba(94,58,23,0.22) 1.4px, transparent 1.6px) 0 0/26px 26px, radial-gradient(circle at 68% 62%, rgba(94,58,23,0.18) 1.1px, transparent 1.3px) 0 0/19px 19px, radial-gradient(circle at 42% 82%, rgba(120,80,40,0.16) 1.3px, transparent 1.5px) 0 0/31px 31px, radial-gradient(circle at 85% 30%, rgba(70,42,15,0.15) 1px, transparent 1.2px) 0 0/22px 22px, linear-gradient(160deg, #d3a86c 0%, #c99a5c 45%, #b98748 100%)",
+    claro: true,
+  },
   { id: "aurora", label: "Aurora", css: "linear-gradient(135deg, #22D3EE 0%, #8B5CF6 55%, #D946EF 100%)", claro: false },
   { id: "atardecer", label: "Atardecer", css: "linear-gradient(135deg, #FB923C 0%, #F43F5E 60%, #A21CAF 100%)", claro: false },
   { id: "oceano", label: "Océano", css: "linear-gradient(135deg, #0EA5E9 0%, #06B6D4 50%, #0D9488 100%)", claro: false },

@@ -5,8 +5,10 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Actor } from '../auth/actor.types';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { ActualizarPerfilMuralDto } from './dto/actualizar-perfil-mural.dto';
 import { CrearNotaDto } from './dto/crear-nota.dto';
+import { EnviarNotaDto } from './dto/enviar-nota.dto';
 import { ActualizarNotaDto } from './dto/actualizar-nota.dto';
 import { ActualizarPosicionEstampaDto } from './dto/actualizar-posicion-estampa.dto';
 
@@ -25,7 +27,7 @@ const PERFIL_POR_DEFECTO = {
   noMeGusta: null,
   cancionFavorita: null,
   superpoder: null,
-  fondoId: 'aurora',
+  fondoId: 'corcho',
 };
 
 const SELECT_NOTA = {
@@ -37,7 +39,32 @@ const SELECT_NOTA = {
   rotacion: true,
   zIndex: true,
   escala: true,
+  enviadaPor: { select: { nombre: true } },
 } as const;
+
+function serializarNota(nota: {
+  id: string;
+  texto: string;
+  color: string;
+  posX: number;
+  posY: number;
+  rotacion: number;
+  zIndex: number;
+  escala: number;
+  enviadaPor: { nombre: string } | null;
+}) {
+  return {
+    id: nota.id,
+    texto: nota.texto,
+    color: nota.color,
+    posX: nota.posX,
+    posY: nota.posY,
+    rotacion: nota.rotacion,
+    zIndex: nota.zIndex,
+    escala: nota.escala,
+    enviadaPorNombre: nota.enviadaPor?.nombre ?? null,
+  };
+}
 
 const SELECT_ESTAMPA_OTORGADA = {
   id: true,
@@ -89,7 +116,10 @@ function serializarEstampaOtorgada(otorgada: {
  */
 @Injectable()
 export class MuralService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificaciones: NotificacionesService,
+  ) {}
 
   private exigirTalentoId(actor: Actor): {
     talentoId: string;
@@ -152,7 +182,7 @@ export class MuralService {
 
     return {
       perfil: perfil ?? PERFIL_POR_DEFECTO,
-      notas,
+      notas: notas.map(serializarNota),
       estampasRecibidas: estampasRecibidas.map(serializarEstampaOtorgada),
       talento,
       empresa,
@@ -205,7 +235,7 @@ export class MuralService {
   async crearNota(actor: Actor, dto: CrearNotaDto) {
     const { talentoId, empresaId } = this.exigirTalentoId(actor);
 
-    return this.prisma.muralNotaAdhesiva.create({
+    const nota = await this.prisma.muralNotaAdhesiva.create({
       data: {
         talentoId,
         empresaId,
@@ -216,6 +246,50 @@ export class MuralService {
       },
       select: SELECT_NOTA,
     });
+    return serializarNota(nota);
+  }
+
+  /**
+   * Un compañero le deja una nota a OTRO talento — a diferencia de
+   * `crearNota`, `talentoDestinoId` no sale del actor sino de un parámetro
+   * ya validado por el llamador (EmpresasService, igual que
+   * `obtenerMuralDeTalento`).
+   */
+  async crearNotaParaOtro(
+    actor: Actor,
+    talentoDestinoId: string,
+    empresaId: string,
+    dto: EnviarNotaDto,
+  ) {
+    if (actor.type !== 'usuario') {
+      throw new ForbiddenException(
+        'Esta acción requiere una cuenta de usuario',
+      );
+    }
+
+    const nota = await this.prisma.muralNotaAdhesiva.create({
+      data: {
+        talentoId: talentoDestinoId,
+        empresaId,
+        texto: dto.texto.trim(),
+        ...(dto.color !== undefined && { color: dto.color }),
+        ...(dto.posX !== undefined && { posX: dto.posX }),
+        ...(dto.posY !== undefined && { posY: dto.posY }),
+        enviadaPorUsuarioId: actor.usuario.id,
+      },
+      select: SELECT_NOTA,
+    });
+
+    await this.notificaciones.crearPersonal({
+      empresaId,
+      talentoId: talentoDestinoId,
+      tipo: 'NOTA_RECIBIDA',
+      titulo: '📝 Nueva nota en tu mural',
+      mensaje: `${actor.usuario.nombre} te dejó una nota en tu mural.`,
+      enlace: '/mi-mural',
+    });
+
+    return serializarNota(nota);
   }
 
   private async resolverNotaPropia(actor: Actor, notaId: string) {
@@ -232,7 +306,7 @@ export class MuralService {
   async actualizarNota(actor: Actor, notaId: string, dto: ActualizarNotaDto) {
     await this.resolverNotaPropia(actor, notaId);
 
-    return this.prisma.muralNotaAdhesiva.update({
+    const nota = await this.prisma.muralNotaAdhesiva.update({
       where: { id: notaId },
       data: {
         ...(dto.texto !== undefined && { texto: dto.texto.trim() }),
@@ -245,6 +319,7 @@ export class MuralService {
       },
       select: SELECT_NOTA,
     });
+    return serializarNota(nota);
   }
 
   async borrarNota(actor: Actor, notaId: string) {

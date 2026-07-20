@@ -163,6 +163,8 @@ export function MiMuralView({
 
         {/* Lienzo libre: notas y estampas se arrastran sobre todo este contenedor */}
         <MuralCanvas
+          slug={slug}
+          miTalentoId={miTalentoId}
           notas={mural.notas}
           estampas={mural.estampasRecibidas}
           editable={editable}

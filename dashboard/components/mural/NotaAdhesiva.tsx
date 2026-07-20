@@ -134,11 +134,13 @@ export function NotaAdhesiva({
     }
   }
 
+  const fondoNota = `linear-gradient(165deg, ${estilo.bg} 0%, color-mix(in srgb, ${estilo.bg} 82%, black) 100%)`;
+
   return (
     <div
       ref={notaRef}
       onPointerDown={handlePointerDown}
-      className={`group flex w-36 flex-col gap-1.5 rounded-sm p-3 text-xs shadow-elegant ${
+      className={`group flex w-36 flex-col gap-1.5 rounded-[3px] p-3 text-xs shadow-[0_12px_20px_-10px_rgba(0,0,0,0.45),0_2px_4px_rgba(0,0,0,0.2)] ${
         arrastrable ? "absolute" : "relative"
       } ${arrastrable ? "cursor-grab active:cursor-grabbing" : ""}`}
       style={
@@ -146,14 +148,14 @@ export function NotaAdhesiva({
           ? ({
               left: `${nota.posX}%`,
               top: `${nota.posY}%`,
-              background: estilo.bg,
+              background: fondoNota,
               color: estilo.texto,
               "--nota-escala": nota.escala,
               transform: `rotate(${nota.rotacion}deg) scale(var(--nota-escala))`,
               transformOrigin: "top left",
               zIndex: nota.zIndex,
             } as React.CSSProperties)
-          : { background: estilo.bg, color: estilo.texto }
+          : { background: fondoNota, color: estilo.texto }
       }
     >
       {editable && (
@@ -225,6 +227,10 @@ export function NotaAdhesiva({
         >
           {texto}
         </p>
+      )}
+
+      {nota.enviadaPorNombre && (
+        <p className="truncate text-right text-[10px] font-medium italic opacity-70">— {nota.enviadaPorNombre}</p>
       )}
 
       {arrastrable && editable && (

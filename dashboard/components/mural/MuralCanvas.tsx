@@ -1,15 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { StickyNote } from "lucide-react";
-import { type EstampaOtorgadaMural, type NotaMural, crearNotaMural } from "@/lib/api";
+import { type EstampaOtorgadaMural, type NotaMural } from "@/lib/api";
 import { fondoMuralTexto } from "@/lib/mural-fondos";
 import { useEsMobile } from "@/lib/use-es-mobile";
 import { NotaAdhesiva } from "./NotaAdhesiva";
 import { EstampaPeel } from "./EstampaPeel";
-
-const COLORES_ALEATORIOS = ["amarillo", "rosa", "celeste", "verde", "lila", "naranja", "menta", "gris"];
+import { NuevaNotaModal } from "./NuevaNotaModal";
 
 export function MuralCanvas({
+  slug,
+  miTalentoId,
   notas,
   estampas,
   editable,
@@ -17,6 +19,9 @@ export function MuralCanvas({
   contenedorRef,
   onNotasChange,
 }: {
+  slug: string;
+  /** talentoId del dueño de este mural — se usa para ofrecer al resto de compañeros como destinatarios. */
+  miTalentoId: string;
   notas: NotaMural[];
   estampas: EstampaOtorgadaMural[];
   /** false cuando se está visitando el mural de otro empleado — solo lectura, sin drag. */
@@ -29,17 +34,10 @@ export function MuralCanvas({
   const esMobile = useEsMobile();
   const arrastrable = editable && !esMobile;
   const textoVacio = fondoMuralTexto(fondoId);
+  const [mostrarNuevaNota, setMostrarNuevaNota] = useState(false);
 
-  async function agregarNota() {
-    const color = COLORES_ALEATORIOS[Math.floor(Math.random() * COLORES_ALEATORIOS.length)];
-    const posX = 10 + Math.random() * 70;
-    const posY = 30 + Math.random() * 55;
-    try {
-      const nota = await crearNotaMural({ texto: "Escribe algo aquí...", color, posX, posY });
-      onNotasChange([...notas, nota]);
-    } catch {
-      // sin cambios visibles si falla
-    }
+  function agregarNotaLocal(nota: NotaMural) {
+    onNotasChange([...notas, nota]);
   }
 
   function actualizarNotaLocal(actualizada: NotaMural) {
@@ -49,6 +47,26 @@ export function MuralCanvas({
   function borrarNotaLocal(id: string) {
     onNotasChange(notas.filter((n) => n.id !== id));
   }
+
+  const botonNuevaNota = editable && (
+    <button
+      onClick={() => setMostrarNuevaNota(true)}
+      className="fixed right-5 bottom-5 z-30 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-elegant transition-transform hover:scale-105"
+    >
+      <StickyNote className="h-4 w-4" />
+      Nueva nota
+    </button>
+  );
+
+  const modal = editable && (
+    <NuevaNotaModal
+      open={mostrarNuevaNota}
+      slug={slug}
+      miTalentoId={miTalentoId}
+      onClose={() => setMostrarNuevaNota(false)}
+      onCreada={agregarNotaLocal}
+    />
+  );
 
   if (arrastrable) {
     return (
@@ -82,15 +100,8 @@ export function MuralCanvas({
           <EstampaPeel key={estampa.id} estampa={estampa} arrastrable />
         ))}
 
-        {editable && (
-          <button
-            onClick={() => void agregarNota()}
-            className="fixed right-5 bottom-5 z-30 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-elegant transition-transform hover:scale-105"
-          >
-            <StickyNote className="h-4 w-4" />
-            Nueva nota
-          </button>
-        )}
+        {botonNuevaNota}
+        {modal}
       </>
     );
   }
@@ -127,15 +138,8 @@ export function MuralCanvas({
           ))}
         </div>
       )}
-      {editable && (
-        <button
-          onClick={() => void agregarNota()}
-          className="fixed right-5 bottom-5 z-30 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-elegant"
-        >
-          <StickyNote className="h-4 w-4" />
-          Nueva nota
-        </button>
-      )}
+      {botonNuevaNota}
+      {modal}
     </div>
   );
 }

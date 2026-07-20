@@ -990,6 +990,7 @@ export interface NotaMural {
   rotacion: number;
   zIndex: number;
   escala: number;
+  enviadaPorNombre: string | null;
 }
 
 export interface EstampaOtorgadaMural {
@@ -1142,6 +1143,32 @@ export async function crearNotaMural(datos: {
     body: JSON.stringify(datos),
   });
   if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
+/** Le deja una nota a OTRO talento — aparece en su mural, no en el propio. */
+export async function enviarNotaAMural(
+  slug: string,
+  talentoId: string,
+  datos: { texto: string; color?: string; posX?: number; posY?: number },
+): Promise<NotaMural> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/empleados/${encodeURIComponent(talentoId)}/mural/notas`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify(datos),
+    },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError("Empleado no encontrado");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo enviar la nota");
+  }
   return res.json();
 }
 
