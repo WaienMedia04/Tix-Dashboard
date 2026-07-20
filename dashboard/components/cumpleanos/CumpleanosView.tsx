@@ -77,7 +77,7 @@ export function CumpleanosView({ slug }: { slug: string }) {
                     <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="xl" className="ring-4 ring-white/20" />
                     <p className="font-display mt-1 text-base font-semibold text-foreground">{t.nombreCompleto}</p>
                     {t.departamento && <p className="text-xs text-muted-foreground">{t.departamento}</p>}
-                    <p className="truncate text-xs text-muted-foreground" title={t.rol}>
+                    <p className="w-full truncate text-center text-xs text-muted-foreground" title={t.rol}>
                       {t.rol}
                     </p>
                   </div>
@@ -107,9 +107,9 @@ export function CumpleanosView({ slug }: { slug: string }) {
             {esteMes.map((t) => (
               <div key={t.id} className="flex flex-col items-center gap-1.5 rounded-lg border border-border p-3 text-center">
                 <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="lg" />
-                <p className="truncate text-xs font-semibold text-foreground">{t.nombreCompleto}</p>
-                {t.departamento && <p className="truncate text-[11px] text-muted-foreground">{t.departamento}</p>}
-                <p className="truncate text-[11px] text-muted-foreground" title={t.rol}>
+                <p className="w-full truncate text-xs font-semibold text-foreground">{t.nombreCompleto}</p>
+                {t.departamento && <p className="w-full truncate text-[11px] text-muted-foreground">{t.departamento}</p>}
+                <p className="w-full truncate text-[11px] text-muted-foreground" title={t.rol}>
                   {t.rol}
                 </p>
                 <span className="mt-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">

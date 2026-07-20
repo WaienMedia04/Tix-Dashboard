@@ -83,7 +83,15 @@ class x {
       powerPreference: "high-performance",
       ...(this.#e.rendererOptions ?? {}),
     };
-    this.renderer = new s(e);
+    try {
+      this.renderer = new s(e);
+    } catch {
+      // Algunos backends (ej. ANGLE D3D9 en Windows, común en GPUs/drivers
+      // viejos) no implementan gl.getShaderPrecisionFormat y three.js no lo
+      // maneja: WebGLRenderer revienta al construirse con precision "highp"
+      // (el default). Forzar "lowp" evita esa consulta y el crash silencioso.
+      this.renderer = new s({ ...e, precision: "lowp" });
+    }
     this.renderer.outputColorSpace = n;
   }
   #g() {
@@ -754,7 +762,15 @@ const Ballpit = ({ className = "", followCursor = true, ...props }: BallpitProps
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    spheresInstanceRef.current = createBallpit(canvas, { followCursor, ...props });
+    try {
+      spheresInstanceRef.current = createBallpit(canvas, { followCursor, ...props });
+    } catch (err) {
+      // Si el navegador/GPU no soporta bien WebGL2 (drivers viejos, GPU
+      // bloqueada por política, entornos virtualizados), degradamos a solo
+      // el fondo en vez de romper la página con un error sin capturar.
+      console.warn("Ballpit: no se pudo inicializar WebGL, se omite la animación.", err);
+      return;
+    }
 
     return () => {
       if (spheresInstanceRef.current) {
