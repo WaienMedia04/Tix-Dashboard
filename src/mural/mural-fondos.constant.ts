@@ -4,6 +4,7 @@
  * (dashboard/lib/mural-fondos.ts) para poder ajustar swatches sin migración.
  */
 export const FONDOS_MURAL_IDS = [
+  'corcho',
   'aurora',
   'atardecer',
   'oceano',
