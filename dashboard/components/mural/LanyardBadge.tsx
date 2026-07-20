@@ -10,7 +10,7 @@ import { useEsMobile } from "@/lib/use-es-mobile";
 // y se carga solo dentro de la ruta Mi Mural en escritorio/tablet.
 const LanyardScene = dynamic(() => import("@/components/vendor/Lanyard/Lanyard"), {
   ssr: false,
-  loading: () => <div className="h-[30rem] w-[24rem] animate-pulse rounded-2xl bg-muted" />,
+  loading: () => <div className="h-[30rem] w-[26rem] animate-pulse rounded-2xl bg-muted" />,
 });
 
 function CarnetFlipCard({
@@ -86,21 +86,12 @@ export function LanyardBadge({
   }
 
   return (
-    // La cuerda del carnet cuelga de un punto fijo en el espacio 3D que
-    // queda con aire por encima dentro del encuadre de la cámara — se
-    // recorta ese aire con overflow-hidden y se sube el canvas real (más
-    // alto que la caja visible) para que la cuerda quede pegada al borde
-    // superior en vez de flotar en el medio.
-    <div className="relative h-[26rem] w-[26rem] shrink-0 overflow-hidden sm:h-[30rem] sm:w-[28rem]">
-      <div className="absolute inset-x-0 -top-32 h-[38rem] sm:-top-36 sm:h-[44rem]">
-        <LanyardScene
-          position={[0, 0, 20]}
-          gravity={[0, -40, 0]}
-          frontImage={frontImage ?? undefined}
-          backImage={logoUrl ?? undefined}
-          imageFit="cover"
-        />
-      </div>
+    // Sin overflow-hidden ni recortes: los parámetros de cámara/física quedan
+    // igual que la demo oficial de React Bits (valores de fábrica del
+    // componente), para que la tarjeta cuelgue libre y no se recorte contra
+    // los bordes de un contenedor al arrastrarla.
+    <div className="h-[30rem] w-[26rem] shrink-0 sm:h-[34rem] sm:w-[28rem]">
+      <LanyardScene frontImage={frontImage ?? undefined} backImage={logoUrl ?? undefined} imageFit="cover" />
     </div>
   );
 }
