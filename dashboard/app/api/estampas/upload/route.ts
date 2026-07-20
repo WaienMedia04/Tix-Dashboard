@@ -13,7 +13,7 @@ export async function POST(request: Request) {
         await exigirRolAdministrativo(request);
         return {
           allowedContentTypes: ["image/png", "image/jpeg", "image/webp"],
-          maximumSizeInBytes: 3 * 1024 * 1024,
+          maximumSizeInBytes: 8 * 1024 * 1024,
           addRandomSuffix: true,
         };
       },
