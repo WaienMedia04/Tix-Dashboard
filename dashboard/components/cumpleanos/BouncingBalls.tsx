@@ -61,7 +61,7 @@ export function BouncingBalls({
     function spawnBalls() {
       const minDim = Math.min(width, height);
       balls = Array.from({ length: count }, () => {
-        const r = minDim * (0.045 + Math.random() * 0.035);
+        const r = minDim * (0.018 + Math.random() * 0.016);
         return {
           x: Math.random() * Math.max(width - 2 * r, 1) + r,
           y: Math.random() * Math.max(height - 2 * r, 1) + r,

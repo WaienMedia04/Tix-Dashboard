@@ -47,9 +47,15 @@ export function CumpleanosView({ slug }: { slug: string }) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-8">
-      {/* Bloque: cumpleaños de hoy — fondo negro, cada tarjeta trae sus propias bolitas (Canvas 2D) */}
+      {/* Bloque: cumpleaños de hoy — fondo negro con bolitas (Canvas 2D) detrás de toda la sección */}
       <section className="dark relative overflow-hidden rounded-2xl border border-border bg-black shadow-elegant">
         <div className="relative min-h-[22rem] sm:min-h-[26rem]">
+          {!esMobile && hoy.length > 0 && (
+            <div className="absolute inset-0 z-0">
+              <BouncingBalls count={45} gravity={0.35} friction={0.99} wallBounce={0.85} followCursor colors={COLORES_GLOBOS} />
+            </div>
+          )}
+
           <div className="relative z-10 flex flex-col items-center px-4 py-8 text-center">
             <PartyPopper className="h-7 w-7 text-warning" />
             <h1 className="font-display mt-2 text-2xl font-bold text-foreground sm:text-3xl">Cumpleaños de hoy</h1>
@@ -61,22 +67,14 @@ export function CumpleanosView({ slug }: { slug: string }) {
                 {hoy.map((t) => (
                   <div
                     key={t.id}
-                    className="relative flex w-44 flex-col items-center gap-2 overflow-hidden rounded-xl border border-white/15 bg-black p-4 shadow-elegant"
+                    className="flex w-44 flex-col items-center gap-2 rounded-xl border border-white/15 bg-black/40 p-4 shadow-elegant backdrop-blur-sm"
                   >
-                    {!esMobile && (
-                      <div className="absolute inset-0 z-0">
-                        <BouncingBalls count={26} gravity={0.35} friction={0.99} wallBounce={0.85} followCursor colors={COLORES_GLOBOS} />
-                      </div>
-                    )}
-
-                    <div className="relative z-10 flex w-full flex-col items-center gap-2 rounded-lg bg-black/40 px-2 py-2 backdrop-blur-sm">
-                      <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="xl" className="ring-4 ring-white/20" />
-                      <p className="font-display mt-1 text-base font-semibold text-foreground">{t.nombreCompleto}</p>
-                      {t.departamento && <p className="text-xs text-muted-foreground">{t.departamento}</p>}
-                      <p className="w-full truncate text-center text-xs text-muted-foreground" title={t.rol}>
-                        {t.rol}
-                      </p>
-                    </div>
+                    <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="xl" className="ring-4 ring-white/20" />
+                    <p className="font-display mt-1 text-base font-semibold text-foreground">{t.nombreCompleto}</p>
+                    {t.departamento && <p className="text-xs text-muted-foreground">{t.departamento}</p>}
+                    <p className="w-full truncate text-center text-xs text-muted-foreground" title={t.rol}>
+                      {t.rol}
+                    </p>
                   </div>
                 ))}
               </div>
