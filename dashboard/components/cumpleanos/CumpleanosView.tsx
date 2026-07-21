@@ -53,7 +53,7 @@ export function CumpleanosView({ slug }: { slug: string }) {
         <div className="relative min-h-[22rem] sm:min-h-[26rem]">
           {!esMobile && hoy.length > 0 && (
             <div className="absolute inset-0 z-0">
-              <Ballpit count={45} gravity={0.7} friction={0.8} wallBounce={0.95} followCursor colors={COLORES_GLOBOS} />
+              <Ballpit count={100} gravity={0} friction={1} wallBounce={0.95} followCursor colors={COLORES_GLOBOS} />
             </div>
           )}
 
