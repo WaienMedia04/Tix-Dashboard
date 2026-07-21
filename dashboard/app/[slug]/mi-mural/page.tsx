@@ -10,6 +10,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { ErrorScreen } from "@/components/ErrorScreen";
 import { MiMuralView } from "@/components/mural/MiMuralView";
+import { ChatFlotante } from "@/components/chat/ChatFlotante";
 
 type Estado =
   | { tipo: "cargando" }
@@ -111,6 +112,7 @@ export default function MiMuralPage() {
       ) : (
         <MiMuralView slug={slug} miTalentoId={estado.talentoId} rol={estado.rol} />
       )}
+      <ChatFlotante slug={slug} />
     </div>
   );
 }

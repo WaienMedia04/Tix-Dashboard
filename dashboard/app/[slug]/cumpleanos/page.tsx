@@ -10,6 +10,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { ErrorScreen } from "@/components/ErrorScreen";
 import { CumpleanosView } from "@/components/cumpleanos/CumpleanosView";
+import { ChatFlotante } from "@/components/chat/ChatFlotante";
 
 type Estado = { tipo: "cargando" } | { tipo: "error"; mensaje: string } | { tipo: "listo"; rol: string };
 
@@ -92,6 +93,7 @@ export default function CumpleanosPage() {
       </header>
 
       <CumpleanosView slug={slug} />
+      <ChatFlotante slug={slug} />
     </div>
   );
 }

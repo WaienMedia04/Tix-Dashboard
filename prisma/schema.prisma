@@ -66,6 +66,7 @@ model Empresa {
   notificaciones    Notificacion[]
   departamentos     DepartamentoDefinicion[]
   solicitudesSoporte SolicitudSoporte[]
+  chatConversaciones ChatConversacion[]
 }
 
 /**
@@ -150,6 +151,9 @@ model Usuario {
   notificacionesLeidas NotificacionLectura[]
   notasMuralEnviadas   MuralNotaAdhesiva[]
   solicitudesSoporte   SolicitudSoporte[]
+  chatConversacionesCreadas ChatConversacion[]  @relation("ChatConversacionesCreadas")
+  chatParticipaciones  ChatParticipante[]
+  chatMensajes         ChatMensaje[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
@@ -369,4 +373,62 @@ model NotificacionLectura {
 
   @@unique([notificacionId, usuarioId])
   @@index([usuarioId])
+}
+
+/**
+ * Conversación de chat interno entre usuarios de una misma empresa. Si
+ * `esGrupo` es false tiene exactamente 2 participantes (chat 1 a 1) y
+ * `nombre` es null — el frontend muestra el nombre del otro participante.
+ */
+model ChatConversacion {
+  id                 String    @id @default(cuid())
+  empresaId          String
+  esGrupo            Boolean   @default(false)
+  nombre             String?
+  creadoPorUsuarioId String?
+  createdAt          DateTime  @default(now())
+
+  empresa       Empresa            @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  creadoPor     Usuario?           @relation("ChatConversacionesCreadas", fields: [creadoPorUsuarioId], references: [id])
+  participantes ChatParticipante[]
+  mensajes      ChatMensaje[]
+
+  @@index([empresaId])
+}
+
+/**
+ * `ultimaLecturaAt` es el puntero de "leído hasta aquí" de este usuario en
+ * esta conversación — se actualiza al abrir/listar los mensajes. De ahí se
+ * derivan tanto el contador de no leídos como el parpadeo de chismes
+ * pendientes, sin necesitar una fila de lectura por mensaje.
+ */
+model ChatParticipante {
+  id              String    @id @default(cuid())
+  conversacionId  String
+  usuarioId       String
+  ultimaLecturaAt DateTime?
+  createdAt       DateTime  @default(now())
+
+  conversacion ChatConversacion @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+  usuario      Usuario          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([conversacionId, usuarioId])
+  @@index([usuarioId])
+}
+
+/// Si `esChisme` es true, el mensaje se muestra destacado en el hilo y hace
+/// parpadear en rojo el botón flotante de chat de los demás participantes
+/// hasta que lo leen.
+model ChatMensaje {
+  id             String   @id @default(cuid())
+  conversacionId String
+  autorUsuarioId String
+  texto          String
+  esChisme       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversacion ChatConversacion @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+  autor        Usuario          @relation(fields: [autorUsuarioId], references: [id])
+
+  @@index([conversacionId, createdAt])
 }

@@ -22,6 +22,7 @@ import { ErrorScreen } from "@/components/ErrorScreen";
 import { MetricCard } from "@/components/MetricCard";
 import { CheckinBadge } from "@/components/CheckinBadge";
 import { EstadoBadge } from "@/components/EstadoBadge";
+import { ChatFlotante } from "@/components/chat/ChatFlotante";
 
 type Estado = { tipo: "cargando" } | { tipo: "error"; mensaje: string } | { tipo: "listo"; sesion: MeResponse };
 
@@ -381,6 +382,7 @@ export default function MiEspacioPage() {
         <BitacoraHoyCard slug={slug} onRegistrada={() => setRecargarClave((c) => c + 1)} />
         <MiProgreso slug={slug} recargarClave={recargarClave} />
       </main>
+      <ChatFlotante slug={slug} />
     </div>
   );
 }

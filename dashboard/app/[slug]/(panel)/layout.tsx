@@ -18,6 +18,7 @@ import { PanelProvider } from "@/components/panel/PanelContext";
 import { PanelDock } from "@/components/panel/PanelDock";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { ErrorScreen } from "@/components/ErrorScreen";
+import { ChatFlotante } from "@/components/chat/ChatFlotante";
 
 type Estado =
   | { tipo: "cargando" }
@@ -144,6 +145,7 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
           </main>
         </div>
         <PanelDock />
+        <ChatFlotante slug={slug} />
       </div>
     </PanelProvider>
   );

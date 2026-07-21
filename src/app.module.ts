@@ -14,6 +14,7 @@ import { AusenciasModule } from './ausencias/ausencias.module';
 import { EstampasModule } from './estampas/estampas.module';
 import { MuralModule } from './mural/mural.module';
 import { NotificacionesModule } from './notificaciones/notificaciones.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { NotificacionesModule } from './notificaciones/notificaciones.module';
     EstampasModule,
     MuralModule,
     NotificacionesModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

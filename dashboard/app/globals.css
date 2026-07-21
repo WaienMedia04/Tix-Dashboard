@@ -297,6 +297,23 @@
   100% { background-position: -200% 0; }
 }
 
+/* Botón flotante de chat: parpadeo en rojo cuando llega un chisme sin abrir. */
+@keyframes chisme-blink {
+  0%, 100% {
+    background-color: var(--color-destructive);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-destructive) 60%, transparent);
+  }
+  50% {
+    background-color: color-mix(in oklab, var(--color-destructive) 55%, black);
+    box-shadow: 0 0 0 10px color-mix(in oklab, var(--color-destructive) 0%, transparent);
+  }
+}
+
+.animate-chisme-blink {
+  animation: chisme-blink 1s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton-shimmer { animation: none; }
+  .animate-chisme-blink { animation: none; background-color: var(--color-destructive); }
 }

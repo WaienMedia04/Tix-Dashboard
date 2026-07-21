@@ -1522,3 +1522,195 @@ export async function marcarTodasNotificacionesLeidas(slug: string): Promise<voi
     throw new Error("No se pudieron marcar las notificaciones como leídas");
   }
 }
+
+// ===== Chat interno =====
+
+export interface ChatPersona {
+  id: string;
+  nombre: string;
+  rol: Rol;
+  fotoUrl: string | null;
+}
+
+export interface ChatUltimoMensaje {
+  texto: string;
+  esChisme: boolean;
+  autorUsuarioId: string;
+  createdAt: string;
+}
+
+export interface ChatConversacion {
+  id: string;
+  esGrupo: boolean;
+  nombre: string | null;
+  fotoUrl: string | null;
+  participantes: ChatPersona[];
+  ultimoMensaje: ChatUltimoMensaje | null;
+  noLeidos: number;
+  tieneChismeSinLeer: boolean;
+  createdAt: string;
+}
+
+export interface ChatResumen {
+  noLeidosTotal: number;
+  hayChismeSinLeer: boolean;
+}
+
+export interface ChatMensaje {
+  id: string;
+  texto: string;
+  esChisme: boolean;
+  autorUsuarioId: string;
+  autorNombre: string;
+  autorFotoUrl: string | null;
+  propio: boolean;
+  createdAt: string;
+}
+
+export interface ChatMensajesResponse {
+  data: ChatMensaje[];
+  hayMas: boolean;
+}
+
+/** Compañeros de la empresa con los que se puede iniciar un chat o armar un grupo. */
+export async function fetchChatDirectorio(slug: string): Promise<ChatPersona[]> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/chat/directorio`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el directorio del chat");
+  }
+  return res.json();
+}
+
+export async function fetchChatConversaciones(slug: string): Promise<ChatConversacion[]> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/chat/conversaciones`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar las conversaciones");
+  }
+  return res.json();
+}
+
+/** Payload liviano para el botón flotante: contador de no leídos + si hay algún chisme sin abrir. */
+export async function fetchChatResumen(slug: string): Promise<ChatResumen> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/chat/conversaciones/resumen`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el resumen del chat");
+  }
+  return res.json();
+}
+
+export async function crearChatConversacion(
+  slug: string,
+  datos: { participanteIds: string[]; esGrupo?: boolean; nombre?: string },
+): Promise<ChatConversacion> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/chat/conversaciones`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    const cuerpo = await res.json().catch(() => null);
+    throw new Error(cuerpo?.message ?? "No se pudo crear la conversación");
+  }
+  return res.json();
+}
+
+export async function fetchChatMensajes(
+  slug: string,
+  conversacionId: string,
+  opts?: { antesDeId?: string; limit?: number },
+): Promise<ChatMensajesResponse> {
+  const params = new URLSearchParams();
+  if (opts?.antesDeId) params.set("antesDeId", opts.antesDeId);
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  const query = params.toString();
+
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/chat/conversaciones/${encodeURIComponent(conversacionId)}/mensajes${query ? `?${query}` : ""}`,
+    { headers: await authHeaders(), cache: "no-store" },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar los mensajes");
+  }
+  return res.json();
+}
+
+export async function enviarChatMensaje(
+  slug: string,
+  conversacionId: string,
+  datos: { texto: string; esChisme?: boolean },
+): Promise<ChatMensaje> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/chat/conversaciones/${encodeURIComponent(conversacionId)}/mensajes`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify(datos),
+    },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo enviar el mensaje");
+  }
+  return res.json();
+}
+
+export async function agregarChatParticipantes(
+  slug: string,
+  conversacionId: string,
+  participanteIds: string[],
+): Promise<ChatConversacion> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/chat/conversaciones/${encodeURIComponent(conversacionId)}/participantes`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ participanteIds }),
+    },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron agregar los participantes");
+  }
+  return res.json();
+}
+
+export async function salirDeChatGrupo(slug: string, conversacionId: string): Promise<void> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/chat/conversaciones/${encodeURIComponent(conversacionId)}/salir`,
+    { method: "POST", headers: await authHeaders() },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo salir del grupo");
+  }
+}
