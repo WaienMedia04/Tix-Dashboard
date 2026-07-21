@@ -39,6 +39,10 @@ export function EmpleadosView() {
     return <p className="text-sm text-destructive">No se pudo cargar el listado de empleados.</p>;
   }
 
+  const primerLugarId = estado.empleados
+    .filter((e) => e.estado === "activo" && e.puntajeIAPromedio !== null)
+    .sort((a, b) => (b.puntajeIAPromedio ?? 0) - (a.puntajeIAPromedio ?? 0))[0]?.id;
+
   return (
     <div className="space-y-4">
       {puedeGestionarEstampas && <EstampasCatalogo slug={slug} empleados={estado.empleados} />}
@@ -49,7 +53,7 @@ export function EmpleadosView() {
         <StaggerGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {estado.empleados.map((empleado) => (
             <StaggerItem key={empleado.id}>
-              <EmpleadoCard slug={slug} empleado={empleado} />
+              <EmpleadoCard slug={slug} empleado={empleado} esPrimero={empleado.id === primerLugarId} />
             </StaggerItem>
           ))}
         </StaggerGroup>

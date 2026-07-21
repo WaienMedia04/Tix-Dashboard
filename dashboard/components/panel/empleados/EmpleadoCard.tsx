@@ -7,6 +7,8 @@ import { PenSquare } from "lucide-react";
 import type { EmpleadoResumen } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
 import { Modal } from "@/components/Modal";
+import BorderGlow from "@/components/vendor/BorderGlow/BorderGlow";
+import ElectricBorder from "@/components/vendor/ElectricBorder/ElectricBorder";
 
 function colorPuntaje(puntaje: number | null): string {
   if (puntaje === null) return "text-muted-foreground";
@@ -23,7 +25,15 @@ const TITULOS: Record<Metrica, string> = {
   cumplimiento: "Cumplimiento",
 };
 
-export function EmpleadoCard({ slug, empleado }: { slug: string; empleado: EmpleadoResumen }) {
+export function EmpleadoCard({
+  slug,
+  empleado,
+  esPrimero = false,
+}: {
+  slug: string;
+  empleado: EmpleadoResumen;
+  esPrimero?: boolean;
+}) {
   const router = useRouter();
   const activo = empleado.estado === "activo";
   const [metricaAbierta, setMetricaAbierta] = useState<Metrica | null>(null);
@@ -40,12 +50,13 @@ export function EmpleadoCard({ slug, empleado }: { slug: string; empleado: Emple
     router.push(`/${slug}/mi-mural/${empleado.id}`);
   }
 
-  return (
-    <>
-      <Link
-        href={`/${slug}/empleados/${empleado.id}`}
-        className="flex flex-col rounded-lg border border-border bg-card p-4 shadow-card transition-colors hover:border-primary/40"
-      >
+  const contenido = (
+    <Link
+      href={`/${slug}/empleados/${empleado.id}`}
+      className={
+        esPrimero ? "flex h-full flex-col rounded-lg bg-card p-4 shadow-card" : "flex h-full flex-col p-4"
+      }
+    >
         <div className="flex items-start gap-3">
           <Avatar nombreCompleto={empleado.nombreCompleto} fotoUrl={empleado.fotoUrl} size="lg" />
           <div className="min-w-0 flex-1">
@@ -113,7 +124,28 @@ export function EmpleadoCard({ slug, empleado }: { slug: string; empleado: Emple
             </p>
           </button>
         </div>
-      </Link>
+    </Link>
+  );
+
+  return (
+    <>
+      {esPrimero ? (
+        <ElectricBorder color="#f5b400" speed={1} chaos={0.12} borderRadius={8} className="h-full">
+          {contenido}
+        </ElectricBorder>
+      ) : (
+        <BorderGlow
+          backgroundColor="var(--card)"
+          borderRadius={8}
+          glowRadius={18}
+          edgeSensitivity={40}
+          glowIntensity={0.8}
+          colors={["#c084fc", "#38bdf8", "#34d399"]}
+          className="h-full"
+        >
+          {contenido}
+        </BorderGlow>
+      )}
 
       <Modal
         open={metricaAbierta !== null}
