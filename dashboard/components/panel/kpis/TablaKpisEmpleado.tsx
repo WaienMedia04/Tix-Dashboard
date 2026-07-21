@@ -1,6 +1,7 @@
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import type { KpiEmpleado, Tendencia } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
+import { EnlaceTalento } from "@/components/EnlaceTalento";
 import { EstadoBadge } from "@/components/EstadoBadge";
 import { StaggerGroup, StaggerItem, StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 
@@ -52,7 +53,7 @@ export function TablaKpisEmpleado({ datos }: { datos: KpiEmpleado[] }) {
                   <td className="px-4 py-2.5 font-medium text-foreground">
                     <div className="flex items-center gap-2.5">
                       <Avatar nombreCompleto={d.nombre} fotoUrl={d.fotoUrl} size="sm" />
-                      {d.nombre}
+                      <EnlaceTalento talentoId={d.talentoId}>{d.nombre}</EnlaceTalento>
                       {d.estadoActual && <EstadoBadge estado={d.estadoActual} />}
                     </div>
                   </td>
@@ -93,7 +94,9 @@ export function TablaKpisEmpleado({ datos }: { datos: KpiEmpleado[] }) {
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2.5">
                       <Avatar nombreCompleto={d.nombre} fotoUrl={d.fotoUrl} size="sm" />
-                      <span className="truncate text-sm font-medium text-foreground">{d.nombre}</span>
+                      <span className="truncate text-sm font-medium text-foreground">
+                        <EnlaceTalento talentoId={d.talentoId}>{d.nombre}</EnlaceTalento>
+                      </span>
                       {d.estadoActual && <EstadoBadge estado={d.estadoActual} />}
                     </div>
                     <IconoTendencia tendencia={d.tendencia} />

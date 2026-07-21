@@ -21,7 +21,7 @@ export function Modal({
 }: {
   open: boolean;
   onClose: () => void;
-  title: string;
+  title: React.ReactNode;
   description?: string;
   size?: "md" | "lg" | "xl";
   children: React.ReactNode;

@@ -2,6 +2,7 @@
 
 import type { ActividadEmpleado } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
+import { EnlaceTalento } from "@/components/EnlaceTalento";
 import { EstadoBadge } from "@/components/EstadoBadge";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 
@@ -22,7 +23,9 @@ export function ActividadEquipo({ empleados }: { empleados: ActividadEmpleado[] 
             <div className="flex items-center gap-3 px-4 py-3">
               <Avatar nombreCompleto={e.nombreCompleto} fotoUrl={e.fotoUrl} size="md" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">{e.nombreCompleto}</p>
+                <p className="truncate text-sm font-medium text-foreground">
+                  <EnlaceTalento talentoId={e.talentoId}>{e.nombreCompleto}</EnlaceTalento>
+                </p>
                 <p className="truncate text-xs text-muted-foreground" title={e.rol}>
                   {e.rol}
                 </p>

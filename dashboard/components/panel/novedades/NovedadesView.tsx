@@ -5,6 +5,7 @@ import { AlertOctagon, CalendarX, FileText, HeartHandshake, Plus, Trophy } from 
 import { type NovedadItem, type TipoNovedad, crearNovedad, fetchNovedades } from "@/lib/api";
 import { usePanel } from "../PanelContext";
 import { Avatar } from "@/components/Avatar";
+import { EnlaceTalento } from "@/components/EnlaceTalento";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { SkeletonTableRows } from "@/components/motion/Skeleton";
 
@@ -43,7 +44,9 @@ function TarjetaNovedad({ novedad }: { novedad: NovedadItem }) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-foreground">{novedad.nombreCompleto}</p>
+            <p className="text-sm font-semibold text-foreground">
+              <EnlaceTalento talentoId={novedad.talentoId}>{novedad.nombreCompleto}</EnlaceTalento>
+            </p>
             <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-medium ${meta.fondo} ${meta.texto}`}>{meta.label}</span>
           </div>
           <span className="text-[11px] text-muted-foreground">{formatearFecha(novedad.fecha)}</span>

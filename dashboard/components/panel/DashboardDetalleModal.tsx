@@ -2,6 +2,7 @@
 
 import type { DashboardData } from "@/lib/api";
 import { Modal } from "@/components/Modal";
+import { EnlaceTalento } from "@/components/EnlaceTalento";
 
 export type DashboardDetalleKey =
   | "total-bitacoras"
@@ -32,6 +33,7 @@ function formatearFecha(fecha: string | null): string {
 }
 
 interface Fila {
+  talentoId: string;
   nombre: string;
   rol: string;
   principal: string;
@@ -49,7 +51,9 @@ function TablaDetalle({ filas }: { filas: Fila[] }) {
           {filas.map((f, idx) => (
             <tr key={idx} className="border-b border-border last:border-0">
               <td className="px-3 py-2.5">
-                <p className="font-medium text-foreground">{f.nombre}</p>
+                <p className="font-medium text-foreground">
+                  <EnlaceTalento talentoId={f.talentoId}>{f.nombre}</EnlaceTalento>
+                </p>
                 <p className="text-xs text-muted-foreground">{f.rol}</p>
               </td>
               <td className="px-3 py-2.5 text-right">
@@ -69,6 +73,7 @@ function construirContenido(detalleKey: DashboardDetalleKey, data: DashboardData
     return (
       <TablaDetalle
         filas={data.rankingTalentos.map((t) => ({
+          talentoId: t.talentoId,
           nombre: t.nombreCompleto,
           rol: t.rol,
           principal: `${t.bitacorasEnviadas} / ${t.totalBitacoras} enviadas`,
@@ -85,6 +90,7 @@ function construirContenido(detalleKey: DashboardDetalleKey, data: DashboardData
         filas={[...data.rankingTalentos]
           .sort((a, b) => (b.puntajeIAPromedio ?? -1) - (a.puntajeIAPromedio ?? -1))
           .map((t) => ({
+            talentoId: t.talentoId,
             nombre: t.nombreCompleto,
             rol: t.rol,
             principal: t.puntajeIAPromedio === null ? "—" : `${t.puntajeIAPromedio.toFixed(1)} / 10`,
@@ -98,6 +104,7 @@ function construirContenido(detalleKey: DashboardDetalleKey, data: DashboardData
     return (
       <TablaDetalle
         filas={activos.map((e) => ({
+          talentoId: e.talentoId,
           nombre: e.nombreCompleto,
           rol: e.rol,
           principal: formatearFecha(e.fecha),
@@ -111,6 +118,7 @@ function construirContenido(detalleKey: DashboardDetalleKey, data: DashboardData
     return (
       <TablaDetalle
         filas={data.actividadEquipo.map((e) => ({
+          talentoId: e.talentoId,
           nombre: e.nombreCompleto,
           rol: e.rol,
           principal: e.fecha?.slice(0, 10) === hoy ? "Check-in enviado hoy" : "Sin check-in hoy",
@@ -126,6 +134,7 @@ function construirContenido(detalleKey: DashboardDetalleKey, data: DashboardData
       filas={data.actividadEquipo
         .filter((e) => e.fecha?.slice(0, 10) === hoy)
         .map((e) => ({
+          talentoId: e.talentoId,
           nombre: e.nombreCompleto,
           rol: e.rol,
           principal: e.estadoEnvio ?? "—",

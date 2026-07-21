@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { formatearHora12 } from "@/lib/formato-hora";
 
 export function CheckinBadge({
   checkinEnviado,
@@ -21,7 +22,7 @@ export function CheckinBadge({
       transition={{ duration: 0.2, ease: "easeOut" }}
       className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium whitespace-nowrap ${clase}`}
     >
-      {checkinEnviado ? `✅ ${horaCheckin ?? "enviado"}` : "— sin check-in"}
+      {checkinEnviado ? `✅ ${formatearHora12(horaCheckin) ?? "enviado"}` : "— sin check-in"}
     </motion.span>
   );
 }

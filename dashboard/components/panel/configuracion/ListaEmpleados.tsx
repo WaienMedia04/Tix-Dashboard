@@ -19,6 +19,7 @@ import {
 } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
 import { CampoDepartamento } from "@/components/CampoDepartamento";
+import { EnlaceTalento } from "@/components/EnlaceTalento";
 import { StaggerGroup, StaggerItem, StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 import { SkeletonTableRows } from "@/components/motion/Skeleton";
 
@@ -490,7 +491,7 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                       <td className="px-4 py-2.5 font-medium text-foreground">
                         <div className="flex items-center gap-2.5">
                           <Avatar nombreCompleto={e.nombreCompleto} fotoUrl={e.fotoUrl} size="sm" />
-                          {e.nombreCompleto}
+                          <EnlaceTalento talentoId={e.id}>{e.nombreCompleto}</EnlaceTalento>
                         </div>
                       </td>
                       <td className="max-w-[220px] truncate px-4 py-2.5 text-muted-foreground" title={e.rol}>
@@ -629,7 +630,9 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                     <div className="flex items-center gap-2.5">
                       <Avatar nombreCompleto={e.nombreCompleto} fotoUrl={e.fotoUrl} size="sm" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{e.nombreCompleto}</p>
+                        <p className="truncate text-sm font-medium text-foreground">
+                          <EnlaceTalento talentoId={e.id}>{e.nombreCompleto}</EnlaceTalento>
+                        </p>
                         <p className="truncate text-xs text-muted-foreground">
                           {e.rol}
                           {e.departamento ? ` · ${e.departamento}` : ""}

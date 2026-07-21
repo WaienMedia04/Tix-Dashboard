@@ -1,6 +1,7 @@
 import type { BitacoraItem } from "@/lib/api";
 import { EstadoBadge } from "@/components/EstadoBadge";
 import { CheckinBadge } from "@/components/CheckinBadge";
+import { EnlaceTalento } from "@/components/EnlaceTalento";
 import { SkeletonTableRows } from "@/components/motion/Skeleton";
 import { StaggerGroup, StaggerItem, StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 
@@ -81,7 +82,9 @@ export function TablaBitacoras({
                   className="cursor-pointer border-t border-border transition-colors hover:bg-muted/50"
                 >
                   <td className="px-4 py-2.5 tabular-nums text-muted-foreground">{formatearFecha(item.fecha)}</td>
-                  <td className="px-4 py-2.5 font-medium text-foreground">{item.talento.nombreCompleto}</td>
+                  <td className="px-4 py-2.5 font-medium text-foreground">
+                    <EnlaceTalento talentoId={item.talento.id}>{item.talento.nombreCompleto}</EnlaceTalento>
+                  </td>
                   <td className="max-w-[220px] truncate px-4 py-2.5 text-muted-foreground" title={item.talento.rol}>
                     {item.talento.rol}
                   </td>
@@ -123,13 +126,24 @@ export function TablaBitacoras({
           <StaggerGroup>
             {items.map((item) => (
               <StaggerItem key={item.id}>
-                <button
+                {/* div en vez de button: el nombre adentro es un <Link> (EnlaceTalento), y <a> dentro de <button> es HTML inválido */}
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onVer(item)}
-                  className="flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors active:bg-muted/50"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onVer(item);
+                    }
+                  }}
+                  className="flex w-full cursor-pointer flex-col gap-2 px-4 py-3 text-left transition-colors active:bg-muted/50"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">{item.talento.nombreCompleto}</p>
+                      <p className="truncate text-sm font-medium text-foreground">
+                        <EnlaceTalento talentoId={item.talento.id}>{item.talento.nombreCompleto}</EnlaceTalento>
+                      </p>
                       <p className="truncate text-xs text-muted-foreground">{item.talento.rol}</p>
                     </div>
                     <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
@@ -148,7 +162,7 @@ export function TablaBitacoras({
                       Tareas: {item.cumplimientoTareas === null ? "—" : `${item.cumplimientoTareas}%`}
                     </span>
                   </div>
-                </button>
+                </div>
               </StaggerItem>
             ))}
           </StaggerGroup>

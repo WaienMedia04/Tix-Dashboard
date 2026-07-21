@@ -3,6 +3,7 @@
 import type { KpiEmpleado } from "@/lib/api";
 import { Modal } from "@/components/Modal";
 import { Avatar } from "@/components/Avatar";
+import { EnlaceTalento } from "@/components/EnlaceTalento";
 import { TablaKpisEmpleado } from "./TablaKpisEmpleado";
 
 export type KpisDetalleKey = "puntaje-ia" | "cumplimiento" | "empleado-destacado" | "empleados-en-riesgo";
@@ -19,7 +20,9 @@ function FilaEmpleado({ kpi, motivo }: { kpi: KpiEmpleado; motivo: string }) {
     <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5">
       <Avatar nombreCompleto={kpi.nombre} fotoUrl={kpi.fotoUrl} size="sm" />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">{kpi.nombre}</p>
+        <p className="truncate text-sm font-medium text-foreground">
+          <EnlaceTalento talentoId={kpi.talentoId}>{kpi.nombre}</EnlaceTalento>
+        </p>
         <p className="text-xs text-muted-foreground">{motivo}</p>
       </div>
     </div>

@@ -4,6 +4,8 @@ import type { BitacoraItem, WorklogReciente } from "@/lib/api";
 import { Modal } from "@/components/Modal";
 import { EstadoBadge } from "@/components/EstadoBadge";
 import { CheckinBadge } from "@/components/CheckinBadge";
+import { EnlaceTalento } from "@/components/EnlaceTalento";
+import { formatearHora12 } from "@/lib/formato-hora";
 
 export interface WorklogDetalle {
   id: string;
@@ -27,10 +29,17 @@ export interface WorklogDetalle {
   notasTix: string | null;
   talentoNombre: string;
   talentoRol?: string;
+  /** Solo disponible cuando el origen es un BitacoraItem — habilita el link a la ficha. */
+  talentoId?: string;
 }
 
 export function bitacoraItemADetalle(item: BitacoraItem): WorklogDetalle {
-  return { ...item, talentoNombre: item.talento.nombreCompleto, talentoRol: item.talento.rol };
+  return {
+    ...item,
+    talentoNombre: item.talento.nombreCompleto,
+    talentoRol: item.talento.rol,
+    talentoId: item.talento.id,
+  };
 }
 
 export function worklogRecienteADetalle(w: WorklogReciente): WorklogDetalle {
@@ -63,7 +72,13 @@ export function WorklogDetalleModal({
     <Modal
       open={detalle !== null}
       onClose={onClose}
-      title={detalle?.talentoNombre ?? ""}
+      title={
+        detalle?.talentoId ? (
+          <EnlaceTalento talentoId={detalle.talentoId}>{detalle.talentoNombre}</EnlaceTalento>
+        ) : (
+          (detalle?.talentoNombre ?? "")
+        )
+      }
       description={detalle?.talentoRol}
       size="lg"
     >
@@ -81,7 +96,7 @@ export function WorklogDetalleModal({
             />
             <Campo etiqueta="Día" valor={detalle.dia} />
             <Campo etiqueta="Semana" valor={detalle.semana} />
-            <Campo etiqueta="Hora de envío" valor={detalle.horaEnvio} />
+            <Campo etiqueta="Hora de envío" valor={formatearHora12(detalle.horaEnvio)} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

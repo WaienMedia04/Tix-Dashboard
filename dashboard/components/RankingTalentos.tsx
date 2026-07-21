@@ -4,6 +4,7 @@ import { Crown } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { TalentoRanking } from "@/lib/api";
 import { Avatar } from "./Avatar";
+import { EnlaceTalento } from "./EnlaceTalento";
 import { Galaxy } from "./Galaxy";
 import { useCountUp } from "@/hooks/useCountUp";
 import { StaggerGroup, StaggerItem } from "./motion/Stagger";
@@ -58,7 +59,9 @@ function PodioPrimero({ talento }: { talento: TalentoRanking }) {
         />
       </div>
 
-      <p className="mt-3 max-w-[9rem] truncate text-sm font-semibold text-foreground">{talento.nombreCompleto}</p>
+      <p className="mt-3 max-w-[9rem] truncate text-sm font-semibold text-foreground">
+        <EnlaceTalento talentoId={talento.talentoId}>{talento.nombreCompleto}</EnlaceTalento>
+      </p>
       <p className="max-w-[9rem] truncate text-xs text-muted-foreground" title={talento.rol}>
         {talento.rol}
       </p>
@@ -75,7 +78,9 @@ function PodioSecundario({ talento, posicion }: { talento: TalentoRanking; posic
   return (
     <div className="flex flex-col items-center">
       <Avatar nombreCompleto={talento.nombreCompleto} fotoUrl={talento.fotoUrl} size="lg" className="ring-2 ring-border" />
-      <p className="mt-2 max-w-[7rem] truncate text-xs font-semibold text-foreground">{talento.nombreCompleto}</p>
+      <p className="mt-2 max-w-[7rem] truncate text-xs font-semibold text-foreground">
+        <EnlaceTalento talentoId={talento.talentoId}>{talento.nombreCompleto}</EnlaceTalento>
+      </p>
       <p className="max-w-[7rem] truncate text-[11px] text-muted-foreground" title={talento.rol}>
         {talento.rol}
       </p>
@@ -141,7 +146,9 @@ export function RankingTalentos({
                       <span className="w-4 shrink-0 text-xs font-medium text-muted-foreground tabular-nums">{idx + 4}</span>
                       <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="md" />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">{t.nombreCompleto}</p>
+                        <p className="truncate text-sm font-medium text-foreground">
+                          <EnlaceTalento talentoId={t.talentoId}>{t.nombreCompleto}</EnlaceTalento>
+                        </p>
                         <p className="truncate text-xs text-muted-foreground" title={t.rol}>
                           {t.rol}
                         </p>

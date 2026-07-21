@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Cake, PartyPopper } from "lucide-react";
 import { type CumpleanosResponse, fetchCumpleanos } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
@@ -70,7 +71,11 @@ export function CumpleanosView({ slug }: { slug: string }) {
                     className="flex w-44 flex-col items-center gap-2 rounded-xl border border-white/15 bg-black/40 p-4 shadow-elegant backdrop-blur-sm"
                   >
                     <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="xl" className="ring-4 ring-white/20" />
-                    <p className="font-display mt-1 text-base font-semibold text-foreground">{t.nombreCompleto}</p>
+                    <p className="font-display mt-1 text-base font-semibold text-foreground">
+                      <Link href={`/${slug}/empleados/${t.id}`} className="hover:underline">
+                        {t.nombreCompleto}
+                      </Link>
+                    </p>
                     {t.departamento && <p className="text-xs text-muted-foreground">{t.departamento}</p>}
                     <p className="w-full truncate text-center text-xs text-muted-foreground" title={t.rol}>
                       {t.rol}
@@ -102,7 +107,11 @@ export function CumpleanosView({ slug }: { slug: string }) {
             {esteMes.map((t) => (
               <div key={t.id} className="flex flex-col items-center gap-1.5 rounded-lg border border-border p-3 text-center">
                 <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="lg" />
-                <p className="w-full truncate text-xs font-semibold text-foreground">{t.nombreCompleto}</p>
+                <p className="w-full truncate text-xs font-semibold text-foreground">
+                  <Link href={`/${slug}/empleados/${t.id}`} className="hover:underline">
+                    {t.nombreCompleto}
+                  </Link>
+                </p>
                 {t.departamento && <p className="w-full truncate text-[11px] text-muted-foreground">{t.departamento}</p>}
                 <p className="w-full truncate text-[11px] text-muted-foreground" title={t.rol}>
                   {t.rol}

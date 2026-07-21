@@ -1,4 +1,5 @@
 import type { ReporteDetalleItem } from "@/lib/api";
+import { EnlaceTalento } from "@/components/EnlaceTalento";
 import { StaggerGroup, StaggerItem, StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 
 function colorPuntaje(puntaje: number | null): string {
@@ -43,7 +44,9 @@ export function TablaReporte({ datos }: { datos: ReporteDetalleItem[] }) {
                   key={d.talentoId}
                   className="border-t border-border transition-colors hover:bg-muted/50 print:hover:bg-transparent"
                 >
-                  <td className="px-4 py-2.5 font-medium text-foreground">{d.nombre}</td>
+                  <td className="px-4 py-2.5 font-medium text-foreground">
+                    <EnlaceTalento talentoId={d.talentoId}>{d.nombre}</EnlaceTalento>
+                  </td>
                   <td className="max-w-[220px] truncate px-4 py-2.5 text-muted-foreground" title={d.rol}>
                     {d.rol}
                   </td>
@@ -76,7 +79,9 @@ export function TablaReporte({ datos }: { datos: ReporteDetalleItem[] }) {
               <StaggerItem key={d.talentoId}>
                 <div className="flex flex-col gap-2 px-4 py-3">
                   <div>
-                    <p className="truncate text-sm font-medium text-foreground">{d.nombre}</p>
+                    <p className="truncate text-sm font-medium text-foreground">
+                      <EnlaceTalento talentoId={d.talentoId}>{d.nombre}</EnlaceTalento>
+                    </p>
                     <p className="truncate text-xs text-muted-foreground">{d.rol}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
