@@ -757,7 +757,14 @@ export type RolInvitable = "TALENTO" | "MANAGER";
 /** CEO/RRHH invitan a su propio talento a entrar a la plataforma, igual que hace un admin. */
 export async function crearUsuarioTalento(
   slug: string,
-  datos: { email: string; nombre: string; rol: RolInvitable; talentoId?: string },
+  datos: {
+    email: string;
+    nombre: string;
+    rol: RolInvitable;
+    talentoId?: string;
+    /** Solo tiene efecto cuando rol es "MANAGER". */
+    departamentoGestionado?: string;
+  },
 ): Promise<{ usuario: { id: string; email: string; nombre: string; rol: RolInvitable }; invitacionEnviada: true }> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/usuarios`, {
     method: "POST",
@@ -785,6 +792,8 @@ export interface UsuarioTalento {
   activo: boolean;
   passwordEstablecida: boolean;
   talentoId: string | null;
+  /** Solo aplica a rol "MANAGER". */
+  departamentoGestionado: string | null;
 }
 
 export async function fetchUsuariosTalento(slug: string): Promise<UsuarioTalento[]> {
@@ -823,6 +832,29 @@ export async function cambiarCorreoUsuarioTalento(
   if (!res.ok) {
     const cuerpo = await res.json().catch(() => null);
     throw new Error(cuerpo?.message ?? "No se pudo cambiar el correo");
+  }
+  return res.json();
+}
+
+export async function actualizarDepartamentoGestionadoUsuario(
+  slug: string,
+  usuarioId: string,
+  departamentoGestionado: string,
+): Promise<UsuarioTalento> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/usuarios/${encodeURIComponent(usuarioId)}/departamento`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ departamentoGestionado }),
+    },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    const cuerpo = await res.json().catch(() => null);
+    throw new Error(cuerpo?.message ?? "No se pudo actualizar el departamento");
   }
   return res.json();
 }

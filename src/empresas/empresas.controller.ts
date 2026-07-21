@@ -20,6 +20,7 @@ import { CrearTalentoDto } from './dto/crear-talento.dto';
 import { CrearUsuarioEmpresaDto } from './dto/crear-usuario-empresa.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { ActualizarLogoEmpresaDto } from './dto/actualizar-logo-empresa.dto';
+import { ActualizarDepartamentoGestionadoDto } from './dto/actualizar-departamento-gestionado.dto';
 import { EnviarNotaDto } from '../mural/dto/enviar-nota.dto';
 import { CambiarCorreoDto } from '../auth/dto/cambiar-correo.dto';
 import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
@@ -220,6 +221,23 @@ export class EmpresasController {
       req.actor!,
       usuarioId,
       dto.email,
+    );
+  }
+
+  @Patch(':slug/usuarios/:usuarioId/departamento')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  actualizarDepartamentoGestionado(
+    @Param('slug') slug: string,
+    @Param('usuarioId') usuarioId: string,
+    @Body() dto: ActualizarDepartamentoGestionadoDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.actualizarDepartamentoGestionado(
+      slug,
+      req.actor!,
+      usuarioId,
+      dto.departamentoGestionado?.trim() || null,
     );
   }
 

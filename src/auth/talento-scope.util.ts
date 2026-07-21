@@ -5,7 +5,9 @@ import { Actor } from './actor.types';
 /**
  * Filtro Prisma para "qué talentos puede ver este actor":
  *  - CEO, RRHH y tráfico de servicio (ClawLink) → toda la empresa.
- *  - MANAGER → solo los talentos que le reportan.
+ *  - MANAGER → solo los talentos de su departamento asignado
+ *    (Usuario.departamentoGestionado, comparado por texto exacto contra
+ *    Talento.departamento).
  *  - TALENTO → solo a sí mismo.
  *
  * En todos los casos se excluyen los talentos vinculados a un Usuario
@@ -20,7 +22,12 @@ export function talentoScopeWhere(actor: Actor): Prisma.TalentoWhereInput {
   if (actor.type !== 'usuario') return base;
 
   if (actor.usuario.rol === 'MANAGER') {
-    return { ...base, managerUsuarioId: actor.usuario.id };
+    // Sin departamento asignado todavía → no ve a nadie (en vez de toda la
+    // empresa por accidente si se compara contra `null`).
+    return {
+      ...base,
+      departamento: actor.usuario.departamentoGestionado ?? '__ninguno__',
+    };
   }
   if (actor.usuario.rol === 'TALENTO') {
     return { ...base, id: actor.usuario.talentoId ?? '__ninguno__' };
@@ -35,7 +42,9 @@ export function talentoScopeWhere(actor: Actor): Prisma.TalentoWhereInput {
  * Empleados y el histórico de Bitácoras siguen usando talentoScopeWhere
  * sin este filtro: ahí sí interesa ver/buscar inactivos.
  */
-export function talentoActivoScopeWhere(actor: Actor): Prisma.TalentoWhereInput {
+export function talentoActivoScopeWhere(
+  actor: Actor,
+): Prisma.TalentoWhereInput {
   return { ...talentoScopeWhere(actor), estado: 'activo' };
 }
 

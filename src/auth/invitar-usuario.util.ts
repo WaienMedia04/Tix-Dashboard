@@ -1,4 +1,7 @@
-import { ConflictException, InternalServerErrorException } from '@nestjs/common';
+import {
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { Rol } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { obtenerClienteServiceRole } from './supabase-auth.util';
@@ -18,6 +21,7 @@ export async function invitarUsuario(
     nombre: string;
     rol: Rol;
     talentoId?: string;
+    departamentoGestionado?: string;
   },
 ) {
   const email = params.email.trim().toLowerCase();
@@ -34,13 +38,11 @@ export async function invitarUsuario(
     );
   }
 
-  const { data, error } = await obtenerClienteServiceRole().auth.admin.inviteUserByEmail(
-    email,
-    {
+  const { data, error } =
+    await obtenerClienteServiceRole().auth.admin.inviteUserByEmail(email, {
       redirectTo: `${origenDashboard}/auth/confirm`,
       data: { nombre: params.nombre.trim(), rol: params.rol },
-    },
-  );
+    });
   if (error || !data?.user) {
     const detalle =
       error?.message && error.message !== '{}'
@@ -56,8 +58,16 @@ export async function invitarUsuario(
       nombre: params.nombre.trim(),
       rol: params.rol,
       talentoId: params.talentoId,
+      departamentoGestionado:
+        params.rol === 'MANAGER' ? params.departamentoGestionado : undefined,
       supabaseUserId: data.user.id,
     },
-    select: { id: true, email: true, nombre: true, rol: true },
+    select: {
+      id: true,
+      email: true,
+      nombre: true,
+      rol: true,
+      departamentoGestionado: true,
+    },
   });
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import { KeyRound, Mail, Plus, Users } from "lucide-react";
+import { Building2, KeyRound, Mail, Plus, Users } from "lucide-react";
 import {
   type DatosNuevoTalento,
   type EmpleadoResumen,
@@ -12,6 +12,7 @@ import {
   fetchEmpleados,
   fetchUsuariosTalento,
   cambiarCorreoUsuarioTalento,
+  actualizarDepartamentoGestionadoUsuario,
   restablecerPasswordUsuarioTalento,
 } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
@@ -61,7 +62,12 @@ export function ListaEmpleados({ slug }: { slug: string }) {
   const [errorForm, setErrorForm] = useState<string | null>(null);
 
   const [crearAcceso, setCrearAcceso] = useState(false);
-  const [nuevoAcceso, setNuevoAcceso] = useState({ email: "", nombreLogin: "", rolLogin: "TALENTO" as RolInvitable });
+  const [nuevoAcceso, setNuevoAcceso] = useState({
+    email: "",
+    nombreLogin: "",
+    rolLogin: "TALENTO" as RolInvitable,
+    departamentoGestionado: "",
+  });
   const [resultadoAcceso, setResultadoAcceso] = useState<
     { tipo: "ok"; correo: string } | { tipo: "error"; mensaje: string } | null
   >(null);
@@ -75,8 +81,18 @@ export function ListaEmpleados({ slug }: { slug: string }) {
   const [resetOkId, setResetOkId] = useState<string | null>(null);
   const [resetErrorId, setResetErrorId] = useState<string | null>(null);
 
+  const [editandoDeptoId, setEditandoDeptoId] = useState<string | null>(null);
+  const [nuevoDeptoValor, setNuevoDeptoValor] = useState("");
+  const [guardandoDeptoId, setGuardandoDeptoId] = useState<string | null>(null);
+  const [deptoError, setDeptoError] = useState<string | null>(null);
+
   const [invitandoTalentoId, setInvitandoTalentoId] = useState<string | null>(null);
-  const [formAcceso, setFormAcceso] = useState({ email: "", nombreLogin: "", rolLogin: "TALENTO" as RolInvitable });
+  const [formAcceso, setFormAcceso] = useState({
+    email: "",
+    nombreLogin: "",
+    rolLogin: "TALENTO" as RolInvitable,
+    departamentoGestionado: "",
+  });
   const [guardandoAccesoId, setGuardandoAccesoId] = useState<string | null>(null);
   const [accesoExistenteError, setAccesoExistenteError] = useState<string | null>(null);
 
@@ -143,17 +159,40 @@ export function ListaEmpleados({ slug }: { slug: string }) {
         nombre: formAcceso.nombreLogin || nombreTalento,
         rol: formAcceso.rolLogin,
         talentoId,
+        departamentoGestionado:
+          formAcceso.rolLogin === "MANAGER" ? formAcceso.departamentoGestionado.trim() || undefined : undefined,
       });
       setUsuarios((prev) => [
         ...prev,
-        { ...usuario, activo: true, passwordEstablecida: false, talentoId },
+        {
+          ...usuario,
+          activo: true,
+          passwordEstablecida: false,
+          talentoId,
+          departamentoGestionado: formAcceso.rolLogin === "MANAGER" ? formAcceso.departamentoGestionado.trim() || null : null,
+        },
       ]);
       setInvitandoTalentoId(null);
-      setFormAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO" });
+      setFormAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO", departamentoGestionado: "" });
     } catch (err) {
       setAccesoExistenteError(err instanceof Error ? err.message : "No se pudo enviar la invitación");
     } finally {
       setGuardandoAccesoId(null);
+    }
+  }
+
+  async function handleGuardarDepto(usuarioId: string) {
+    setGuardandoDeptoId(usuarioId);
+    setDeptoError(null);
+    try {
+      const actualizado = await actualizarDepartamentoGestionadoUsuario(slug, usuarioId, nuevoDeptoValor.trim());
+      setUsuarios((prev) => prev.map((u) => (u.id === usuarioId ? actualizado : u)));
+      setEditandoDeptoId(null);
+      setNuevoDeptoValor("");
+    } catch (err) {
+      setDeptoError(err instanceof Error ? err.message : "No se pudo actualizar el departamento");
+    } finally {
+      setGuardandoDeptoId(null);
     }
   }
 
@@ -177,13 +216,22 @@ export function ListaEmpleados({ slug }: { slug: string }) {
             nombre: nuevoAcceso.nombreLogin || nuevo.nombreCompleto,
             rol: nuevoAcceso.rolLogin,
             talentoId: nuevo.id,
+            departamentoGestionado:
+              nuevoAcceso.rolLogin === "MANAGER" ? nuevoAcceso.departamentoGestionado.trim() || undefined : undefined,
           });
           setUsuarios((prev) => [
             ...prev,
-            { ...usuario, activo: true, passwordEstablecida: false, talentoId: nuevo.id },
+            {
+              ...usuario,
+              activo: true,
+              passwordEstablecida: false,
+              talentoId: nuevo.id,
+              departamentoGestionado:
+                nuevoAcceso.rolLogin === "MANAGER" ? nuevoAcceso.departamentoGestionado.trim() || null : null,
+            },
           ]);
           setResultadoAcceso({ tipo: "ok", correo: nuevoAcceso.email });
-          setNuevoAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO" });
+          setNuevoAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO", departamentoGestionado: "" });
           setCrearAcceso(false);
         } catch (err) {
           setResultadoAcceso({
@@ -357,6 +405,19 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                   ))}
                 </select>
               </div>
+              {nuevoAcceso.rolLogin === "MANAGER" && (
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Departamento a gestionar
+                  </label>
+                  <input
+                    value={nuevoAcceso.departamentoGestionado}
+                    onChange={(e) => setNuevoAcceso((f) => ({ ...f, departamentoGestionado: e.target.value }))}
+                    className={CAMPO_CLASES}
+                    placeholder="Ej. Ventas"
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -456,7 +517,7 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                           <button
                             onClick={() => {
                               setInvitandoTalentoId(invitandoTalentoId === e.id ? null : e.id);
-                              setFormAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO" });
+                              setFormAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO", departamentoGestionado: "" });
                               setAccesoExistenteError(null);
                             }}
                             className="text-xs font-medium text-primary hover:underline"
@@ -510,6 +571,21 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                                 ))}
                               </select>
                             </div>
+                            {formAcceso.rolLogin === "MANAGER" && (
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                  Departamento a gestionar
+                                </label>
+                                <input
+                                  value={formAcceso.departamentoGestionado}
+                                  onChange={(ev) =>
+                                    setFormAcceso((f) => ({ ...f, departamentoGestionado: ev.target.value }))
+                                  }
+                                  className={CAMPO_CLASES}
+                                  placeholder="Ej. Ventas"
+                                />
+                              </div>
+                            )}
                             <button
                               onClick={() => void handleDarAcceso(e.id, e.nombreCompleto)}
                               disabled={guardandoAccesoId === e.id}
@@ -584,7 +660,7 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                         <button
                           onClick={() => {
                             setInvitandoTalentoId(invitandoTalentoId === e.id ? null : e.id);
-                            setFormAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO" });
+                            setFormAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO", departamentoGestionado: "" });
                             setAccesoExistenteError(null);
                           }}
                           className="text-xs font-medium text-primary hover:underline"
@@ -634,6 +710,21 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                             ))}
                           </select>
                         </div>
+                        {formAcceso.rolLogin === "MANAGER" && (
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                              Departamento a gestionar
+                            </label>
+                            <input
+                              value={formAcceso.departamentoGestionado}
+                              onChange={(ev) =>
+                                setFormAcceso((f) => ({ ...f, departamentoGestionado: ev.target.value }))
+                              }
+                              className={CAMPO_CLASES}
+                              placeholder="Ej. Ventas"
+                            />
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => void handleDarAcceso(e.id, e.nombreCompleto)}
@@ -675,6 +766,9 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                     <p className="truncate text-sm font-medium text-foreground">{u.nombre}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       {u.email} · {u.rol === "MANAGER" ? "Gerente" : "Empleado"}
+                      {u.rol === "MANAGER" && (
+                        <> · Departamento: {u.departamentoGestionado || "sin asignar"}</>
+                      )}
                       {!u.passwordEstablecida && (
                         <span className="ml-1.5 rounded-full bg-warning/10 px-1.5 py-0.5 text-warning">
                           Pendiente de activar
@@ -683,6 +777,19 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
+                    {u.rol === "MANAGER" && (
+                      <button
+                        onClick={() => {
+                          setEditandoDeptoId(editandoDeptoId === u.id ? null : u.id);
+                          setNuevoDeptoValor(u.departamentoGestionado ?? "");
+                          setDeptoError(null);
+                        }}
+                        className="flex items-center gap-1 rounded p-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                        title="Cambiar departamento gestionado"
+                      >
+                        <Building2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setEditandoCorreoId(editandoCorreoId === u.id ? null : u.id);
@@ -704,6 +811,33 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                     </button>
                   </div>
                 </div>
+
+                {editandoDeptoId === u.id && (
+                  <div className="flex items-center gap-2 rounded-md border border-border bg-background/50 p-2">
+                    <input
+                      value={nuevoDeptoValor}
+                      onChange={(e) => setNuevoDeptoValor(e.target.value)}
+                      placeholder="Ej. Ventas"
+                      className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    <button
+                      onClick={() => void handleGuardarDepto(u.id)}
+                      disabled={guardandoDeptoId === u.id}
+                      className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                    >
+                      {guardandoDeptoId === u.id ? "..." : "Guardar"}
+                    </button>
+                    <button
+                      onClick={() => { setEditandoDeptoId(null); setDeptoError(null); }}
+                      className="rounded-md border border-border px-2.5 py-1.5 text-xs hover:bg-accent"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                )}
+                {editandoDeptoId === u.id && deptoError && (
+                  <p className="text-xs text-destructive">{deptoError}</p>
+                )}
 
                 {editandoCorreoId === u.id && (
                   <div className="flex items-center gap-2 rounded-md border border-border bg-background/50 p-2">

@@ -26,4 +26,9 @@ export class CrearUsuarioEmpresaDto {
   @IsString()
   @IsOptional()
   talentoId?: string;
+
+  /** Solo tiene efecto cuando rol es MANAGER. */
+  @IsString()
+  @IsOptional()
+  departamentoGestionado?: string;
 }

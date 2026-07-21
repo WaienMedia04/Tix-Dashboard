@@ -110,6 +110,11 @@ model Usuario {
   nombre              String
   rol                 Rol
   talentoId           String?   @unique
+  /// Solo aplica a rol MANAGER: nombre del departamento que gestiona (mismo
+  /// texto libre que Talento.departamento) — talentoScopeWhere() lo usa para
+  /// que un MANAGER vea en dashboard/rankings/reportes/KPIs a los talentos
+  /// activos cuyo `departamento` coincida exactamente con este valor.
+  departamentoGestionado String?
   activo              Boolean   @default(true)
   ultimoLoginAt       DateTime?
   createdAt           DateTime  @default(now())

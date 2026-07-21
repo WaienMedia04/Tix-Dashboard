@@ -1214,6 +1214,7 @@ export class EmpresasService {
       nombre: dto.nombre,
       rol: dto.rol,
       talentoId: dto.talentoId,
+      departamentoGestionado: dto.departamentoGestionado,
     });
 
     return { usuario, invitacionEnviada: true };
@@ -1232,6 +1233,7 @@ export class EmpresasService {
         activo: true,
         passwordEstablecida: true,
         talentoId: true,
+        departamentoGestionado: true,
       },
       orderBy: { nombre: 'asc' },
     });
@@ -1274,6 +1276,32 @@ export class EmpresasService {
     const empresa = await this.resolverEmpresa(slug, actor);
     await this.validarUsuarioGestionable(empresa.id, usuarioId);
     return enviarResetPassword(this.prisma, usuarioId);
+  }
+
+  async actualizarDepartamentoGestionado(
+    slug: string,
+    actor: Actor,
+    usuarioId: string,
+    departamentoGestionado: string | null,
+  ) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+    const usuario = await this.validarUsuarioGestionable(empresa.id, usuarioId);
+    if (usuario.rol !== 'MANAGER') {
+      throw new ForbiddenException(
+        'Solo un usuario con rol Gerente puede tener un departamento asignado',
+      );
+    }
+    return this.prisma.usuario.update({
+      where: { id: usuarioId },
+      data: { departamentoGestionado },
+      select: {
+        id: true,
+        email: true,
+        nombre: true,
+        rol: true,
+        departamentoGestionado: true,
+      },
+    });
   }
 
   async rankings(slug: string, actor: Actor, query: RankingsQueryDto) {
