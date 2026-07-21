@@ -8,7 +8,6 @@ import { fondoMuralCss, fondoMuralTexto } from "@/lib/mural-fondos";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Modal } from "@/components/Modal";
 import Dock from "@/components/vendor/Dock/Dock";
-import MetaBalls from "@/components/vendor/MetaBalls/MetaBalls";
 import { LanyardBadge } from "./LanyardBadge";
 import { PerfilDivertidoForm } from "./PerfilDivertidoForm";
 import { SobreMiSoloLectura } from "./SobreMiSoloLectura";
@@ -86,22 +85,6 @@ export function MiMuralView({
           notas y estampas se puedan arrastrar a cualquier parte de la página
           (incluso sobre el carnet), no solo debajo del encabezado. */}
       <div ref={contenedorRef} className="relative">
-        {/* Decoración: metaballs flotando en la esquina superior izquierda del mural. */}
-        <div className="absolute top-0 left-0 z-0 hidden h-48 w-48 sm:block lg:h-64 lg:w-64 print:hidden">
-          <MetaBalls
-            color="#9333ea"
-            cursorBallColor="#06b6d4"
-            cursorBallSize={1}
-            ballCount={15}
-            animationSize={30}
-            enableMouseInteraction
-            enableTransparency
-            hoverSmoothness={0.05}
-            clumpFactor={1}
-            speed={0.3}
-          />
-        </div>
-
         {/* Encabezado: carnet grande y centrado, nombre y rol debajo */}
         <div className="flex flex-col items-center px-4 pb-4 text-center">
           <LanyardBadge

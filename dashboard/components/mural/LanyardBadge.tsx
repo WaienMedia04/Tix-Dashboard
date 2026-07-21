@@ -10,7 +10,7 @@ import { useEsMobile } from "@/lib/use-es-mobile";
 // y se carga solo dentro de la ruta Mi Mural en escritorio/tablet.
 const LanyardScene = dynamic(() => import("@/components/vendor/Lanyard/Lanyard"), {
   ssr: false,
-  loading: () => <div className="h-[34rem] w-[36rem] animate-pulse rounded-2xl bg-muted" />,
+  loading: () => <div className="h-[37rem] w-[39rem] animate-pulse rounded-2xl bg-muted" />,
 });
 
 function CarnetFlipCard({
@@ -30,7 +30,7 @@ function CarnetFlipCard({
       <button
         onClick={() => setVolteada((v) => !v)}
         aria-label="Voltear carnet"
-        className="h-80 w-60 shrink-0 [perspective:1200px]"
+        className="h-[22rem] w-[16rem] shrink-0 [perspective:1200px]"
       >
         <div
           className="relative h-full w-full rounded-2xl shadow-elegant transition-transform duration-500 [transform-style:preserve-3d]"
@@ -94,7 +94,7 @@ export function LanyardBadge({
     // El alto es menor que el ancho a propósito: con la cámara más cerca la
     // tarjeta ocupa solo la parte de arriba del marco, así que se recorta el
     // aire que sobraba abajo para que el nombre no quede tan separado.
-    <div className="h-[34rem] w-[36rem] shrink-0 sm:h-[37rem] sm:w-[41rem]">
+    <div className="h-[37rem] w-[39rem] shrink-0 sm:h-[40rem] sm:w-[44rem]">
       <LanyardScene
         position={[0, 0, 20]}
         frontImage={frontImage ?? undefined}
