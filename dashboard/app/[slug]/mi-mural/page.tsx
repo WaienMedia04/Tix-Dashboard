@@ -11,6 +11,7 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import { ErrorScreen } from "@/components/ErrorScreen";
 import { MiMuralView } from "@/components/mural/MiMuralView";
 import { ChatFlotante } from "@/components/chat/ChatFlotante";
+import { CampanaNotificaciones } from "@/components/notificaciones/CampanaNotificaciones";
 
 type Estado =
   | { tipo: "cargando" }
@@ -97,7 +98,10 @@ export default function MiMuralPage() {
           </Link>
           <BrandMark />
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <CampanaNotificaciones slug={slug} />
+          <ThemeToggle />
+        </div>
       </header>
 
       {estado.tipo === "sin-talento" ? (

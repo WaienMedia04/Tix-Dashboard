@@ -10,6 +10,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { ErrorScreen } from "@/components/ErrorScreen";
 import { MiMuralView } from "@/components/mural/MiMuralView";
+import { CampanaNotificaciones } from "@/components/notificaciones/CampanaNotificaciones";
 
 type Estado =
   | { tipo: "cargando" }
@@ -97,7 +98,10 @@ export default function MuralDeCompaneroPage() {
           </Link>
           <BrandMark />
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <CampanaNotificaciones slug={slug} />
+          <ThemeToggle />
+        </div>
       </header>
 
       <MiMuralView slug={slug} talentoId={talentoId} miTalentoId={estado.miTalentoId} />
