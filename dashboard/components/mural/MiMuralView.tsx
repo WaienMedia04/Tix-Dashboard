@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Gift, NotebookPen, Palette, Sparkles, StickyNote, Users } from "lucide-react";
+import { Building2, Gift, NotebookPen, Palette, Radio, Sparkles, StickyNote, Users } from "lucide-react";
 import { type MuralPropio, fetchMuralDeTalento, fetchMuralPropio } from "@/lib/api";
 import { fondoMuralCss, fondoMuralTexto } from "@/lib/mural-fondos";
+import { colorParaEstado } from "@/lib/estados-mural";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Modal } from "@/components/Modal";
 import Dock from "@/components/vendor/Dock/Dock";
+import TextType from "@/components/vendor/TextType/TextType";
 import { LanyardBadge } from "./LanyardBadge";
 import { PerfilDivertidoForm } from "./PerfilDivertidoForm";
 import { SobreMiSoloLectura } from "./SobreMiSoloLectura";
@@ -15,6 +17,7 @@ import { SelectorFondo } from "./SelectorFondo";
 import { MuralCanvas } from "./MuralCanvas";
 import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
+import { EstadoModal } from "./EstadoModal";
 
 export function MiMuralView({
   slug,
@@ -39,6 +42,7 @@ export function MiMuralView({
   const [mostrarCompaneros, setMostrarCompaneros] = useState(false);
   const [mostrarEstampas, setMostrarEstampas] = useState(false);
   const [mostrarNuevaNota, setMostrarNuevaNota] = useState(false);
+  const [mostrarEstado, setMostrarEstado] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -92,6 +96,46 @@ export function MiMuralView({
             frontImage={mural.talento.carnetFotoUrl ?? mural.talento.fotoUrl}
             logoUrl={mural.empresa.logoUrl}
           />
+          {mural.perfil.estado &&
+            (() => {
+              const contenido = (
+                <>
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span
+                      className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
+                      style={{ background: colorParaEstado(mural.perfil.estado!) }}
+                    />
+                    <span
+                      className="relative inline-flex h-2 w-2 rounded-full"
+                      style={{ background: colorParaEstado(mural.perfil.estado!) }}
+                    />
+                  </span>
+                  {mural.perfil.estado}
+                </>
+              );
+              const clases =
+                "mt-3 inline-flex items-center gap-2 rounded-full bg-black/40 px-3.5 py-1.5 text-xs font-semibold backdrop-blur-sm";
+              return editable ? (
+                <button type="button" onClick={() => setMostrarEstado(true)} className={clases} style={{ color: texto.color }}>
+                  {contenido}
+                </button>
+              ) : (
+                <div className={clases} style={{ color: texto.color }}>
+                  {contenido}
+                </div>
+              );
+            })()}
+          {editable && !mural.perfil.estado && (
+            <button
+              type="button"
+              onClick={() => setMostrarEstado(true)}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-dashed border-white/30 px-3.5 py-1.5 text-xs font-medium opacity-80 backdrop-blur-sm transition-opacity hover:opacity-100"
+              style={{ color: texto.color }}
+            >
+              <Radio className="h-3.5 w-3.5" />
+              Poner un estado
+            </button>
+          )}
           <h1
             className="font-display mt-4 text-3xl font-bold sm:text-4xl"
             style={{ color: texto.color, textShadow: texto.sombra }}
@@ -114,6 +158,23 @@ export function MiMuralView({
               <Building2 className="h-4 w-4" />
               {mural.talento.departamento}
             </p>
+          )}
+
+          {mural.perfil.personalidades.length > 0 && (
+            <div
+              className="mt-2 min-h-[1.5em] text-base font-medium italic"
+              style={{ color: texto.color, textShadow: texto.sombra }}
+            >
+              <TextType
+                text={mural.perfil.personalidades}
+                typingSpeed={70}
+                deletingSpeed={35}
+                pauseDuration={1800}
+                loop
+                showCursor
+                cursorCharacter="|"
+              />
+            </div>
           )}
 
           {/* En el mural propio, "Sobre mí" vive en el Dock de abajo junto al resto. */}
@@ -149,6 +210,11 @@ export function MiMuralView({
         <div className="pointer-events-none fixed inset-0 z-40 print:hidden">
           <Dock
             items={[
+              {
+                icon: <Radio className="h-5 w-5 text-rose-400" />,
+                label: "Estado",
+                onClick: () => setMostrarEstado(true),
+              },
               {
                 icon: <Sparkles className="h-5 w-5 text-amber-400" />,
                 label: "Sobre mí",
@@ -244,6 +310,15 @@ export function MiMuralView({
               return { ...prev, estampasRecibidas: prev.estampasRecibidas.filter((e) => e.id !== estampa.id) };
             })
           }
+        />
+      )}
+
+      {editable && (
+        <EstadoModal
+          open={mostrarEstado}
+          estadoActual={mural.perfil.estado}
+          onClose={() => setMostrarEstado(false)}
+          onActualizado={(perfil) => setMural((prev) => (prev ? { ...prev, perfil } : prev))}
         />
       )}
     </div>

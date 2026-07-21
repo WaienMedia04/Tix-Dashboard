@@ -260,6 +260,13 @@ model TalentoPerfilMural {
   noMeGusta       String?
   cancionFavorita String?
   superpoder      String?
+  /// Hasta 5 palabras que describen la personalidad del talento — se
+  /// muestran en efecto "máquina de escribir" arriba de su mural y en el
+  /// panel "Sobre mí".
+  personalidades  String[] @default([])
+  /// Estado actual del talento (ej. "Trabajando", "En reunión", o texto
+  /// libre) — se muestra como una píldora animada arriba del nombre.
+  estado          String?
   fondoId         String   @default("corcho")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

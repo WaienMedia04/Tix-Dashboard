@@ -1056,6 +1056,10 @@ export interface PerfilMural {
   noMeGusta: string | null;
   cancionFavorita: string | null;
   superpoder: string | null;
+  /** Hasta 5 palabras que describen la personalidad — se muestran animadas en el mural. */
+  personalidades: string[];
+  /** Estado actual (ej. "Trabajando", "En reunión") — se muestra como píldora animada arriba del nombre. */
+  estado: string | null;
   fondoId: string;
 }
 

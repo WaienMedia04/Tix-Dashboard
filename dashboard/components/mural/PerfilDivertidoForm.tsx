@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Music2, Sparkles, ThumbsDown, ThumbsUp, Wand2 } from "lucide-react";
+import { Fingerprint, Music2, Sparkles, ThumbsDown, ThumbsUp, Wand2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { type PerfilMural, actualizarPerfilMural } from "@/lib/api";
+
+const CANTIDAD_PERSONALIDADES = 5;
 
 const CAMPO_CLASES =
   "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring";
@@ -35,9 +37,16 @@ export function PerfilDivertidoForm({
     cancionFavorita: perfil.cancionFavorita ?? "",
     superpoder: perfil.superpoder ?? "",
   });
+  const [personalidades, setPersonalidades] = useState<string[]>(() =>
+    Array.from({ length: CANTIDAD_PERSONALIDADES }, (_, i) => perfil.personalidades[i] ?? ""),
+  );
   const [guardando, setGuardando] = useState(false);
   const [guardadoOk, setGuardadoOk] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function handlePersonalidadChange(indice: number, valor: string) {
+    setPersonalidades((prev) => prev.map((p, i) => (i === indice ? valor : p)));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,7 +54,10 @@ export function PerfilDivertidoForm({
     setGuardadoOk(false);
     setGuardando(true);
     try {
-      const actualizado = await actualizarPerfilMural(form);
+      const actualizado = await actualizarPerfilMural({
+        ...form,
+        personalidades: personalidades.map((p) => p.trim()).filter(Boolean),
+      });
       onActualizado(actualizado);
       setGuardadoOk(true);
     } catch {
@@ -72,6 +84,26 @@ export function PerfilDivertidoForm({
           />
         </label>
       ))}
+
+      <div className="flex flex-col gap-1.5">
+        <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <Fingerprint className="h-3.5 w-3.5" />
+          5 palabras que te describen
+        </span>
+        <p className="text-[11px] text-muted-foreground">Aparecerán animadas, una por una, arriba de tu mural.</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {personalidades.map((valor, i) => (
+            <input
+              key={i}
+              value={valor}
+              onChange={(e) => handlePersonalidadChange(i, e.target.value)}
+              placeholder={`Palabra ${i + 1}`}
+              maxLength={30}
+              className={CAMPO_CLASES}
+            />
+          ))}
+        </div>
+      </div>
 
       {error && <p className="text-xs text-destructive">{error}</p>}
       {guardadoOk && <p className="text-xs text-success">¡Guardado!</p>}

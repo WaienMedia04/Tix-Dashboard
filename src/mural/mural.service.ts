@@ -18,6 +18,8 @@ const SELECT_PERFIL = {
   noMeGusta: true,
   cancionFavorita: true,
   superpoder: true,
+  personalidades: true,
+  estado: true,
   fondoId: true,
 } as const;
 
@@ -27,8 +29,18 @@ const PERFIL_POR_DEFECTO = {
   noMeGusta: null,
   cancionFavorita: null,
   superpoder: null,
+  personalidades: [] as string[],
+  estado: null,
   fondoId: 'corcho',
 };
+
+/** Recorta a 5, recorta espacios y descarta vacíos — misma limpieza al crear y al actualizar. */
+function limpiarPersonalidades(personalidades: string[]): string[] {
+  return personalidades
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0)
+    .slice(0, 5);
+}
 
 const SELECT_NOTA = {
   id: true,
@@ -210,6 +222,10 @@ export class MuralService {
         ...(dto.superpoder !== undefined && {
           superpoder: dto.superpoder.trim() || null,
         }),
+        ...(dto.personalidades !== undefined && {
+          personalidades: limpiarPersonalidades(dto.personalidades),
+        }),
+        ...(dto.estado !== undefined && { estado: dto.estado.trim() || null }),
         ...(dto.fondoId !== undefined && { fondoId: dto.fondoId }),
       },
       update: {
@@ -226,6 +242,10 @@ export class MuralService {
         ...(dto.superpoder !== undefined && {
           superpoder: dto.superpoder.trim() || null,
         }),
+        ...(dto.personalidades !== undefined && {
+          personalidades: limpiarPersonalidades(dto.personalidades),
+        }),
+        ...(dto.estado !== undefined && { estado: dto.estado.trim() || null }),
         ...(dto.fondoId !== undefined && { fondoId: dto.fondoId }),
       },
       select: SELECT_PERFIL,

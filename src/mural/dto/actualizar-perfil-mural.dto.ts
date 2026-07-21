@@ -1,4 +1,11 @@
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsIn,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { FONDOS_MURAL_IDS } from '../mural-fondos.constant';
 
 export class ActualizarPerfilMuralDto {
@@ -26,6 +33,18 @@ export class ActualizarPerfilMuralDto {
   @IsOptional()
   @MaxLength(120)
   superpoder?: string;
+
+  @IsArray()
+  @IsOptional()
+  @ArrayMaxSize(5)
+  @IsString({ each: true })
+  @MaxLength(30, { each: true })
+  personalidades?: string[];
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(40)
+  estado?: string;
 
   @IsString()
   @IsOptional()
