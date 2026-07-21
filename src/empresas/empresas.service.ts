@@ -35,6 +35,7 @@ import {
   talentoScopeWhere,
 } from '../auth/talento-scope.util';
 import { validarDepartamentoPermitido } from './departamento.util';
+import { CrearSolicitudSoporteDto } from './dto/crear-solicitud-soporte.dto';
 
 /** Días de ausencia autorizada quedan fuera del numerador y denominador. */
 function excluirAusencias<T extends { estadoEnvio: string }>(
@@ -1610,5 +1611,31 @@ export class EmpresasService {
     });
 
     return { ...datosReporte, analisis };
+  }
+
+  /** Solicitud de soporte (avería/sugerencia) enviada al equipo de Talentix. */
+  async crearSolicitudSoporte(
+    slug: string,
+    actor: Actor,
+    dto: CrearSolicitudSoporteDto,
+  ) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+    if (actor.type !== 'usuario') {
+      throw new ForbiddenException(
+        'Esta acción requiere una cuenta de usuario',
+      );
+    }
+
+    const solicitud = await this.prisma.solicitudSoporte.create({
+      data: {
+        empresaId: empresa.id,
+        usuarioId: actor.usuario.id,
+        tipo: dto.tipo,
+        mensaje: dto.mensaje.trim(),
+      },
+      select: { id: true, tipo: true, mensaje: true, createdAt: true },
+    });
+
+    return solicitud;
   }
 }

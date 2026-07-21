@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { StickyNote } from "lucide-react";
 import { type EstampaOtorgadaMural, type NotaMural } from "@/lib/api";
 import { fondoMuralTexto } from "@/lib/mural-fondos";
 import { useEsMobile } from "@/lib/use-es-mobile";
@@ -18,6 +16,8 @@ export function MuralCanvas({
   fondoId,
   contenedorRef,
   onNotasChange,
+  mostrarNuevaNota,
+  onCerrarNuevaNota,
 }: {
   slug: string;
   /** talentoId del dueño de este mural — se usa para ofrecer al resto de compañeros como destinatarios. */
@@ -30,11 +30,13 @@ export function MuralCanvas({
   /** Contenedor compartido con el resto del mural — así las notas/estampas se pueden soltar en cualquier parte de la página. */
   contenedorRef: React.RefObject<HTMLDivElement | null>;
   onNotasChange: (notas: NotaMural[]) => void;
+  /** El modal ahora lo abre el botón "Agregar nota" del Dock, no un FAB propio de este componente. */
+  mostrarNuevaNota: boolean;
+  onCerrarNuevaNota: () => void;
 }) {
   const esMobile = useEsMobile();
   const arrastrable = editable && !esMobile;
   const textoVacio = fondoMuralTexto(fondoId);
-  const [mostrarNuevaNota, setMostrarNuevaNota] = useState(false);
 
   function agregarNotaLocal(nota: NotaMural) {
     onNotasChange([...notas, nota]);
@@ -48,22 +50,12 @@ export function MuralCanvas({
     onNotasChange(notas.filter((n) => n.id !== id));
   }
 
-  const botonNuevaNota = editable && (
-    <button
-      onClick={() => setMostrarNuevaNota(true)}
-      className="fixed right-5 bottom-5 z-30 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-elegant transition-transform hover:scale-105"
-    >
-      <StickyNote className="h-4 w-4" />
-      Nueva nota
-    </button>
-  );
-
   const modal = editable && (
     <NuevaNotaModal
       open={mostrarNuevaNota}
       slug={slug}
       miTalentoId={miTalentoId}
-      onClose={() => setMostrarNuevaNota(false)}
+      onClose={onCerrarNuevaNota}
       onCreada={agregarNotaLocal}
     />
   );
@@ -100,7 +92,6 @@ export function MuralCanvas({
           <EstampaPeel key={estampa.id} estampa={estampa} arrastrable />
         ))}
 
-        {botonNuevaNota}
         {modal}
       </>
     );
@@ -113,7 +104,7 @@ export function MuralCanvas({
           className="py-10 text-center text-sm font-medium"
           style={{ color: textoVacio.color, textShadow: textoVacio.sombra }}
         >
-          {editable ? "Agrega notas desde el botón de abajo." : "Todavía no hay nada en este mural."}
+          {editable ? "Agrega notas desde el Dock — Agregar nota." : "Todavía no hay nada en este mural."}
         </p>
       )}
       {notas.length > 0 && (
@@ -138,7 +129,6 @@ export function MuralCanvas({
           ))}
         </div>
       )}
-      {botonNuevaNota}
       {modal}
     </div>
   );

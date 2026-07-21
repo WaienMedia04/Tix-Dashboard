@@ -11,6 +11,7 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 const TITULOS: Record<string, string> = {
   dashboard: "Dashboard global",
   empresas: "Gestión de empresas",
+  soporte: "Solicitudes de soporte",
 };
 
 function AdminHeader({ onAbrirMenu }: { onAbrirMenu?: () => void }) {

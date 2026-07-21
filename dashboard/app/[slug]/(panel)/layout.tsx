@@ -15,6 +15,7 @@ import { resolverEstadoMfa } from "@/lib/mfa";
 import { Sidebar } from "@/components/panel/Sidebar";
 import { Header } from "@/components/panel/Header";
 import { PanelProvider } from "@/components/panel/PanelContext";
+import { PanelDock } from "@/components/panel/PanelDock";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { ErrorScreen } from "@/components/ErrorScreen";
 
@@ -128,7 +129,7 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
             plan={estado.data.empresa.plan}
             onAbrirMenu={() => setMenuMovilAbierto(true)}
           />
-          <main className="bg-page-backdrop flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5 print:overflow-visible print:bg-transparent print:p-0">
+          <main className="bg-page-backdrop flex-1 overflow-y-auto px-4 py-4 pb-24 sm:px-6 sm:py-5 sm:pb-28 print:overflow-visible print:bg-transparent print:p-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={pathname}
@@ -142,6 +143,7 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
             </AnimatePresence>
           </main>
         </div>
+        <PanelDock />
       </div>
     </PanelProvider>
   );

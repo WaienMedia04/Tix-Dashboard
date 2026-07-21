@@ -288,3 +288,27 @@ export function cambiarRolUsuarioAdmin(
     body: JSON.stringify({ rol, talentoId }),
   });
 }
+
+// ── Solicitudes de soporte (Dock del panel) ────────────────────────────────
+
+export interface SolicitudSoporteAdmin {
+  id: string;
+  tipo: "AVERIA" | "SUGERENCIA";
+  mensaje: string;
+  leida: boolean;
+  createdAt: string;
+  empresa: { nombre: string; slug: string };
+  usuario: { nombre: string; email: string };
+}
+
+export function fetchSolicitudesSoporteAdmin(token: string): Promise<SolicitudSoporteAdmin[]> {
+  return adminFetch("/admin/soporte", token);
+}
+
+export function fetchSolicitudesSoportePendientesAdmin(token: string): Promise<{ total: number }> {
+  return adminFetch("/admin/soporte/pendientes", token);
+}
+
+export function marcarSolicitudSoporteLeidaAdmin(token: string, id: string): Promise<{ id: string; leida: boolean }> {
+  return adminFetch(`/admin/soporte/${id}/leida`, token, { method: "PATCH" });
+}

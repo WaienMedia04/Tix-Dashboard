@@ -5,14 +5,18 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Building2, ChevronsLeft, ChevronsRight, LayoutDashboard, LogOut, Moon, Sun, X } from "lucide-react";
-import { borrarTokenAdmin } from "@/lib/admin-auth";
+import { Building2, ChevronsLeft, ChevronsRight, LayoutDashboard, LifeBuoy, LogOut, Moon, Sun, X } from "lucide-react";
+import { borrarTokenAdmin, leerTokenAdmin } from "@/lib/admin-auth";
+import { fetchSolicitudesSoportePendientesAdmin } from "@/lib/admin-api";
 import { useEsMobile } from "@/lib/use-es-mobile";
 
 const NAV = [
   { href: "/admin/dashboard", label: "Dashboard global", icon: LayoutDashboard },
   { href: "/admin/empresas", label: "Empresas", icon: Building2 },
+  { href: "/admin/soporte", label: "Soporte", icon: LifeBuoy },
 ];
+
+const INTERVALO_PENDIENTES_MS = 45_000;
 
 const CLAVE = "tix-admin-sidebar";
 
@@ -24,10 +28,30 @@ export function AdminSidebar({ abierto = false, onCerrar }: { abierto?: boolean;
   const esMobile = useEsMobile();
   const [montado, setMontado] = useState(false);
   const [col, setCol] = useState(() => typeof window !== "undefined" && sessionStorage.getItem(CLAVE) === "1");
+  const [pendientes, setPendientes] = useState(0);
 
   // Patrón oficial de next-themes: evita el mismatch de hidratación.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMontado(true), []);
+
+  useEffect(() => {
+    const token = leerTokenAdmin();
+    if (!token) return;
+    let cancelado = false;
+    function cargar() {
+      fetchSolicitudesSoportePendientesAdmin(token!)
+        .then((r) => {
+          if (!cancelado) setPendientes(r.total);
+        })
+        .catch(() => {});
+    }
+    cargar();
+    const id = setInterval(cargar, INTERVALO_PENDIENTES_MS);
+    return () => {
+      cancelado = true;
+      clearInterval(id);
+    };
+  }, []);
 
   const esOscuro = montado && resolvedTheme === "dark";
   const colVisual = esMobile ? false : col;
@@ -117,7 +141,14 @@ export function AdminSidebar({ abierto = false, onCerrar }: { abierto?: boolean;
                     transition={{ duration: 0.22, ease: "easeOut" }}
                   />
                 )}
-                <item.icon className="relative z-10 h-4 w-4 shrink-0" />
+                <span className="relative z-10 shrink-0">
+                  <item.icon className="h-4 w-4" />
+                  {item.href === "/admin/soporte" && pendientes > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-semibold text-white">
+                      {pendientes > 9 ? "9+" : pendientes}
+                    </span>
+                  )}
+                </span>
                 {!colVisual && <span className="relative z-10 truncate">{item.label}</span>}
                 {colVisual && (
                   <span className="pointer-events-none absolute left-full z-20 ml-2 -translate-x-1 rounded-md bg-foreground px-2 py-1 text-xs font-medium whitespace-nowrap text-background opacity-0 shadow-elegant transition-all duration-150 group-hover:translate-x-0 group-hover:opacity-100">

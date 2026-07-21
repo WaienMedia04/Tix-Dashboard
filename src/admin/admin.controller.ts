@@ -170,4 +170,25 @@ export class AdminController {
   borrarTalento(@Param('id') id: string) {
     return this.adminService.borrarTalento(id);
   }
+
+  // ── Solicitudes de soporte (Dock del panel) ───────────────────────────────
+
+  @Get('soporte')
+  @UseGuards(AdminGuard)
+  listarSolicitudesSoporte() {
+    return this.adminService.listarSolicitudesSoporte();
+  }
+
+  @Get('soporte/pendientes')
+  @UseGuards(AdminGuard)
+  async contarSolicitudesSoportePendientes() {
+    const total = await this.adminService.contarSolicitudesSoportePendientes();
+    return { total };
+  }
+
+  @Patch('soporte/:id/leida')
+  @UseGuards(AdminGuard)
+  marcarSolicitudSoporteLeida(@Param('id') id: string) {
+    return this.adminService.marcarSolicitudSoporteLeida(id);
+  }
 }

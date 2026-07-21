@@ -901,6 +901,27 @@ export async function restablecerPasswordUsuarioTalento(
   return res.json();
 }
 
+export type TipoSoporte = "AVERIA" | "SUGERENCIA";
+
+export async function crearSolicitudSoporte(
+  slug: string,
+  datos: { tipo: TipoSoporte; mensaje: string },
+): Promise<{ id: string; tipo: TipoSoporte; mensaje: string; createdAt: string }> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/soporte`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    const cuerpo = await res.json().catch(() => null);
+    throw new Error(cuerpo?.message ?? "No se pudo enviar la solicitud");
+  }
+  return res.json();
+}
+
 export async function actualizarFotoTalento(
   talentoId: string,
   fotoUrl: string,

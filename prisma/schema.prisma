@@ -65,6 +65,7 @@ model Empresa {
   estampasOtorgadas EstampaOtorgada[]
   notificaciones    Notificacion[]
   departamentos     DepartamentoDefinicion[]
+  solicitudesSoporte SolicitudSoporte[]
 }
 
 /**
@@ -148,9 +149,34 @@ model Usuario {
   estampasOtorgadas    EstampaOtorgada[]
   notificacionesLeidas NotificacionLectura[]
   notasMuralEnviadas   MuralNotaAdhesiva[]
+  solicitudesSoporte   SolicitudSoporte[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
+}
+
+enum TipoSoporte {
+  AVERIA
+  SUGERENCIA
+}
+
+/// Solicitudes de soporte que CEO/RRHH/Gerente envían desde el Dock del
+/// panel — las revisa el equipo de Talentix (IAGIL) desde el panel admin,
+/// no algo que la propia empresa consulte de vuelta.
+model SolicitudSoporte {
+  id        String      @id @default(cuid())
+  empresaId String
+  usuarioId String
+  tipo      TipoSoporte
+  mensaje   String
+  leida     Boolean     @default(false)
+  createdAt DateTime    @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId])
+  @@index([leida])
 }
 
 model Worklog {

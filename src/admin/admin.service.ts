@@ -418,6 +418,39 @@ export class AdminService {
     return cambiarRolUsuario(this.prisma, usuarioId, rol, talentoId);
   }
 
+  // ── Solicitudes de soporte (Dock del panel) ──────────────────────────────
+
+  async listarSolicitudesSoporte() {
+    return this.prisma.solicitudSoporte.findMany({
+      select: {
+        id: true,
+        tipo: true,
+        mensaje: true,
+        leida: true,
+        createdAt: true,
+        empresa: { select: { nombre: true, slug: true } },
+        usuario: { select: { nombre: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async contarSolicitudesSoportePendientes() {
+    return this.prisma.solicitudSoporte.count({ where: { leida: false } });
+  }
+
+  async marcarSolicitudSoporteLeida(id: string) {
+    const solicitud = await this.prisma.solicitudSoporte.findUnique({
+      where: { id },
+    });
+    if (!solicitud) throw new NotFoundException('Solicitud no encontrada');
+    return this.prisma.solicitudSoporte.update({
+      where: { id },
+      data: { leida: true },
+      select: { id: true, leida: true },
+    });
+  }
+
   private async validarEmpresaExiste(id: string) {
     const empresa = await this.prisma.empresa.findUnique({ where: { id } });
     if (!empresa) throw new NotFoundException('Empresa no encontrada');

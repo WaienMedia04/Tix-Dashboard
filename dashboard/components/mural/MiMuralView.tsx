@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { Building2, Gift, NotebookPen, Palette, Sparkles, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Building2, Gift, NotebookPen, Palette, Sparkles, StickyNote, Users } from "lucide-react";
 import { type MuralPropio, fetchMuralDeTalento, fetchMuralPropio } from "@/lib/api";
 import { fondoMuralCss, fondoMuralTexto } from "@/lib/mural-fondos";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Modal } from "@/components/Modal";
+import Dock from "@/components/vendor/Dock/Dock";
 import { LanyardBadge } from "./LanyardBadge";
 import { PerfilDivertidoForm } from "./PerfilDivertidoForm";
 import { SobreMiSoloLectura } from "./SobreMiSoloLectura";
@@ -30,12 +31,14 @@ export function MiMuralView({
   rol?: string;
 }) {
   const editable = talentoId === undefined;
+  const router = useRouter();
   const [mural, setMural] = useState<MuralPropio | null>(null);
   const [error, setError] = useState(false);
   const [mostrarSobreMi, setMostrarSobreMi] = useState(false);
   const [mostrarFondo, setMostrarFondo] = useState(false);
   const [mostrarCompaneros, setMostrarCompaneros] = useState(false);
   const [mostrarEstampas, setMostrarEstampas] = useState(false);
+  const [mostrarNuevaNota, setMostrarNuevaNota] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,52 +116,18 @@ export function MiMuralView({
             </p>
           )}
 
-          {/* Botones flotantes: abren en modal para no ocupar espacio del muro */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-            <button
-              onClick={() => setMostrarSobreMi(true)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-card/90 px-4 py-2 text-xs font-medium text-foreground shadow-elegant backdrop-blur-sm transition-transform hover:scale-105"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              {editable ? "Sobre mí" : "Sobre esta persona"}
-            </button>
-            {editable && (
+          {/* En el mural propio, "Sobre mí" vive en el Dock de abajo junto al resto. */}
+          {!editable && (
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
               <button
-                onClick={() => setMostrarFondo(true)}
+                onClick={() => setMostrarSobreMi(true)}
                 className="inline-flex items-center gap-1.5 rounded-full bg-card/90 px-4 py-2 text-xs font-medium text-foreground shadow-elegant backdrop-blur-sm transition-transform hover:scale-105"
               >
-                <Palette className="h-3.5 w-3.5" />
-                Fondo
+                <Sparkles className="h-3.5 w-3.5" />
+                Sobre esta persona
               </button>
-            )}
-            {editable && (
-              <Link
-                href={rol === "TALENTO" ? `/${slug}/mi-espacio` : `/${slug}/bitacoras`}
-                className="inline-flex items-center gap-1.5 rounded-full bg-card/90 px-4 py-2 text-xs font-medium text-foreground shadow-elegant backdrop-blur-sm transition-transform hover:scale-105"
-              >
-                <NotebookPen className="h-3.5 w-3.5" />
-                Mis Bitácoras
-              </Link>
-            )}
-            {editable && (
-              <button
-                onClick={() => setMostrarCompaneros(true)}
-                className="inline-flex items-center gap-1.5 rounded-full bg-card/90 px-4 py-2 text-xs font-medium text-foreground shadow-elegant backdrop-blur-sm transition-transform hover:scale-105"
-              >
-                <Users className="h-3.5 w-3.5" />
-                Compañeros
-              </button>
-            )}
-            {editable && (
-              <button
-                onClick={() => setMostrarEstampas(true)}
-                className="inline-flex items-center gap-1.5 rounded-full bg-card/90 px-4 py-2 text-xs font-medium text-foreground shadow-elegant backdrop-blur-sm transition-transform hover:scale-105"
-              >
-                <Gift className="h-3.5 w-3.5" />
-                Mis Estampas
-              </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Lienzo libre: notas y estampas se arrastran sobre todo este contenedor */}
@@ -171,8 +140,53 @@ export function MiMuralView({
           fondoId={mural.perfil.fondoId}
           contenedorRef={contenedorRef}
           onNotasChange={(notas) => setMural((prev) => (prev ? { ...prev, notas } : prev))}
+          mostrarNuevaNota={mostrarNuevaNota}
+          onCerrarNuevaNota={() => setMostrarNuevaNota(false)}
         />
       </div>
+
+      {editable && (
+        <div className="pointer-events-none fixed inset-0 z-40 print:hidden">
+          <Dock
+            items={[
+              {
+                icon: <Sparkles className="h-5 w-5 text-amber-400" />,
+                label: "Sobre mí",
+                onClick: () => setMostrarSobreMi(true),
+              },
+              {
+                icon: <Palette className="h-5 w-5 text-fuchsia-400" />,
+                label: "Fondo",
+                onClick: () => setMostrarFondo(true),
+              },
+              {
+                icon: <NotebookPen className="h-5 w-5 text-cyan-400" />,
+                label: "Mis Bitácoras",
+                onClick: () => router.push(rol === "TALENTO" ? `/${slug}/mi-espacio` : `/${slug}/bitacoras`),
+              },
+              {
+                icon: <Users className="h-5 w-5 text-emerald-400" />,
+                label: "Compañeros",
+                onClick: () => setMostrarCompaneros(true),
+              },
+              {
+                icon: <Gift className="h-5 w-5 text-rose-400" />,
+                label: "Mis Estampas",
+                onClick: () => setMostrarEstampas(true),
+              },
+              {
+                icon: <StickyNote className="h-5 w-5 text-yellow-400" />,
+                label: "Agregar nota",
+                onClick: () => setMostrarNuevaNota(true),
+              },
+            ]}
+            className="pointer-events-auto"
+            panelHeight={64}
+            baseItemSize={46}
+            magnification={62}
+          />
+        </div>
+      )}
 
       <Modal
         open={mostrarSobreMi}

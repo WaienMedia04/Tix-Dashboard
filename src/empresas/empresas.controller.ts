@@ -21,6 +21,7 @@ import { CrearUsuarioEmpresaDto } from './dto/crear-usuario-empresa.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { ActualizarLogoEmpresaDto } from './dto/actualizar-logo-empresa.dto';
 import { ActualizarDepartamentoGestionadoDto } from './dto/actualizar-departamento-gestionado.dto';
+import { CrearSolicitudSoporteDto } from './dto/crear-solicitud-soporte.dto';
 import { EnviarNotaDto } from '../mural/dto/enviar-nota.dto';
 import { CambiarCorreoDto } from '../auth/dto/cambiar-correo.dto';
 import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
@@ -262,5 +263,17 @@ export class EmpresasController {
       req.actor!,
       usuarioId,
     );
+  }
+
+  /** Solicitud de soporte (avería/sugerencia) desde el Dock del panel — la revisa el equipo de Talentix. */
+  @Post(':slug/soporte')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH', 'MANAGER')
+  crearSolicitudSoporte(
+    @Param('slug') slug: string,
+    @Body() dto: CrearSolicitudSoporteDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.crearSolicitudSoporte(slug, req.actor!, dto);
   }
 }
