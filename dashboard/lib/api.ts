@@ -1708,15 +1708,16 @@ export async function agregarChatParticipantes(
   return res.json();
 }
 
-export async function salirDeChatGrupo(slug: string, conversacionId: string): Promise<void> {
+/** Elimina la conversación para el usuario actual (chat 1 a 1) o lo saca del grupo (chat grupal). */
+export async function eliminarChatConversacion(slug: string, conversacionId: string): Promise<void> {
   const res = await fetch(
-    `${API_URL}/empresas/${encodeURIComponent(slug)}/chat/conversaciones/${encodeURIComponent(conversacionId)}/salir`,
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/chat/conversaciones/${encodeURIComponent(conversacionId)}/eliminar`,
     { method: "POST", headers: await authHeaders() },
   );
   if (res.status === 401) {
     throw new SesionInvalidaError("Sesión inválida o expirada");
   }
   if (!res.ok) {
-    throw new Error("No se pudo salir del grupo");
+    throw new Error("No se pudo eliminar la conversación");
   }
 }

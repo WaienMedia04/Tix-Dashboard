@@ -485,7 +485,18 @@ export class ChatService {
     return this.mapearParaUsuario(conversacionId, usuario.id);
   }
 
-  async salirDeGrupo(slug: string, actor: Actor, conversacionId: string) {
+  /**
+   * "Eliminar chat" / "Salir del grupo": ambos casos son lo mismo por
+   * debajo — borrar la fila de ChatParticipante de este usuario. En un 1 a 1
+   * eso saca la conversación de su lista sin afectar al otro participante
+   * (si ambos la eliminan, no queda nadie apuntando a ella, así que se borra
+   * la conversación entera — cascada se lleva los mensajes con ella).
+   */
+  async eliminarConversacion(
+    slug: string,
+    actor: Actor,
+    conversacionId: string,
+  ) {
     const usuario = this.exigirUsuario(actor);
     const empresaId = await this.resolverEmpresaId(slug, actor);
     const participante = await this.exigirParticipante(
@@ -494,13 +505,19 @@ export class ChatService {
       empresaId,
     );
 
-    if (!participante.conversacion.esGrupo) {
-      throw new BadRequestException('Solo se puede salir de un grupo');
-    }
-
     await this.prisma.chatParticipante.delete({
       where: { id: participante.id },
     });
+
+    const participantesRestantes = await this.prisma.chatParticipante.count({
+      where: { conversacionId },
+    });
+    if (participantesRestantes === 0) {
+      await this.prisma.chatConversacion.delete({
+        where: { id: conversacionId },
+      });
+    }
+
     return { ok: true };
   }
 }

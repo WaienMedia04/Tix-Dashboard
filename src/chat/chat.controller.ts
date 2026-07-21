@@ -87,12 +87,12 @@ export class ChatController {
     return this.chatService.agregarParticipantes(slug, req.actor!, id, dto);
   }
 
-  @Post('conversaciones/:id/salir')
-  salirDeGrupo(
+  @Post('conversaciones/:id/eliminar')
+  eliminarConversacion(
     @Param('slug') slug: string,
     @Param('id') id: string,
     @Req() req: RequestConActor,
   ) {
-    return this.chatService.salirDeGrupo(slug, req.actor!, id);
+    return this.chatService.eliminarConversacion(slug, req.actor!, id);
   }
 }
