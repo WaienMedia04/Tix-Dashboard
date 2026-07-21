@@ -89,8 +89,8 @@ export function MiMuralView({
         {/* Decoración: metaballs flotando en la esquina superior izquierda del mural. */}
         <div className="absolute top-0 left-0 z-0 hidden h-48 w-48 sm:block lg:h-64 lg:w-64 print:hidden">
           <MetaBalls
-            color="#ffffff"
-            cursorBallColor="#ffffff"
+            color="#9333ea"
+            cursorBallColor="#06b6d4"
             cursorBallSize={1}
             ballCount={15}
             animationSize={30}
