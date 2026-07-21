@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Menu, PenSquare } from "lucide-react";
 import { usePanel } from "./PanelContext";
 import { CampanaNotificaciones } from "@/components/notificaciones/CampanaNotificaciones";
+import { MenuUsuario } from "./MenuUsuario";
 
 export function Header({
   empresaNombre,
@@ -61,10 +62,12 @@ export function Header({
           <PenSquare className="h-4.5 w-4.5" />
         </Link>
         <CampanaNotificaciones slug={slug} />
-        <div className="text-right">
+        <div className="hidden text-right sm:block">
           <p className="max-w-[40vw] truncate text-sm font-medium text-foreground">{empresaNombre}</p>
           <p className="text-xs text-muted-foreground capitalize">Plan {plan}</p>
         </div>
+        <div className="h-6 w-px shrink-0 bg-border" />
+        <MenuUsuario />
       </div>
     </header>
   );

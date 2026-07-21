@@ -7,16 +7,26 @@ export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
   async me(usuario: Usuario) {
-    const empresa = await this.prisma.empresa.findUnique({
-      where: { id: usuario.empresaId },
-      select: { slug: true, nombre: true },
-    });
+    const [empresa, talento] = await Promise.all([
+      this.prisma.empresa.findUnique({
+        where: { id: usuario.empresaId },
+        select: { slug: true, nombre: true },
+      }),
+      usuario.talentoId
+        ? this.prisma.talento.findUnique({
+            where: { id: usuario.talentoId },
+            select: { fotoUrl: true },
+          })
+        : null,
+    ]);
     return {
       usuario: {
         id: usuario.id,
         nombre: usuario.nombre,
+        email: usuario.email,
         rol: usuario.rol,
         talentoId: usuario.talentoId,
+        fotoUrl: talento?.fotoUrl ?? null,
         passwordEstablecida: usuario.passwordEstablecida,
       },
       empresa,

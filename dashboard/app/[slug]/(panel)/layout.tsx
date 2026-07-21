@@ -27,6 +27,8 @@ type Estado =
       rol: Rol;
       usuarioId: string;
       usuarioNombre: string;
+      usuarioEmail: string;
+      usuarioFotoUrl: string | null;
     };
 
 function PanelInterno({ slug, children }: { slug: string; children: React.ReactNode }) {
@@ -74,6 +76,8 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
             rol: sesion.usuario.rol,
             usuarioId: sesion.usuario.id,
             usuarioNombre: sesion.usuario.nombre,
+            usuarioEmail: sesion.usuario.email,
+            usuarioFotoUrl: sesion.usuario.fotoUrl,
           });
         }
       } catch (err) {
@@ -104,6 +108,8 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
         rol: estado.rol,
         usuarioId: estado.usuarioId,
         usuarioNombre: estado.usuarioNombre,
+        usuarioEmail: estado.usuarioEmail,
+        usuarioFotoUrl: estado.usuarioFotoUrl,
         empresa: estado.data.empresa,
         dashboardInicial: estado.data,
       }}

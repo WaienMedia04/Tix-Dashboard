@@ -330,8 +330,10 @@ export type Rol = "CEO" | "RRHH" | "MANAGER" | "TALENTO";
 export interface SesionUsuario {
   id: string;
   nombre: string;
+  email: string;
   rol: Rol;
   talentoId: string | null;
+  fotoUrl: string | null;
   passwordEstablecida: boolean;
 }
 
