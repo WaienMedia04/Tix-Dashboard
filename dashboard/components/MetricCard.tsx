@@ -30,7 +30,7 @@ export function MetricCard({
 }) {
   const valorAnimado = useCountUp(value);
   const primario = variant === "primary";
-  const className = `w-full select-none rounded-xl p-4 text-left shadow-card transition-shadow hover:shadow-elegant ${
+  const className = `h-full w-full select-none rounded-xl p-4 text-left shadow-card transition-shadow hover:shadow-elegant ${
     onClick ? "cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" : ""
   } ${primario ? "bg-primary-dark text-primary-dark-foreground" : bordered ? "border border-border bg-card" : "bg-card"}`;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { PolarAngleAxis, RadialBar, RadialBarChart } from "recharts";
+import { PolarAngleAxis, RadialBar, RadialBarChart, ResponsiveContainer } from "recharts";
 import { COLOR_PISTA_DARK, COLOR_PISTA_LIGHT, useColorPorTema } from "../kpis/colorTokens";
 
 export function GaugeCumplimiento({ porcentaje, onClick }: { porcentaje: number | null; onClick?: () => void }) {
@@ -20,34 +20,34 @@ export function GaugeCumplimiento({ porcentaje, onClick }: { porcentaje: number 
         {porcentaje === null ? (
           <p className="text-sm text-muted-foreground">—</p>
         ) : (
-          <div className="relative">
-            <RadialBarChart
-              width={180}
-              height={96}
-              cx="50%"
-              cy="100%"
-              innerRadius="72%"
-              outerRadius="100%"
-              barSize={14}
-              startAngle={180}
-              endAngle={0}
-              data={data}
-            >
-              <defs>
-                <linearGradient id="gaugeGradientCumplimiento" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#00F2FF" />
-                  <stop offset="100%" stopColor="#BC00FF" />
-                </linearGradient>
-              </defs>
-              <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-              <RadialBar
-                dataKey="value"
-                cornerRadius={8}
-                background={{ fill: colorPista }}
-                isAnimationActive
-                animationDuration={600}
-              />
-            </RadialBarChart>
+          <div className="relative h-24 w-full max-w-[180px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart
+                cx="50%"
+                cy="100%"
+                innerRadius="72%"
+                outerRadius="100%"
+                barSize={14}
+                startAngle={180}
+                endAngle={0}
+                data={data}
+              >
+                <defs>
+                  <linearGradient id="gaugeGradientCumplimiento" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#00F2FF" />
+                    <stop offset="100%" stopColor="#BC00FF" />
+                  </linearGradient>
+                </defs>
+                <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                <RadialBar
+                  dataKey="value"
+                  cornerRadius={8}
+                  background={{ fill: colorPista }}
+                  isAnimationActive
+                  animationDuration={600}
+                />
+              </RadialBarChart>
+            </ResponsiveContainer>
             <p className="font-display absolute inset-x-0 bottom-1 text-center text-2xl font-semibold text-foreground tabular-nums">
               {porcentaje}%
             </p>
