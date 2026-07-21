@@ -7,7 +7,7 @@ import { type CumpleanosResponse, fetchCumpleanos } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useEsMobile } from "@/lib/use-es-mobile";
-import { BouncingBalls } from "@/components/cumpleanos/BouncingBalls";
+import Ballpit from "@/components/vendor/Ballpit/Ballpit";
 
 const COLORES_GLOBOS = ["#FF477E", "#FFD23F", "#06D6A0", "#118AB2", "#EF476F", "#FFA62B", "#9B5DE5", "#F72585"];
 
@@ -48,12 +48,12 @@ export function CumpleanosView({ slug }: { slug: string }) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-8">
-      {/* Bloque: cumpleaños de hoy — fondo negro con bolitas (Canvas 2D) detrás de toda la sección */}
+      {/* Bloque: cumpleaños de hoy — fondo negro con Ballpit (three.js) detrás de toda la sección */}
       <section className="dark relative overflow-hidden rounded-2xl border border-border bg-black shadow-elegant">
         <div className="relative min-h-[22rem] sm:min-h-[26rem]">
           {!esMobile && hoy.length > 0 && (
             <div className="absolute inset-0 z-0">
-              <BouncingBalls count={45} gravity={0.35} friction={0.99} wallBounce={0.85} followCursor colors={COLORES_GLOBOS} />
+              <Ballpit count={45} gravity={0.7} friction={0.8} wallBounce={0.95} followCursor colors={COLORES_GLOBOS} />
             </div>
           )}
 
