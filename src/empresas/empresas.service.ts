@@ -34,6 +34,7 @@ import {
   talentoActivoScopeWhere,
   talentoScopeWhere,
 } from '../auth/talento-scope.util';
+import { validarDepartamentoPermitido } from './departamento.util';
 
 /** Días de ausencia autorizada quedan fuera del numerador y denominador. */
 function excluirAusencias<T extends { estadoEnvio: string }>(
@@ -1158,8 +1159,23 @@ export class EmpresasService {
     };
   }
 
+  /** Catálogo de departamentos configurado por Talentix para esta empresa. */
+  async departamentos(slug: string, actor: Actor) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+    return this.prisma.departamentoDefinicion.findMany({
+      where: { empresaId: empresa.id },
+      select: { id: true, nombre: true },
+      orderBy: { nombre: 'asc' },
+    });
+  }
+
   async crearTalento(slug: string, actor: Actor, dto: CrearTalentoDto) {
     const empresa = await this.resolverEmpresa(slug, actor);
+    await validarDepartamentoPermitido(
+      this.prisma,
+      empresa.id,
+      dto.departamento?.trim(),
+    );
 
     const talento = await this.prisma.talento.create({
       data: {
@@ -1198,6 +1214,13 @@ export class EmpresasService {
    */
   async crearUsuario(slug: string, actor: Actor, dto: CrearUsuarioEmpresaDto) {
     const empresa = await this.resolverEmpresa(slug, actor);
+    if (dto.rol === 'MANAGER') {
+      await validarDepartamentoPermitido(
+        this.prisma,
+        empresa.id,
+        dto.departamentoGestionado?.trim(),
+      );
+    }
 
     if (dto.talentoId) {
       const talento = await this.prisma.talento.findUnique({
@@ -1291,6 +1314,11 @@ export class EmpresasService {
         'Solo un usuario con rol Gerente puede tener un departamento asignado',
       );
     }
+    await validarDepartamentoPermitido(
+      this.prisma,
+      empresa.id,
+      departamentoGestionado,
+    );
     return this.prisma.usuario.update({
       where: { id: usuarioId },
       data: { departamentoGestionado },

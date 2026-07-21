@@ -4,12 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { upload } from "@vercel/blob/client";
-import { Bot, ChevronLeft, Copy, Eye, EyeOff, KeyRound, Mail, Plus, Trash2, UserCog, X } from "lucide-react";
+import { Bot, Building2, ChevronLeft, Copy, Eye, EyeOff, KeyRound, Mail, Plus, Trash2, UserCog, X } from "lucide-react";
 import {
   type EmpresaAdmin,
   type EmpleadoAdmin,
   type RolAdmin,
   type UsuarioAdmin,
+  type DepartamentoAdmin,
   AdminNoAutorizadoError,
   AdminConflictoError,
   fetchAdminDashboard,
@@ -25,6 +26,9 @@ import {
   cambiarCorreoUsuarioAdmin,
   restablecerPasswordAdmin,
   cambiarRolUsuarioAdmin,
+  fetchDepartamentosAdmin,
+  crearDepartamentoAdmin,
+  borrarDepartamentoAdmin,
 } from "@/lib/admin-api";
 import { leerTokenAdmin, borrarTokenAdmin } from "@/lib/admin-auth";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -423,17 +427,29 @@ export default function AdminEmpresaDetallePage() {
   const [guardandoRolId, setGuardandoRolId] = useState<string | null>(null);
   const [rolError, setRolError] = useState<string | null>(null);
 
+  const [departamentos, setDepartamentos] = useState<DepartamentoAdmin[]>([]);
+  const [nuevoDepartamentoNombre, setNuevoDepartamentoNombre] = useState("");
+  const [guardandoDepartamento, setGuardandoDepartamento] = useState(false);
+  const [departamentoError, setDepartamentoError] = useState<string | null>(null);
+  const [eliminandoDepartamentoId, setEliminandoDepartamentoId] = useState<string | null>(null);
+
   useEffect(() => {
     const token = leerTokenAdmin();
     if (!token) { router.replace("/admin"); return; }
 
-    Promise.all([fetchAdminDashboard(token), fetchEmpleadosAdmin(token, id), fetchUsuariosAdmin(token, id)])
-      .then(([dash, emps, usrs]) => {
+    Promise.all([
+      fetchAdminDashboard(token),
+      fetchEmpleadosAdmin(token, id),
+      fetchUsuariosAdmin(token, id),
+      fetchDepartamentosAdmin(token, id),
+    ])
+      .then(([dash, emps, usrs, deptos]) => {
         const emp = dash.empresas.find((e) => e.id === id) ?? null;
         setEmpresa(emp);
         if (emp) setEditForm({ nombre: emp.nombre, plan: emp.plan, codigoAcceso: emp.codigoAcceso ?? "" });
         setEmpleados(emps);
         setUsuarios(usrs);
+        setDepartamentos(deptos);
         setCargando(false);
       })
       .catch((err) => {
@@ -441,6 +457,37 @@ export default function AdminEmpresaDetallePage() {
         else setCargando(false);
       });
   }, [id, router]);
+
+  async function handleCrearDepartamento(e: React.FormEvent) {
+    e.preventDefault();
+    const token = leerTokenAdmin();
+    if (!token || !nuevoDepartamentoNombre.trim()) return;
+    setGuardandoDepartamento(true);
+    setDepartamentoError(null);
+    try {
+      const nuevo = await crearDepartamentoAdmin(token, id, nuevoDepartamentoNombre.trim());
+      setDepartamentos((prev) => [...prev, nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+      setNuevoDepartamentoNombre("");
+    } catch (err) {
+      setDepartamentoError(err instanceof Error ? err.message : "No se pudo crear el departamento");
+    } finally {
+      setGuardandoDepartamento(false);
+    }
+  }
+
+  async function handleEliminarDepartamento(departamentoId: string) {
+    const token = leerTokenAdmin();
+    if (!token) return;
+    setEliminandoDepartamentoId(departamentoId);
+    try {
+      await borrarDepartamentoAdmin(token, id, departamentoId);
+      setDepartamentos((prev) => prev.filter((d) => d.id !== departamentoId));
+    } catch (err) {
+      setDepartamentoError(err instanceof Error ? err.message : "No se pudo eliminar el departamento");
+    } finally {
+      setEliminandoDepartamentoId(null);
+    }
+  }
 
   async function handleCambiarCorreo(usuarioId: string) {
     const token = leerTokenAdmin();
@@ -910,6 +957,57 @@ export default function AdminEmpresaDetallePage() {
                       </button>
                     )}
                   </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Departamentos */}
+        <div className="rounded-xl border border-border bg-card shadow-card">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <h2 className="font-display flex items-center gap-2 text-base font-semibold text-foreground">
+              <Building2 className="h-4 w-4" /> Departamentos ({departamentos.length})
+            </h2>
+          </div>
+          <p className="px-5 pt-4 text-xs text-muted-foreground">
+            Una vez que agregues al menos uno, en el panel de esta empresa el campo &ldquo;Departamento&rdquo; (de
+            empleados y gerentes) se vuelve una lista para elegir de aquí en vez de texto libre.
+          </p>
+          <form onSubmit={(e) => void handleCrearDepartamento(e)} className="flex items-end gap-2 px-5 py-4">
+            <div className="flex-1">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">Nombre</label>
+              <input
+                value={nuevoDepartamentoNombre}
+                onChange={(e) => setNuevoDepartamentoNombre(e.target.value)}
+                placeholder="Ej. Ventas"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={guardandoDepartamento || !nuevoDepartamentoNombre.trim()}
+              className="flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
+            >
+              <Plus className="h-3.5 w-3.5" /> {guardandoDepartamento ? "Agregando..." : "Agregar"}
+            </button>
+          </form>
+          {departamentoError && <p className="px-5 pb-2 text-sm text-destructive">{departamentoError}</p>}
+          <div className="divide-y divide-border">
+            {departamentos.length === 0 ? (
+              <p className="px-5 py-6 text-sm text-muted-foreground">Sin departamentos configurados todavía.</p>
+            ) : (
+              departamentos.map((d) => (
+                <div key={d.id} className="flex items-center justify-between gap-3 px-5 py-2.5">
+                  <p className="text-sm text-foreground">{d.nombre}</p>
+                  <button
+                    onClick={() => void handleEliminarDepartamento(d.id)}
+                    disabled={eliminandoDepartamentoId === d.id}
+                    className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                    title="Eliminar departamento"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               ))
             )}

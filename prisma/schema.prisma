@@ -64,6 +64,25 @@ model Empresa {
   estampasDefinidas EstampaDefinicion[]
   estampasOtorgadas EstampaOtorgada[]
   notificaciones    Notificacion[]
+  departamentos     DepartamentoDefinicion[]
+}
+
+/**
+ * Catálogo de departamentos que el equipo de Talentix (panel admin) define
+ * por empresa — CEO/RRHH eligen de esta lista al asignar el departamento de
+ * un talento o de un Gerente (Usuario.departamentoGestionado), en vez de
+ * escribirlo libremente, para que ambos lados coincidan siempre exacto.
+ */
+model DepartamentoDefinicion {
+  id        String   @id @default(cuid())
+  empresaId String
+  nombre    String
+  createdAt DateTime @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, nombre])
+  @@index([empresaId])
 }
 
 model Talento {

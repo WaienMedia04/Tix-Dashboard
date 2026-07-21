@@ -20,6 +20,7 @@ import { Actor } from '../auth/actor.types';
 import { CvExtractionService, type CvExtraido } from './cv-extraction.service';
 import { WorklogsService } from '../worklogs/worklogs.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { validarDepartamentoPermitido } from '../empresas/departamento.util';
 
 @Injectable()
 export class TalentosService {
@@ -50,7 +51,14 @@ export class TalentosService {
     actor: Actor,
     dto: ActualizarTalentoDto,
   ) {
-    await this.resolverTalento(talentoId, actor);
+    const talento = await this.resolverTalento(talentoId, actor);
+    if (dto.departamento !== undefined) {
+      await validarDepartamentoPermitido(
+        this.prisma,
+        talento.empresaId,
+        dto.departamento?.trim(),
+      );
+    }
 
     return this.prisma.talento.update({
       where: { id: talentoId },

@@ -17,6 +17,7 @@ import { EditarEmpresaDto } from './dto/editar-empresa.dto';
 import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
 import { CrearTalentoAdminDto } from './dto/crear-talento-admin.dto';
 import { CrearUsuarioAdminDto } from './dto/crear-usuario-admin.dto';
+import { CrearDepartamentoAdminDto } from './dto/crear-departamento-admin.dto';
 
 @Injectable()
 export class AdminService {
@@ -180,6 +181,50 @@ export class AdminService {
       },
       select: { id: true, nombreCompleto: true, rol: true, estado: true },
     });
+  }
+
+  // ── Catálogo de departamentos por empresa ────────────────────────────────
+
+  async departamentosDeEmpresa(empresaId: string) {
+    await this.validarEmpresaExiste(empresaId);
+    return this.prisma.departamentoDefinicion.findMany({
+      where: { empresaId },
+      select: { id: true, nombre: true, createdAt: true },
+      orderBy: { nombre: 'asc' },
+    });
+  }
+
+  async crearDepartamento(empresaId: string, dto: CrearDepartamentoAdminDto) {
+    await this.validarEmpresaExiste(empresaId);
+    const nombre = dto.nombre.trim();
+
+    const existente = await this.prisma.departamentoDefinicion.findUnique({
+      where: { empresaId_nombre: { empresaId, nombre } },
+    });
+    if (existente) {
+      throw new ConflictException(
+        'Ese departamento ya existe para esta empresa',
+      );
+    }
+
+    return this.prisma.departamentoDefinicion.create({
+      data: { empresaId, nombre },
+      select: { id: true, nombre: true, createdAt: true },
+    });
+  }
+
+  async borrarDepartamento(empresaId: string, departamentoId: string) {
+    await this.validarEmpresaExiste(empresaId);
+    const departamento = await this.prisma.departamentoDefinicion.findUnique({
+      where: { id: departamentoId },
+    });
+    if (!departamento || departamento.empresaId !== empresaId) {
+      throw new NotFoundException('Departamento no encontrado');
+    }
+    await this.prisma.departamentoDefinicion.delete({
+      where: { id: departamentoId },
+    });
+    return { ok: true };
   }
 
   async fichaTalento(talentoId: string) {

@@ -412,6 +412,29 @@ export async function fetchBitacoras(slug: string, filtros: BitacorasFiltros): P
   return res.json();
 }
 
+export interface DepartamentoDefinicion {
+  id: string;
+  nombre: string;
+}
+
+/** Catálogo de departamentos configurado por Talentix (panel admin) para esta empresa. */
+export async function fetchDepartamentos(slug: string): Promise<DepartamentoDefinicion[]> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/departamentos`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError(`Empresa "${slug}" no encontrada`);
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar los departamentos");
+  }
+  return res.json();
+}
+
 export async function fetchEmpleados(slug: string): Promise<EmpleadoResumen[]> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/empleados`, {
     headers: await authHeaders(),

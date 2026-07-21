@@ -20,6 +20,7 @@ import { EstadoEmpresaDto } from './dto/estado-empresa.dto';
 import { CrearTalentoAdminDto } from './dto/crear-talento-admin.dto';
 import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
 import { CrearUsuarioAdminDto } from './dto/crear-usuario-admin.dto';
+import { CrearDepartamentoAdminDto } from './dto/crear-departamento-admin.dto';
 import { CambiarCorreoDto } from '../auth/dto/cambiar-correo.dto';
 import { CambiarRolDto } from '../auth/dto/cambiar-rol.dto';
 
@@ -110,6 +111,32 @@ export class AdminController {
   @UseGuards(AdminGuard)
   crearEmpleado(@Param('id') id: string, @Body() dto: CrearTalentoAdminDto) {
     return this.adminService.crearEmpleado(id, dto);
+  }
+
+  // ── Catálogo de departamentos por empresa ─────────────────────────────────
+
+  @Get('empresas/:id/departamentos')
+  @UseGuards(AdminGuard)
+  departamentosDeEmpresa(@Param('id') id: string) {
+    return this.adminService.departamentosDeEmpresa(id);
+  }
+
+  @Post('empresas/:id/departamentos')
+  @UseGuards(AdminGuard)
+  crearDepartamento(
+    @Param('id') id: string,
+    @Body() dto: CrearDepartamentoAdminDto,
+  ) {
+    return this.adminService.crearDepartamento(id, dto);
+  }
+
+  @Delete('empresas/:id/departamentos/:departamentoId')
+  @UseGuards(AdminGuard)
+  borrarDepartamento(
+    @Param('id') id: string,
+    @Param('departamentoId') departamentoId: string,
+  ) {
+    return this.adminService.borrarDepartamento(id, departamentoId);
   }
 
   // ── Talentos individuales ─────────────────────────────────────────────────

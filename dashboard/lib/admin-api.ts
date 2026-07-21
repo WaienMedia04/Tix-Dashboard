@@ -216,6 +216,37 @@ export function borrarEmpleadoAdmin(token: string, talentoId: string): Promise<{
   return adminFetch(`/admin/talentos/${talentoId}`, token, { method: "DELETE" });
 }
 
+// ── Catálogo de departamentos por empresa ──────────────────────────────────
+
+export interface DepartamentoAdmin {
+  id: string;
+  nombre: string;
+  createdAt: string;
+}
+
+export function fetchDepartamentosAdmin(token: string, empresaId: string): Promise<DepartamentoAdmin[]> {
+  return adminFetch(`/admin/empresas/${empresaId}/departamentos`, token);
+}
+
+export function crearDepartamentoAdmin(
+  token: string,
+  empresaId: string,
+  nombre: string,
+): Promise<DepartamentoAdmin> {
+  return adminFetch(`/admin/empresas/${empresaId}/departamentos`, token, {
+    method: "POST",
+    body: JSON.stringify({ nombre }),
+  });
+}
+
+export function borrarDepartamentoAdmin(
+  token: string,
+  empresaId: string,
+  departamentoId: string,
+): Promise<{ ok: boolean }> {
+  return adminFetch(`/admin/empresas/${empresaId}/departamentos/${departamentoId}`, token, { method: "DELETE" });
+}
+
 export interface UsuarioAdmin {
   id: string;
   email: string;

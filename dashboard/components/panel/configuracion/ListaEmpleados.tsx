@@ -4,11 +4,13 @@ import { Fragment, useEffect, useState } from "react";
 import { Building2, KeyRound, Mail, Plus, Users } from "lucide-react";
 import {
   type DatosNuevoTalento,
+  type DepartamentoDefinicion,
   type EmpleadoResumen,
   type RolInvitable,
   type UsuarioTalento,
   crearTalento,
   crearUsuarioTalento,
+  fetchDepartamentos,
   fetchEmpleados,
   fetchUsuariosTalento,
   cambiarCorreoUsuarioTalento,
@@ -16,6 +18,7 @@ import {
   restablecerPasswordUsuarioTalento,
 } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
+import { CampoDepartamento } from "@/components/CampoDepartamento";
 import { StaggerGroup, StaggerItem, StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 import { SkeletonTableRows } from "@/components/motion/Skeleton";
 
@@ -86,6 +89,8 @@ export function ListaEmpleados({ slug }: { slug: string }) {
   const [guardandoDeptoId, setGuardandoDeptoId] = useState<string | null>(null);
   const [deptoError, setDeptoError] = useState<string | null>(null);
 
+  const [departamentos, setDepartamentos] = useState<DepartamentoDefinicion[]>([]);
+
   const [invitandoTalentoId, setInvitandoTalentoId] = useState<string | null>(null);
   const [formAcceso, setFormAcceso] = useState({
     email: "",
@@ -108,6 +113,11 @@ export function ListaEmpleados({ slug }: { slug: string }) {
     fetchUsuariosTalento(slug)
       .then((usrs) => {
         if (!cancelado) setUsuarios(usrs);
+      })
+      .catch(() => {});
+    fetchDepartamentos(slug)
+      .then((deptos) => {
+        if (!cancelado) setDepartamentos(deptos);
       })
       .catch(() => {});
     return () => {
@@ -303,17 +313,12 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                 required
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Departamento
-              </label>
-              <input
-                value={form.departamento}
-                onChange={(e) => campo("departamento", e.target.value)}
-                className={CAMPO_CLASES}
-                placeholder="Opcional"
-              />
-            </div>
+            <CampoDepartamento
+              label="Departamento"
+              value={form.departamento ?? ""}
+              onChange={(v) => campo("departamento", v)}
+              departamentos={departamentos}
+            />
           </div>
           <div className="flex flex-wrap gap-3">
             <div className="flex flex-col gap-1">
@@ -406,17 +411,12 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                 </select>
               </div>
               {nuevoAcceso.rolLogin === "MANAGER" && (
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                    Departamento a gestionar
-                  </label>
-                  <input
-                    value={nuevoAcceso.departamentoGestionado}
-                    onChange={(e) => setNuevoAcceso((f) => ({ ...f, departamentoGestionado: e.target.value }))}
-                    className={CAMPO_CLASES}
-                    placeholder="Ej. Ventas"
-                  />
-                </div>
+                <CampoDepartamento
+                  label="Departamento a gestionar"
+                  value={nuevoAcceso.departamentoGestionado}
+                  onChange={(v) => setNuevoAcceso((f) => ({ ...f, departamentoGestionado: v }))}
+                  departamentos={departamentos}
+                />
               )}
             </div>
           )}
@@ -572,19 +572,12 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                               </select>
                             </div>
                             {formAcceso.rolLogin === "MANAGER" && (
-                              <div className="flex flex-col gap-1">
-                                <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                  Departamento a gestionar
-                                </label>
-                                <input
-                                  value={formAcceso.departamentoGestionado}
-                                  onChange={(ev) =>
-                                    setFormAcceso((f) => ({ ...f, departamentoGestionado: ev.target.value }))
-                                  }
-                                  className={CAMPO_CLASES}
-                                  placeholder="Ej. Ventas"
-                                />
-                              </div>
+                              <CampoDepartamento
+                                label="Departamento a gestionar"
+                                value={formAcceso.departamentoGestionado}
+                                onChange={(v) => setFormAcceso((f) => ({ ...f, departamentoGestionado: v }))}
+                                departamentos={departamentos}
+                              />
                             )}
                             <button
                               onClick={() => void handleDarAcceso(e.id, e.nombreCompleto)}
@@ -711,19 +704,12 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                           </select>
                         </div>
                         {formAcceso.rolLogin === "MANAGER" && (
-                          <div className="flex flex-col gap-1">
-                            <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                              Departamento a gestionar
-                            </label>
-                            <input
-                              value={formAcceso.departamentoGestionado}
-                              onChange={(ev) =>
-                                setFormAcceso((f) => ({ ...f, departamentoGestionado: ev.target.value }))
-                              }
-                              className={CAMPO_CLASES}
-                              placeholder="Ej. Ventas"
-                            />
-                          </div>
+                          <CampoDepartamento
+                            label="Departamento a gestionar"
+                            value={formAcceso.departamentoGestionado}
+                            onChange={(v) => setFormAcceso((f) => ({ ...f, departamentoGestionado: v }))}
+                            departamentos={departamentos}
+                          />
                         )}
                         <div className="flex items-center gap-2">
                           <button
@@ -814,12 +800,27 @@ export function ListaEmpleados({ slug }: { slug: string }) {
 
                 {editandoDeptoId === u.id && (
                   <div className="flex items-center gap-2 rounded-md border border-border bg-background/50 p-2">
-                    <input
-                      value={nuevoDeptoValor}
-                      onChange={(e) => setNuevoDeptoValor(e.target.value)}
-                      placeholder="Ej. Ventas"
-                      className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
+                    {departamentos.length > 0 ? (
+                      <select
+                        value={nuevoDeptoValor}
+                        onChange={(e) => setNuevoDeptoValor(e.target.value)}
+                        className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                      >
+                        <option value="">Sin especificar</option>
+                        {departamentos.map((d) => (
+                          <option key={d.id} value={d.nombre}>
+                            {d.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        value={nuevoDeptoValor}
+                        onChange={(e) => setNuevoDeptoValor(e.target.value)}
+                        placeholder="Ej. Ventas"
+                        className="flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    )}
                     <button
                       onClick={() => void handleGuardarDepto(u.id)}
                       disabled={guardandoDeptoId === u.id}

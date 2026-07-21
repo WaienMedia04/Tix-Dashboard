@@ -19,12 +19,15 @@ import {
 } from "lucide-react";
 import {
   type BitacoraItem,
+  type DepartamentoDefinicion,
   type EmpleadoDetalle,
   actualizarEstadoTalento,
   actualizarTalento,
+  fetchDepartamentos,
   fetchEmpleadoDetalle,
 } from "@/lib/api";
 import { usePanel } from "../PanelContext";
+import { CampoDepartamento } from "@/components/CampoDepartamento";
 import { MetricCard } from "@/components/MetricCard";
 import { TablaBitacoras } from "../bitacoras/TablaBitacoras";
 import { WorklogDetalleModal, bitacoraItemADetalle } from "../bitacoras/WorklogDetalleModal";
@@ -111,10 +114,18 @@ function InfoRRHH({
   editable: boolean;
   onActualizada: (campos: Partial<EmpleadoDetalle["talento"]>) => void;
 }) {
+  const { slug } = usePanel();
   const [editando, setEditando] = useState(false);
   const [form, setForm] = useState<FormRRHH>(() => formularioDesde(talento));
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [departamentos, setDepartamentos] = useState<DepartamentoDefinicion[]>([]);
+
+  useEffect(() => {
+    fetchDepartamentos(slug)
+      .then(setDepartamentos)
+      .catch(() => {});
+  }, [slug]);
 
   function iniciarEdicion() {
     setForm(formularioDesde(talento));
@@ -161,7 +172,13 @@ function InfoRRHH({
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <CampoEditable label="Departamento" value={form.departamento} onChange={(v) => campo("departamento", v)} />
+          <CampoDepartamento
+            label="Departamento"
+            value={form.departamento}
+            onChange={(v) => campo("departamento", v)}
+            departamentos={departamentos}
+            className={CAMPO_CLASES}
+          />
           <CampoEditable label="Cédula" value={form.cedula} onChange={(v) => campo("cedula", v)} />
           <CampoEditable label="Correo" type="email" value={form.correo} onChange={(v) => campo("correo", v)} />
           <CampoEditable label="Teléfono" value={form.telefono} onChange={(v) => campo("telefono", v)} />

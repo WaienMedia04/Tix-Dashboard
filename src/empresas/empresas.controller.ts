@@ -177,6 +177,14 @@ export class EmpresasController {
     return this.empresasService.alertas(slug, req.actor!);
   }
 
+  /** Catálogo de departamentos configurado por Talentix (panel admin) — solo lectura. */
+  @Get(':slug/departamentos')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  departamentos(@Param('slug') slug: string, @Req() req: RequestConActor) {
+    return this.empresasService.departamentos(slug, req.actor!);
+  }
+
   @Post(':slug/talentos')
   @UseGuards(CompanyAccessGuard, RolesGuard)
   @Roles('CEO', 'RRHH')
