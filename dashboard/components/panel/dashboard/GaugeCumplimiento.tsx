@@ -10,21 +10,23 @@ export function GaugeCumplimiento({ porcentaje, onClick }: { porcentaje: number 
   return (
     <div
       onClick={onClick}
-      className={`flex h-full select-none flex-col rounded-xl border border-border bg-card p-4 shadow-card ${
+      className={`flex h-full select-none flex-col rounded-xl border border-border bg-card p-3 shadow-card ${
         onClick ? "cursor-pointer transition-shadow hover:shadow-elegant" : ""
       }`}
     >
       <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Cumplimiento del equipo</p>
       <p className="mt-0.5 text-[11px] text-muted-foreground">% de bitácoras enviadas</p>
-      <div className="relative mt-1 flex flex-1 items-end justify-center">
+      <div className="relative mt-0.5 min-h-0 flex-1">
         {porcentaje === null ? (
-          <p className="text-sm text-muted-foreground">—</p>
+          <div className="flex h-full items-center justify-center">
+            <p className="text-sm text-muted-foreground">—</p>
+          </div>
         ) : (
-          <div className="relative h-24 w-full max-w-[180px]">
+          <div className="relative mx-auto h-full w-full max-w-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <RadialBarChart
                 cx="50%"
-                cy="100%"
+                cy="78%"
                 innerRadius="72%"
                 outerRadius="100%"
                 barSize={14}
@@ -48,7 +50,7 @@ export function GaugeCumplimiento({ porcentaje, onClick }: { porcentaje: number 
                 />
               </RadialBarChart>
             </ResponsiveContainer>
-            <p className="font-display absolute inset-x-0 bottom-1 text-center text-2xl font-semibold text-foreground tabular-nums">
+            <p className="font-display absolute inset-x-0 bottom-0 text-center text-2xl font-semibold text-foreground tabular-nums">
               {porcentaje}%
             </p>
           </div>

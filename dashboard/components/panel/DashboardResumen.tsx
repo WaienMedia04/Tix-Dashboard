@@ -38,7 +38,7 @@ export function DashboardResumen() {
   return (
     <StaggerGroup className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <StaggerItem className="h-44">
+        <StaggerItem className="h-40">
           <MetricCard
             label="Total de bitácoras"
             value={String(data.metricas.totalBitacoras)}
@@ -48,7 +48,7 @@ export function DashboardResumen() {
             onClick={() => setDetalleKey("total-bitacoras")}
           />
         </StaggerItem>
-        <StaggerItem className="h-44">
+        <StaggerItem className="h-40">
           <MetricCard
             label="% de cumplimiento"
             value={`${data.metricas.porcentajeEnviadas}%`}
@@ -57,7 +57,7 @@ export function DashboardResumen() {
             onClick={() => setDetalleKey("cumplimiento")}
           />
         </StaggerItem>
-        <StaggerItem className="h-44">
+        <StaggerItem className="h-40">
           <MetricCard
             label="Puntaje IA promedio"
             value={puntajeIAPromedioGlobal(data)}
@@ -65,7 +65,7 @@ export function DashboardResumen() {
             onClick={() => setDetalleKey("puntaje-ia")}
           />
         </StaggerItem>
-        <StaggerItem className="h-44">
+        <StaggerItem className="h-40">
           <MetricCard
             label="Empleados activos"
             value={String(data.metricas.empleadosActivos)}
@@ -73,13 +73,13 @@ export function DashboardResumen() {
             onClick={() => setDetalleKey("empleados-activos")}
           />
         </StaggerItem>
-        <StaggerItem className="h-44">
+        <StaggerItem className="h-40">
           <GaugeCumplimiento
             porcentaje={data.metricas.totalBitacoras === 0 ? null : data.metricas.porcentajeEnviadas}
             onClick={() => setDetalleKey("cumplimiento-equipo")}
           />
         </StaggerItem>
-        <StaggerItem className="h-44">
+        <StaggerItem className="h-40">
           <GaugeCheckin
             porcentaje={data.metricas.empleadosActivos === 0 ? null : data.metricas.porcentajeCheckinHoy}
             onClick={() => setDetalleKey("checkin-equipo")}
