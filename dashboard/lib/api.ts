@@ -1176,9 +1176,15 @@ export interface CumpleanosMesItem extends CumpleanosHoyItem {
   dia: number;
 }
 
+export interface CumpleanosPorMes {
+  mes: number;
+  talentos: CumpleanosMesItem[];
+}
+
 export interface CumpleanosResponse {
   hoy: CumpleanosHoyItem[];
   esteMes: CumpleanosMesItem[];
+  porMes: CumpleanosPorMes[];
 }
 
 /** Cumpleaños de hoy y del resto del mes en curso — visible para toda la empresa. */

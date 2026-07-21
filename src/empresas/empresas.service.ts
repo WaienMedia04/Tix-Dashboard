@@ -202,7 +202,14 @@ export class EmpresasService {
       .filter((t) => t.mes === mesHoy && !idsHoy.has(t.id))
       .sort((a, b) => a.dia - b.dia);
 
-    return { hoy, esteMes };
+    const porMes = Array.from({ length: 12 }, (_, i) => i + 1).map((mes) => ({
+      mes,
+      talentos: conMesDia
+        .filter((t) => t.mes === mes)
+        .sort((a, b) => a.dia - b.dia),
+    }));
+
+    return { hoy, esteMes, porMes };
   }
 
   async dashboard(slug: string, actor: Actor) {
