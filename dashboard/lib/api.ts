@@ -1101,6 +1101,34 @@ export async function actualizarCvDatosTalento(
   return res.json();
 }
 
+export interface ComparacionCv {
+  puntajeAjuste: number;
+  resumen: string;
+  fortalezas: string[];
+  brechas: string[];
+  otrosRolesSugeridos: string[];
+}
+
+/** Compara el CV ya extraído del talento contra una descripción de puesto pegada al vuelo — no se persiste. */
+export async function compararCvTalento(
+  talentoId: string,
+  descripcionPuesto: string,
+): Promise<{ evaluado: boolean; comparacion: ComparacionCv | null }> {
+  const res = await fetch(`${API_URL}/talentos/${encodeURIComponent(talentoId)}/comparar-cv`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify({ descripcionPuesto }),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    const cuerpo = await res.json().catch(() => null);
+    throw new Error(cuerpo?.message ?? "No se pudo comparar el CV");
+  }
+  return res.json();
+}
+
 // ── Mi Mural ────────────────────────────────────────────────────────────
 
 export type TipoEstampaForma = "REDONDEADO" | "CIRCULAR" | "CUADRADO" | "DIAMANTE" | "LIBRE";

@@ -2,8 +2,15 @@
 
 import { useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
-import { ExternalLink, FileText, Loader2, Pencil, Sparkles, Upload } from "lucide-react";
-import { actualizarCvDatosTalento, actualizarCvTalento, authHeaders, type CvDatosExtraidos } from "@/lib/api";
+import { ExternalLink, FileText, Loader2, Pencil, Sparkles, Target, Upload } from "lucide-react";
+import {
+  actualizarCvDatosTalento,
+  actualizarCvTalento,
+  authHeaders,
+  compararCvTalento,
+  type ComparacionCv,
+  type CvDatosExtraidos,
+} from "@/lib/api";
 import { mensajeError } from "@/lib/errores";
 
 const CAMPO_CLASES =
@@ -75,6 +82,119 @@ function SubidaCv({
           e.target.value = "";
         }}
       />
+    </div>
+  );
+}
+
+function ColorPuntaje(puntaje: number): string {
+  if (puntaje >= 70) return "text-success";
+  if (puntaje >= 40) return "text-warning";
+  return "text-destructive";
+}
+
+function CompararCv({ talentoId }: { talentoId: string }) {
+  const [abierto, setAbierto] = useState(false);
+  const [descripcion, setDescripcion] = useState("");
+  const [evaluando, setEvaluando] = useState(false);
+  const [resultado, setResultado] = useState<ComparacionCv | null | undefined>(undefined);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleComparar() {
+    if (!descripcion.trim()) return;
+    setEvaluando(true);
+    setError(null);
+    setResultado(undefined);
+    try {
+      const r = await compararCvTalento(talentoId, descripcion.trim());
+      setResultado(r.comparacion);
+      if (!r.evaluado) setError("No se pudo completar el análisis con IA. Intenta de nuevo.");
+    } catch (err) {
+      setError(mensajeError(err, "No se pudo comparar el CV."));
+    } finally {
+      setEvaluando(false);
+    }
+  }
+
+  return (
+    <div className="border-t border-border pt-3">
+      <button
+        onClick={() => setAbierto((v) => !v)}
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+      >
+        <Target className="h-3.5 w-3.5" />
+        Comparar con una descripción de puesto
+      </button>
+
+      {abierto && (
+        <div className="mt-3 space-y-3">
+          <textarea
+            value={descripcion}
+            onChange={(e) => setDescripcion(e.target.value)}
+            rows={5}
+            maxLength={6000}
+            placeholder="Pega aquí la descripción del puesto (actual o uno al que podría aplicar en el futuro)..."
+            className={CAMPO_CLASES}
+          />
+          <button
+            onClick={() => void handleComparar()}
+            disabled={evaluando || !descripcion.trim()}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {evaluando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {evaluando ? "Analizando..." : "Comparar con IA"}
+          </button>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+
+          {resultado && (
+            <div className="space-y-3 rounded-md bg-muted/40 p-3">
+              <div className="flex items-center gap-2">
+                <span className={`font-display text-2xl font-semibold tabular-nums ${ColorPuntaje(resultado.puntajeAjuste)}`}>
+                  {resultado.puntajeAjuste}
+                </span>
+                <span className="text-xs text-muted-foreground">/ 100 de ajuste</span>
+              </div>
+              <p className="text-sm text-foreground">{resultado.resumen}</p>
+
+              {resultado.fortalezas.length > 0 && (
+                <div>
+                  <p className="mb-1 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Fortalezas</p>
+                  <ul className="list-inside list-disc space-y-0.5 text-sm text-muted-foreground">
+                    {resultado.fortalezas.map((f, idx) => (
+                      <li key={idx}>{f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {resultado.brechas.length > 0 && (
+                <div>
+                  <p className="mb-1 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Brechas</p>
+                  <ul className="list-inside list-disc space-y-0.5 text-sm text-muted-foreground">
+                    {resultado.brechas.map((b, idx) => (
+                      <li key={idx}>{b}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {resultado.otrosRolesSugeridos.length > 0 && (
+                <div>
+                  <p className="mb-1 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                    Otros roles a los que podría aplicar
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {resultado.otrosRolesSugeridos.map((r) => (
+                      <span key={r} className="rounded-md bg-accent px-2 py-0.5 text-xs text-accent-foreground">
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -285,6 +405,8 @@ export function CvTalento({
               </ul>
             </div>
           )}
+
+          {editable && <CompararCv talentoId={talentoId} />}
 
           {editable && (
             <div className="border-t border-border pt-3">

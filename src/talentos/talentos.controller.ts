@@ -14,6 +14,7 @@ import { ActualizarFotoDto } from './dto/actualizar-foto.dto';
 import { ActualizarCarnetDto } from './dto/actualizar-carnet.dto';
 import { ActualizarCvDto } from './dto/actualizar-cv.dto';
 import { ActualizarCvDatosDto } from './dto/actualizar-cv-datos.dto';
+import { CompararCvDto } from './dto/comparar-cv.dto';
 import { RegistrarWorklogPropioDto } from './dto/registrar-worklog-propio.dto';
 import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 import { SessionGuard } from '../auth/guards/session.guard';
@@ -93,5 +94,17 @@ export class TalentosController {
     @Req() req: RequestConActor,
   ) {
     return this.talentosService.actualizarCvDatos(talentoId, req.actor!, dto);
+  }
+
+  /** Compara el CV ya extraído del talento contra una descripción de puesto pegada al vuelo. */
+  @Post(':talentoId/comparar-cv')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  compararCv(
+    @Param('talentoId') talentoId: string,
+    @Body() dto: CompararCvDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.talentosService.compararCv(talentoId, req.actor!, dto);
   }
 }

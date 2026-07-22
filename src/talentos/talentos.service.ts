@@ -18,6 +18,8 @@ import {
 } from './dto/registrar-worklog-propio.dto';
 import { Actor } from '../auth/actor.types';
 import { CvExtractionService, type CvExtraido } from './cv-extraction.service';
+import { CvComparacionService } from './cv-comparacion.service';
+import { CompararCvDto } from './dto/comparar-cv.dto';
 import { WorklogsService } from '../worklogs/worklogs.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { validarDepartamentoPermitido } from '../empresas/departamento.util';
@@ -29,6 +31,7 @@ export class TalentosService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cvExtraction: CvExtractionService,
+    private readonly cvComparacion: CvComparacionService,
     private readonly worklogs: WorklogsService,
     private readonly notificaciones: NotificacionesService,
   ) {}
@@ -215,6 +218,26 @@ export class TalentosService {
         cvDatosExtraidos: true,
       },
     });
+  }
+
+  /**
+   * Compara el CV ya extraído del talento contra una descripción de puesto
+   * pegada al vuelo — no se persiste, se calcula en cada llamada.
+   */
+  async compararCv(talentoId: string, actor: Actor, dto: CompararCvDto) {
+    const talento = await this.resolverTalento(talentoId, actor);
+    const cv = talento.cvDatosExtraidos as CvExtraido | null;
+    if (!cv) {
+      throw new NotFoundException(
+        'Este talento todavía no tiene datos de CV extraídos',
+      );
+    }
+
+    const comparacion = await this.cvComparacion.comparar(
+      dto.descripcionPuesto.trim(),
+      cv,
+    );
+    return { evaluado: comparacion !== null, comparacion };
   }
 
   /**
