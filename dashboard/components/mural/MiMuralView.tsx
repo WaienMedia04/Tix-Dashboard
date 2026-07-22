@@ -19,6 +19,9 @@ import { MuralCanvas } from "./MuralCanvas";
 import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
 import { EstadoModal } from "./EstadoModal";
+
+/** Gris claro de fondo de la sección de la Pizarra — también es el color final del difuminado que la une con el mural de arriba. */
+const COLOR_FONDO_PIZARRA = "#f4f4f5";
 import { PizarraSocial } from "@/components/pizarra/PizarraSocial";
 
 export function MiMuralView({
@@ -85,7 +88,7 @@ export function MiMuralView({
   return (
     <>
     <div
-      className="min-h-[calc(100vh-73px)] transition-[background] duration-500"
+      className="relative min-h-[calc(100vh-73px)] transition-[background] duration-500"
       style={{ background: fondoMuralCss(mural.perfil.fondoId) }}
     >
       {/* Muro libre: un solo contenedor cubre encabezado + lienzo, para que
@@ -139,15 +142,6 @@ export function MiMuralView({
                 <Radio className="h-3.5 w-3.5" />
                 Poner un estado
               </button>
-            )}
-            {mural.racha > 0 && (
-              <div
-                className="inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3.5 py-1.5 text-xs font-semibold backdrop-blur-sm"
-                style={{ color: texto.color }}
-                title="Días seguidos enviando bitácora"
-              >
-                🔥 {mural.racha} {mural.racha === 1 ? "día" : "días"}
-              </div>
             )}
           </div>
           <GradientText
@@ -220,6 +214,15 @@ export function MiMuralView({
           onCerrarNuevaNota={() => setMostrarNuevaNota(false)}
         />
       </div>
+
+      {mural.racha > 0 && (
+        <div
+          className="fixed bottom-4 left-4 z-30 inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3.5 py-1.5 text-xs font-semibold text-white backdrop-blur-sm print:hidden"
+          title="Días seguidos enviando bitácora"
+        >
+          🔥 {mural.racha} {mural.racha === 1 ? "día" : "días"}
+        </div>
+      )}
 
       {editable && (
         <div className="pointer-events-none fixed inset-0 z-40 print:hidden">
@@ -336,12 +339,15 @@ export function MiMuralView({
           onActualizado={(perfil) => setMural((prev) => (prev ? { ...prev, perfil } : prev))}
         />
       )}
+
+      {/* Difumina el borde inferior del mural hacia el gris de la Pizarra, para que no se note el corte entre las dos secciones. */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-28 sm:h-40"
+        style={{ background: `linear-gradient(to bottom, transparent, ${COLOR_FONDO_PIZARRA})` }}
+      />
     </div>
 
-    <div
-      className="px-4 py-10 transition-[background] duration-500 sm:px-8"
-      style={{ background: fondoMuralCss(mural.perfil.fondoId) }}
-    >
+    <div className="px-4 py-10 sm:px-8" style={{ background: COLOR_FONDO_PIZARRA }}>
       <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} />
     </div>
     </>
