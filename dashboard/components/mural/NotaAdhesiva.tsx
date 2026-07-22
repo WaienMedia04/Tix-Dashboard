@@ -1,12 +1,103 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Maximize2, X } from "lucide-react";
+import { Bold, Expand, Italic, Maximize2, Smile, X } from "lucide-react";
 import { type NotaMural, actualizarNotaMural, borrarNotaMural } from "@/lib/api";
 import { COLORES_NOTA, colorNotaEstilo } from "@/lib/mural-fondos";
+import { EMOJIS_NOTA } from "@/lib/emojis-nota.constant";
+import { renderizarTextoNota } from "@/lib/nota-texto";
+import { Modal } from "@/components/Modal";
 
 const ESCALA_MIN = 0.7;
 const ESCALA_MAX = 1.8;
+
+/** Envuelve la selección actual del textarea con un marcador (negrita/cursiva) o inserta un emoji en el cursor. */
+function BarraFormato({
+  valor,
+  onCambiar,
+  textareaRef,
+}: {
+  valor: string;
+  onCambiar: (v: string) => void;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+}) {
+  const [mostrarEmoji, setMostrarEmoji] = useState(false);
+
+  function envolverSeleccion(marcador: string, relleno: string) {
+    const el = textareaRef.current;
+    if (!el) return;
+    const inicio = el.selectionStart;
+    const fin = el.selectionEnd;
+    const seleccionado = valor.slice(inicio, fin) || relleno;
+    const nuevo = `${valor.slice(0, inicio)}${marcador}${seleccionado}${marcador}${valor.slice(fin)}`;
+    onCambiar(nuevo);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(inicio + marcador.length, inicio + marcador.length + seleccionado.length);
+    });
+  }
+
+  function insertarEmoji(emoji: string) {
+    setMostrarEmoji(false);
+    const el = textareaRef.current;
+    if (!el) {
+      onCambiar(valor + emoji);
+      return;
+    }
+    const inicio = el.selectionStart;
+    const fin = el.selectionEnd;
+    const nuevo = `${valor.slice(0, inicio)}${emoji}${valor.slice(fin)}`;
+    onCambiar(nuevo);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(inicio + emoji.length, inicio + emoji.length);
+    });
+  }
+
+  return (
+    <div className="relative flex items-center gap-1" onPointerDown={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        onClick={() => envolverSeleccion("**", "negrita")}
+        title="Negrita"
+        className="flex h-6 w-6 items-center justify-center rounded hover:bg-black/10"
+      >
+        <Bold className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => envolverSeleccion("_", "cursiva")}
+        title="Cursiva"
+        className="flex h-6 w-6 items-center justify-center rounded hover:bg-black/10"
+      >
+        <Italic className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setMostrarEmoji((v) => !v)}
+        title="Insertar emoji"
+        className="flex h-6 w-6 items-center justify-center rounded hover:bg-black/10"
+      >
+        <Smile className="h-3.5 w-3.5" />
+      </button>
+
+      {mostrarEmoji && (
+        <div className="absolute top-7 left-0 z-20 grid w-48 grid-cols-8 gap-0.5 rounded-md bg-white/95 p-1.5 text-base shadow-elegant">
+          {EMOJIS_NOTA.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => insertarEmoji(emoji)}
+              className="rounded hover:bg-black/10"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function NotaAdhesiva({
   nota,
@@ -27,9 +118,13 @@ export function NotaAdhesiva({
   const notaRef = useRef<HTMLDivElement>(null);
   const arrastrandoRef = useRef(false);
   const redimensionandoRef = useRef(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaModalRef = useRef<HTMLTextAreaElement>(null);
   const [texto, setTexto] = useState(nota.texto);
   const [editando, setEditando] = useState(false);
   const [mostrarColores, setMostrarColores] = useState(false);
+  const [mostrarExpandir, setMostrarExpandir] = useState(false);
+  const [borrador, setBorrador] = useState(nota.texto);
   const estilo = colorNotaEstilo(nota.color);
 
   function handlePointerDown(e: React.PointerEvent) {
@@ -115,6 +210,16 @@ export function NotaAdhesiva({
     actualizarNotaMural(nota.id, { texto: textoFinal }).catch(() => {});
   }
 
+  function guardarBorrador() {
+    const textoFinal = borrador.trim() || nota.texto;
+    setTexto(textoFinal);
+    setBorrador(textoFinal);
+    setMostrarExpandir(false);
+    if (textoFinal === nota.texto) return;
+    onActualizada({ ...nota, texto: textoFinal });
+    actualizarNotaMural(nota.id, { texto: textoFinal }).catch(() => {});
+  }
+
   async function cambiarColor(color: string) {
     setMostrarColores(false);
     onActualizada({ ...nota, color });
@@ -158,36 +263,54 @@ export function NotaAdhesiva({
           : { background: fondoNota, color: estilo.texto }
       }
     >
-      {editable && (
-        <div className="flex items-start justify-between gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="flex items-start justify-between gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex items-center gap-1">
+          {editable && (
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setMostrarColores((v) => !v);
+              }}
+              className="h-3.5 w-3.5 rounded-full border border-black/10"
+              style={{ background: estilo.bg }}
+              aria-label="Cambiar color"
+            />
+          )}
+        </div>
+        <div className="flex items-center gap-1.5">
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
-              setMostrarColores((v) => !v);
+              setBorrador(texto);
+              setMostrarExpandir(true);
             }}
-            className="h-3.5 w-3.5 rounded-full border border-black/10"
-            style={{ background: estilo.bg }}
-            aria-label="Cambiar color"
-          />
-          <button
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              void eliminar();
-            }}
-            aria-label="Borrar nota"
+            aria-label="Expandir nota"
             className="opacity-60 hover:opacity-100"
           >
-            <X className="h-3.5 w-3.5" />
+            <Expand className="h-3.5 w-3.5" />
           </button>
+          {editable && (
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                void eliminar();
+              }}
+              aria-label="Borrar nota"
+              className="opacity-60 hover:opacity-100"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
-      )}
+      </div>
 
       {editable && mostrarColores && (
         <div
           onPointerDown={(e) => e.stopPropagation()}
-          className="absolute top-6 left-2 z-10 flex flex-wrap gap-1 rounded-md bg-white/90 p-1.5 shadow-elegant"
+          className="absolute top-6 left-2 z-10 flex flex-wrap items-center gap-1 rounded-md bg-white/90 p-1.5 shadow-elegant"
         >
           {COLORES_NOTA.map((c) => (
             <button
@@ -201,20 +324,37 @@ export function NotaAdhesiva({
               aria-label={c.label}
             />
           ))}
+          <label
+            className="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border border-dashed border-black/30 text-[8px] text-black/60"
+            title="Color libre"
+          >
+            +
+            <input
+              type="color"
+              value={nota.color.startsWith("#") ? nota.color : "#ffffff"}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => void cambiarColor(e.target.value)}
+              className="sr-only"
+            />
+          </label>
         </div>
       )}
 
       {editable && editando ? (
-        <textarea
-          autoFocus
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          onBlur={guardarTexto}
-          onPointerDown={(e) => e.stopPropagation()}
-          maxLength={280}
-          rows={4}
-          className="w-full resize-none bg-transparent text-xs outline-none"
-        />
+        <div className="flex flex-col gap-1">
+          <BarraFormato valor={texto} onCambiar={setTexto} textareaRef={textareaRef} />
+          <textarea
+            ref={textareaRef}
+            autoFocus
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            onBlur={guardarTexto}
+            onPointerDown={(e) => e.stopPropagation()}
+            maxLength={280}
+            rows={4}
+            className="w-full resize-none bg-transparent text-xs outline-none"
+          />
+        </div>
       ) : (
         <p
           onClick={(e) => {
@@ -225,7 +365,7 @@ export function NotaAdhesiva({
           onPointerDown={(e) => e.stopPropagation()}
           className={`min-h-16 whitespace-pre-wrap break-words ${editable ? "cursor-text" : ""}`}
         >
-          {texto}
+          {renderizarTextoNota(texto)}
         </p>
       )}
 
@@ -242,6 +382,44 @@ export function NotaAdhesiva({
           <Maximize2 className="h-2.5 w-2.5 text-foreground/70" />
         </div>
       )}
+
+      <Modal
+        open={mostrarExpandir}
+        onClose={() => (editable ? guardarBorrador() : setMostrarExpandir(false))}
+        title="Nota"
+        size="md"
+      >
+        {editable ? (
+          <div className="space-y-3">
+            <BarraFormato valor={borrador} onCambiar={setBorrador} textareaRef={textareaModalRef} />
+            <textarea
+              ref={textareaModalRef}
+              autoFocus
+              value={borrador}
+              onChange={(e) => setBorrador(e.target.value)}
+              maxLength={280}
+              rows={8}
+              className="w-full resize-none rounded-md border border-border bg-background p-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-ring"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={guardarBorrador}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+              >
+                Guardar
+              </button>
+              <span className="text-xs text-muted-foreground">{borrador.length}/280</span>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-base whitespace-pre-wrap break-words text-foreground">{renderizarTextoNota(texto)}</p>
+            {nota.enviadaPorNombre && (
+              <p className="text-right text-xs font-medium italic text-muted-foreground">— {nota.enviadaPorNombre}</p>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

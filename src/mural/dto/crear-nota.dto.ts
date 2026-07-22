@@ -1,14 +1,14 @@
 import {
-  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   Max,
   MaxLength,
   Min,
 } from 'class-validator';
-import { COLORES_NOTA_MURAL } from '../mural-notas-colores.constant';
+import { PATRON_COLOR_NOTA } from '../mural-notas-colores.constant';
 
 export class CrearNotaDto {
   @IsString()
@@ -16,9 +16,10 @@ export class CrearNotaDto {
   @MaxLength(280)
   texto!: string;
 
+  /** Id de la paleta fija (ej. "amarillo") o color libre en hexadecimal (ej. "#a1b2c3"). */
   @IsString()
   @IsOptional()
-  @IsIn(COLORES_NOTA_MURAL)
+  @Matches(PATRON_COLOR_NOTA, { message: 'Color inválido' })
   color?: string;
 
   @IsNumber()

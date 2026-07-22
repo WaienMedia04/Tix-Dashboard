@@ -62,6 +62,19 @@ export const COLORES_NOTA: { id: string; label: string; bg: string; texto: strin
   { id: "blanco", label: "Blanco", bg: "#FFFFFF", texto: "#18181B" },
 ];
 
+/** Contraste simple por luminancia — texto oscuro sobre colores claros, blanco sobre oscuros. */
+function colorTextoContraste(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminancia > 0.6 ? "#18181B" : "#FFFFFF";
+}
+
+/** Acepta un id de la paleta fija o un color libre en hexadecimal (#rrggbb). */
 export function colorNotaEstilo(colorId: string): { bg: string; texto: string } {
+  if (colorId.startsWith("#")) {
+    return { bg: colorId, texto: colorTextoContraste(colorId) };
+  }
   return COLORES_NOTA.find((c) => c.id === colorId) ?? COLORES_NOTA[0];
 }
