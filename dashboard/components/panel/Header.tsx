@@ -28,6 +28,7 @@ export function Header({
     bitacoras: { titulo: "Bitácoras", subtitulo: "Historial de bitácoras enviadas" },
     empleados: { titulo: "Empleados", subtitulo: "Gestión y perfiles del equipo" },
     murales: { titulo: "Murales", subtitulo: "El mural personal de cada talento" },
+    noticias: { titulo: "Mural informativo", subtitulo: "Noticias, eventos y blog para todo el equipo" },
     kpis: { titulo: "KPIs y Métricas", subtitulo: "Análisis de productividad del equipo" },
     reportes: { titulo: "Reportes", subtitulo: "Resúmenes ejecutivos por período" },
     configuracion: { titulo: "Configuración", subtitulo: "Datos y accesos de la empresa" },

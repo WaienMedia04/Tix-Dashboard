@@ -2036,3 +2036,95 @@ export async function fetchPizarraTriviaRanking(slug: string): Promise<PizarraTr
   }
   return res.json();
 }
+
+// ===== Boletín (mural informativo: noticias, eventos, blog) =====
+
+export type TipoBoletin = "NOTICIA" | "EVENTO" | "BLOG";
+
+export interface BoletinItem {
+  id: string;
+  tipo: TipoBoletin;
+  titulo: string;
+  contenido: string;
+  fechaEvento: string | null;
+  createdAt: string;
+  updatedAt: string;
+  autorNombre: string;
+}
+
+export interface BoletinResponse {
+  data: BoletinItem[];
+  hayMas: boolean;
+}
+
+export async function fetchBoletin(
+  slug: string,
+  opts?: { cursorId?: string; limit?: number },
+): Promise<BoletinResponse> {
+  const params = new URLSearchParams();
+  if (opts?.cursorId) params.set("cursorId", opts.cursorId);
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  const query = params.toString();
+
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/boletin${query ? `?${query}` : ""}`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el mural informativo");
+  }
+  return res.json();
+}
+
+export async function crearBoletin(
+  slug: string,
+  datos: { tipo: TipoBoletin; titulo: string; contenido: string; fechaEvento?: string },
+): Promise<BoletinItem> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/boletin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo publicar");
+  }
+  return res.json();
+}
+
+export async function actualizarBoletin(
+  slug: string,
+  id: string,
+  datos: Partial<{ tipo: TipoBoletin; titulo: string; contenido: string; fechaEvento: string }>,
+): Promise<BoletinItem> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/boletin/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo actualizar la publicación");
+  }
+  return res.json();
+}
+
+export async function borrarBoletin(slug: string, id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/boletin/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: await authHeaders(),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo borrar la publicación");
+  }
+}

@@ -75,7 +75,7 @@ export function PizarraSocial({ slug, miRol }: { slug: string; miRol: string }) 
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5">
+    <div className="w-full min-w-0 flex-1 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5 lg:max-w-2xl">
       <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 sm:px-5">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
           <ClipboardList className="h-4 w-4" />

@@ -19,6 +19,7 @@ import { MuralCanvas } from "./MuralCanvas";
 import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
 import { EstadoModal } from "./EstadoModal";
+import { BoletinInformativo } from "@/components/boletin/BoletinInformativo";
 
 /** Gris claro de fondo de la sección de la Pizarra — también es el color final del difuminado que la une con el mural de arriba. */
 const COLOR_FONDO_PIZARRA = "#e4e4e7";
@@ -353,7 +354,10 @@ export function MiMuralView({
     </div>
 
     <div className="px-4 py-10 sm:px-8" style={{ background: COLOR_FONDO_PIZARRA }}>
-      <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} />
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-6 lg:flex-row">
+        <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} />
+        <BoletinInformativo slug={slug} />
+      </div>
     </div>
     </>
   );

@@ -44,6 +44,12 @@ enum TipoNotificacion {
   NOTA_RECIBIDA
 }
 
+enum TipoBoletin {
+  NOTICIA
+  EVENTO
+  BLOG
+}
+
 model Empresa {
   id                String               @id @default(cuid())
   nombre            String
@@ -71,6 +77,7 @@ model Empresa {
   pizarraEncuestas   PizarraEncuesta[]
   pizarraReconocimientos PizarraReconocimiento[]
   pizarraTriviaRespuestas PizarraTriviaRespuesta[]
+  boletines          Boletin[]
 }
 
 /**
@@ -167,6 +174,7 @@ model Usuario {
   pizarraEncuestaVotos         PizarraEncuestaVoto[]
   pizarraReconocimientosCreados PizarraReconocimiento[]   @relation("PizarraReconocimientosCreados")
   pizarraTriviaRespuestas      PizarraTriviaRespuesta[]
+  boletinesCreados             Boletin[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
@@ -583,4 +591,27 @@ model PizarraTriviaRespuesta {
 
   @@unique([empresaId, usuarioId, fecha])
   @@index([empresaId, fecha])
+}
+
+/**
+ * Mural informativo de la empresa: noticias, eventos y entradas de blog que
+ * publica CEO/RRHH — a diferencia de la Pizarra (social, todos publican),
+ * este es de una sola vía: RRHH/CEO escribe, toda la empresa lo lee.
+ */
+model Boletin {
+  id                 String      @id @default(cuid())
+  empresaId          String
+  tipo               TipoBoletin
+  titulo             String
+  contenido          String
+  /// Solo aplica cuando `tipo` es EVENTO — fecha en que ocurre el evento (distinta de `createdAt`, que es cuándo se publicó).
+  fechaEvento        DateTime?
+  creadoPorUsuarioId String
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  creadoPor Usuario @relation(fields: [creadoPorUsuarioId], references: [id])
+
+  @@index([empresaId, createdAt])
 }
