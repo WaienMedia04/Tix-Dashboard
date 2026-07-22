@@ -338,7 +338,10 @@ export function MiMuralView({
       )}
     </div>
 
-    <div className="bg-page-backdrop px-4 py-10 sm:px-8">
+    <div
+      className="px-4 py-10 transition-[background] duration-500 sm:px-8"
+      style={{ background: fondoMuralCss(mural.perfil.fondoId) }}
+    >
       <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} />
     </div>
     </>
