@@ -147,7 +147,7 @@ export function MiMuralView({
           <GradientText
             colors={coloresNombreMural(mural.perfil.colorNombreId)}
             animationSpeed={4}
-            className="font-display mt-7 text-3xl font-bold sm:text-4xl"
+            className="font-display mt-10 text-3xl font-bold sm:text-4xl"
           >
             {nombreCompleto}
           </GradientText>

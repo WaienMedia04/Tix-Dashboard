@@ -128,7 +128,12 @@ export function NotaAdhesiva({
   const estilo = colorNotaEstilo(nota.color);
 
   function handlePointerDown(e: React.PointerEvent) {
-    if (!arrastrable || editando) return;
+    // El modal "Expandir" se renderiza en un portal fuera del DOM de la nota,
+    // pero React sigue burbujeando el evento por el árbol de componentes —
+    // sin este guard, un pointerdown dentro del modal termina disparando el
+    // arrastre de la nota de abajo y le roba la captura del puntero al modal
+    // (el usuario deja de poder interactuar con él, incl. escribir).
+    if (!arrastrable || editando || mostrarExpandir) return;
     const contenedor = contenedorRef.current;
     const el = notaRef.current;
     if (!contenedor || !el) return;
