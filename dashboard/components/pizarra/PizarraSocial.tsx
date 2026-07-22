@@ -2,17 +2,31 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ClipboardList } from "lucide-react";
-import { type PizarraPost, fetchPizarraPosts } from "@/lib/api";
+import { type PizarraPanel, type PizarraPost, fetchPizarraPanel, fetchPizarraPosts } from "@/lib/api";
 import { PizarraComposer } from "./PizarraComposer";
 import { PizarraPostCard } from "./PizarraPostCard";
+import { PizarraReconocimientoBanner } from "./PizarraReconocimientoBanner";
+import { PizarraNuevoReconocimientoModal } from "./PizarraNuevoReconocimientoModal";
+import { PizarraEncuestaCard } from "./PizarraEncuestaCard";
+import { PizarraNuevaEncuestaModal } from "./PizarraNuevaEncuestaModal";
+import { PizarraContenidoDiarioBanner } from "./PizarraContenidoDiario";
+import { PizarraTimeline } from "./PizarraTimeline";
+import { PizarraTrivia } from "./PizarraTrivia";
 
 const INTERVALO_POLLING_MS = 15_000;
+const INTERVALO_PANEL_MS = 60_000;
 
 /** Pizarra compartida por toda la empresa — mismo contenido se vea desde el mural de quien se vea. */
 export function PizarraSocial({ slug, miRol }: { slug: string; miRol: string }) {
+  const esModerador = miRol === "CEO" || miRol === "RRHH";
+
   const [posts, setPosts] = useState<PizarraPost[] | null>(null);
   const [cargandoMas, setCargandoMas] = useState(false);
   const [hayMas, setHayMas] = useState(false);
+  const [panel, setPanel] = useState<PizarraPanel | null>(null);
+  const [mostrarNuevaEncuesta, setMostrarNuevaEncuesta] = useState(false);
+  const [mostrarNuevoReconocimiento, setMostrarNuevoReconocimiento] = useState(false);
+  const [prefillComposer, setPrefillComposer] = useState<{ texto: string } | null>(null);
 
   const cargar = useCallback(() => {
     fetchPizarraPosts(slug)
@@ -23,11 +37,23 @@ export function PizarraSocial({ slug, miRol }: { slug: string; miRol: string }) 
       .catch(() => setPosts((prev) => prev ?? []));
   }, [slug]);
 
+  const cargarPanel = useCallback(() => {
+    fetchPizarraPanel(slug)
+      .then(setPanel)
+      .catch(() => {});
+  }, [slug]);
+
   useEffect(() => {
     cargar();
     const id = setInterval(cargar, INTERVALO_POLLING_MS);
     return () => clearInterval(id);
   }, [cargar]);
+
+  useEffect(() => {
+    cargarPanel();
+    const id = setInterval(cargarPanel, INTERVALO_PANEL_MS);
+    return () => clearInterval(id);
+  }, [cargarPanel]);
 
   async function cargarMas() {
     if (!posts || posts.length === 0) return;
@@ -49,8 +75,8 @@ export function PizarraSocial({ slug, miRol }: { slug: string; miRol: string }) 
   }
 
   return (
-    <section className="mx-auto w-full max-w-2xl space-y-4 px-4 pt-2 pb-10">
-      <div className="flex items-center gap-2">
+    <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-elegant">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3 sm:px-5">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
           <ClipboardList className="h-4 w-4" />
         </span>
@@ -60,31 +86,73 @@ export function PizarraSocial({ slug, miRol }: { slug: string; miRol: string }) 
         </div>
       </div>
 
-      <PizarraComposer slug={slug} onPublicado={(post) => setPosts((prev) => [post, ...(prev ?? [])])} />
-
-      {posts === null && <div className="h-24 animate-pulse rounded-xl bg-muted" />}
-      {posts !== null && posts.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">Todavía no hay nada en la pizarra. ¡Sé el primero!</p>
-      )}
-      {posts?.map((post) => (
-        <PizarraPostCard
-          key={post.id}
-          slug={slug}
-          post={post}
-          puedeBorrar={post.propio || miRol === "CEO" || miRol === "RRHH"}
-          onActualizado={actualizarPost}
-          onBorrado={(id) => setPosts((prev) => prev?.filter((p) => p.id !== id) ?? prev)}
+      <div className="space-y-4 p-4 sm:p-5">
+        <PizarraReconocimientoBanner
+          reconocimiento={panel?.reconocimientoActivo ?? null}
+          puedeFijar={esModerador}
+          onFijar={() => setMostrarNuevoReconocimiento(true)}
         />
-      ))}
-      {hayMas && (
-        <button
-          onClick={() => void cargarMas()}
-          disabled={cargandoMas}
-          className="mx-auto block text-xs font-medium text-primary hover:underline disabled:opacity-50"
-        >
-          {cargandoMas ? "Cargando…" : "Cargar más"}
-        </button>
-      )}
-    </section>
+
+        <PizarraEncuestaCard
+          slug={slug}
+          encuesta={panel?.encuestaActiva ?? null}
+          puedeCrear={esModerador}
+          onActualizada={(e) => setPanel((prev) => (prev ? { ...prev, encuestaActiva: e } : prev))}
+          onCrear={() => setMostrarNuevaEncuesta(true)}
+        />
+
+        <PizarraContenidoDiarioBanner
+          contenido={panel?.contenidoDiario ?? null}
+          onResponder={(pregunta) => setPrefillComposer({ texto: `❓ ${pregunta}: ` })}
+        />
+
+        <PizarraTimeline slug={slug} />
+
+        <PizarraTrivia slug={slug} />
+
+        <PizarraComposer
+          slug={slug}
+          onPublicado={(post) => setPosts((prev) => [post, ...(prev ?? [])])}
+          prefill={prefillComposer}
+        />
+
+        {posts === null && <div className="h-24 animate-pulse rounded-xl bg-muted" />}
+        {posts !== null && posts.length === 0 && (
+          <p className="py-6 text-center text-sm text-muted-foreground">Todavía no hay nada en la pizarra. ¡Sé el primero!</p>
+        )}
+        {posts?.map((post) => (
+          <PizarraPostCard
+            key={post.id}
+            slug={slug}
+            post={post}
+            puedeBorrar={post.propio || esModerador}
+            onActualizado={actualizarPost}
+            onBorrado={(id) => setPosts((prev) => prev?.filter((p) => p.id !== id) ?? prev)}
+          />
+        ))}
+        {hayMas && (
+          <button
+            onClick={() => void cargarMas()}
+            disabled={cargandoMas}
+            className="mx-auto block text-xs font-medium text-primary hover:underline disabled:opacity-50"
+          >
+            {cargandoMas ? "Cargando…" : "Cargar más"}
+          </button>
+        )}
+      </div>
+
+      <PizarraNuevaEncuestaModal
+        slug={slug}
+        open={mostrarNuevaEncuesta}
+        onClose={() => setMostrarNuevaEncuesta(false)}
+        onCreada={(e) => setPanel((prev) => (prev ? { ...prev, encuestaActiva: e } : prev))}
+      />
+      <PizarraNuevoReconocimientoModal
+        slug={slug}
+        open={mostrarNuevoReconocimiento}
+        onClose={() => setMostrarNuevoReconocimiento(false)}
+        onCreado={(r) => setPanel((prev) => (prev ? { ...prev, reconocimientoActivo: r } : prev))}
+      />
+    </div>
   );
 }

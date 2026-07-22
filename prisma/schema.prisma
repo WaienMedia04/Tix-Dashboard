@@ -68,6 +68,9 @@ model Empresa {
   solicitudesSoporte SolicitudSoporte[]
   chatConversaciones ChatConversacion[]
   pizarraPosts       PizarraPost[]
+  pizarraEncuestas   PizarraEncuesta[]
+  pizarraReconocimientos PizarraReconocimiento[]
+  pizarraTriviaRespuestas PizarraTriviaRespuesta[]
 }
 
 /**
@@ -118,6 +121,7 @@ model Talento {
   notasMural        MuralNotaAdhesiva[]
   estampasRecibidas EstampaOtorgada[]
   notificaciones    Notificacion[]
+  pizarraReconocimientos PizarraReconocimiento[]
 
   @@index([empresaId])
   @@index([empresaId, managerUsuarioId])
@@ -159,6 +163,10 @@ model Usuario {
   pizarraReacciones         PizarraReaccion[]
   pizarraComentariosCreados PizarraComentario[] @relation("PizarraComentariosCreados")
   pizarraMenciones          PizarraMencion[]
+  pizarraEncuestasCreadas       PizarraEncuesta[]         @relation("PizarraEncuestasCreadas")
+  pizarraEncuestaVotos         PizarraEncuestaVoto[]
+  pizarraReconocimientosCreados PizarraReconocimiento[]   @relation("PizarraReconocimientosCreados")
+  pizarraTriviaRespuestas      PizarraTriviaRespuesta[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
@@ -506,4 +514,73 @@ model PizarraMencion {
 
   @@unique([postId, usuarioId])
   @@index([usuarioId])
+}
+
+/// Encuesta que publica CEO/RRHH en la pizarra — solo se muestra la más
+/// reciente como "activa"; las anteriores quedan en el historial.
+model PizarraEncuesta {
+  id                 String   @id @default(cuid())
+  empresaId          String
+  creadoPorUsuarioId String
+  pregunta           String
+  opciones           String[]
+  createdAt          DateTime @default(now())
+
+  empresa   Empresa               @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  creadoPor Usuario               @relation("PizarraEncuestasCreadas", fields: [creadoPorUsuarioId], references: [id])
+  votos     PizarraEncuestaVoto[]
+
+  @@index([empresaId, createdAt])
+}
+
+/// Un voto por usuario por encuesta — votar de nuevo reemplaza el voto anterior (upsert).
+model PizarraEncuestaVoto {
+  id          String   @id @default(cuid())
+  encuestaId  String
+  usuarioId   String
+  opcionIndex Int
+  createdAt   DateTime @default(now())
+
+  encuesta PizarraEncuesta @relation(fields: [encuestaId], references: [id], onDelete: Cascade)
+  usuario  Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([encuestaId, usuarioId])
+  @@index([encuestaId])
+}
+
+/// "Empleado del mes/semana" o "Proyecto destacado" que fija CEO/RRHH en la
+/// pizarra — solo el más reciente con `activo` true se muestra.
+model PizarraReconocimiento {
+  id                 String   @id @default(cuid())
+  empresaId          String
+  talentoId          String
+  titulo             String
+  descripcion        String?
+  creadoPorUsuarioId String
+  activo             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento   Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+  creadoPor Usuario @relation("PizarraReconocimientosCreados", fields: [creadoPorUsuarioId], references: [id])
+
+  @@index([empresaId, activo])
+}
+
+/// Respuesta a la trivia del día — la pregunta en sí vive en código (banco
+/// fijo, rotación determinística por fecha), acá solo se guarda quién
+/// acertó cada día, para el ranking.
+model PizarraTriviaRespuesta {
+  id        String   @id @default(cuid())
+  empresaId String
+  usuarioId String
+  fecha     String
+  correcta  Boolean
+  createdAt DateTime @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, usuarioId, fecha])
+  @@index([empresaId, fecha])
 }

@@ -338,7 +338,7 @@ export function MiMuralView({
       )}
     </div>
 
-    <div className="border-t border-border bg-background">
+    <div className="bg-page-backdrop px-4 py-10 sm:px-8">
       <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} />
     </div>
     </>

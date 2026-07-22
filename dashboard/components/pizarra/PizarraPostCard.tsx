@@ -76,7 +76,7 @@ export function PizarraPostCard({
   const comentariosVisibles = mostrarComentarios ? post.comentarios : post.comentarios.slice(-2);
 
   return (
-    <div className="rounded-xl border border-border bg-card p-3.5 shadow-card">
+    <div className="rounded-xl border border-border/70 bg-background p-3.5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <Avatar nombreCompleto={post.autor.nombre} fotoUrl={post.autor.fotoUrl} size="sm" />

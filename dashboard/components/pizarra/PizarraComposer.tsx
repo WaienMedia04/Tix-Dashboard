@@ -9,9 +9,12 @@ import { Avatar } from "@/components/Avatar";
 export function PizarraComposer({
   slug,
   onPublicado,
+  prefill,
 }: {
   slug: string;
   onPublicado: (post: PizarraPost) => void;
+  /** Cambia de referencia cada vez que algo externo (ej. "Responder" en la pregunta del día) quiere precargar el texto. */
+  prefill?: { texto: string } | null;
 }) {
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -24,6 +27,13 @@ export function PizarraComposer({
       .then(setDirectorio)
       .catch(() => setDirectorio([]));
   }, [slug]);
+
+  useEffect(() => {
+    if (!prefill) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- precarga intencional al hacer clic en "Responder"
+    setTexto(prefill.texto);
+    textareaRef.current?.focus();
+  }, [prefill]);
 
   function actualizarMencion(valor: string, cursor: number) {
     const antes = valor.slice(0, cursor);
@@ -83,7 +93,7 @@ export function PizarraComposer({
   return (
     <form
       onSubmit={(e) => void handleSubmit(e)}
-      className="relative rounded-xl border border-border bg-card p-3 shadow-card"
+      className="relative rounded-xl border border-border/70 bg-background p-3"
     >
       <textarea
         ref={textareaRef}

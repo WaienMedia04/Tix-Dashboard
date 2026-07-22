@@ -1,0 +1,55 @@
+/**
+ * Bancos fijos de preguntas y frases — rotan de forma determinística por
+ * fecha (mismo índice para todos, mismo día) en vez de guardarse en la base
+ * de datos. No requiere administración ni servicios externos.
+ */
+export const PREGUNTAS_DEL_DIA: string[] = [
+  '¿Qué comida elegirías para toda la vida?',
+  '¿Cuál fue tu primer trabajo?',
+  '¿Qué película recomiendas sin dudar?',
+  '¿Perro o gato?',
+  '¿Playa o montaña?',
+  '¿Cuál es tu serie favorita del momento?',
+  '¿Qué app no puede faltar en tu celular?',
+  '¿Café o té?',
+  '¿Cuál es tu hora favorita del día para trabajar?',
+  '¿Qué canción no puede faltar en tu playlist?',
+  '¿Cuál fue el último libro que leíste?',
+  '¿Qué superpoder te gustaría tener?',
+  '¿Cuál es tu snack favorito en la oficina?',
+  '¿Prefieres trabajar en silencio o con música?',
+  '¿Qué destino quieres visitar antes de que termine el año?',
+  '¿Cuál es tu emoji más usado?',
+  '¿Madrugador o nocturno?',
+  '¿Cuál fue tu materia favorita en la escuela?',
+  '¿Qué deporte te gustaría aprender?',
+  '¿Cuál es tu comida dominicana favorita?',
+  '¿Qué videojuego marcó tu infancia?',
+  '¿Prefieres pedir delivery o cocinar?',
+  '¿Cuál es tu meme favorito de todos los tiempos?',
+  '¿Qué habilidad te gustaría dominar este año?',
+  '¿Cuál es tu forma favorita de desconectar después del trabajo?',
+];
+
+export const FRASES_DEL_DIA: string[] = [
+  'El progreso, no la perfección.',
+  'Un pequeño paso hoy vale más que un plan perfecto mañana.',
+  'La constancia le gana al talento cuando el talento no es constante.',
+  'Equipo que se comunica, equipo que avanza.',
+  'Celebra lo pequeño — ahí se construye lo grande.',
+  'Nadie llega lejos solo.',
+  'Hoy es un buen día para aprender algo nuevo.',
+  'La actitud es la diferencia entre un problema y un reto.',
+  'El descanso también es parte del trabajo bien hecho.',
+  'Pregunta cuando no sepas — así se crece.',
+  'Cada bitácora enviada es un paso más cerca de la meta.',
+  'La claridad de hoy evita el caos de mañana.',
+  'Un gracias a tiempo vale más de lo que parece.',
+  'Lo simple, bien hecho, gana a lo complicado a medias.',
+  'El buen humor también es productividad.',
+  'Ayudar a un compañero es invertir en el equipo.',
+  'La curiosidad es el mejor combustible profesional.',
+  'Los errores de hoy son la experiencia de mañana.',
+  'Un equipo fuerte se nota en los días difíciles.',
+  'Empieza donde estás, con lo que tienes.',
+];

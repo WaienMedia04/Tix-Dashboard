@@ -1853,3 +1853,186 @@ export async function comentarPizarraPost(slug: string, postId: string, texto: s
   }
   return res.json();
 }
+
+// ===== Pizarra: contenido diario, encuestas, reconocimiento, timeline, trivia =====
+
+export interface PizarraContenidoDiario {
+  pregunta: string;
+  frase: string;
+}
+
+export interface PizarraEncuestaActiva {
+  id: string;
+  pregunta: string;
+  opciones: string[];
+  conteos: number[];
+  total: number;
+  miVoto: number | null;
+  createdAt: string;
+}
+
+export interface PizarraReconocimientoActivo {
+  id: string;
+  titulo: string;
+  descripcion: string | null;
+  createdAt: string;
+  talento: { id: string; nombreCompleto: string; fotoUrl: string | null; rol: string };
+}
+
+export interface PizarraPanel {
+  contenidoDiario: PizarraContenidoDiario;
+  encuestaActiva: PizarraEncuestaActiva | null;
+  reconocimientoActivo: PizarraReconocimientoActivo | null;
+}
+
+export async function fetchPizarraPanel(slug: string): Promise<PizarraPanel> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/panel`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el panel de la pizarra");
+  }
+  return res.json();
+}
+
+export async function crearPizarraEncuesta(
+  slug: string,
+  datos: { pregunta: string; opciones: string[] },
+): Promise<PizarraEncuestaActiva> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/encuestas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo crear la encuesta");
+  }
+  return res.json();
+}
+
+export async function votarPizarraEncuesta(
+  slug: string,
+  encuestaId: string,
+  opcionIndex: number,
+): Promise<PizarraEncuestaActiva> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/encuestas/${encodeURIComponent(encuestaId)}/votar`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ opcionIndex }),
+    },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo votar");
+  }
+  return res.json();
+}
+
+export async function crearPizarraReconocimiento(
+  slug: string,
+  datos: { talentoId: string; titulo: string; descripcion?: string },
+): Promise<PizarraReconocimientoActivo> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/reconocimiento`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo publicar el reconocimiento");
+  }
+  return res.json();
+}
+
+export interface PizarraEventoTimeline {
+  id: string;
+  tipo: "estampa" | "nuevo" | "cumple";
+  fecha: string;
+  texto: string;
+  talento: { id: string; nombreCompleto: string; fotoUrl: string | null };
+}
+
+export async function fetchPizarraTimeline(slug: string): Promise<PizarraEventoTimeline[]> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/timeline`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar la actividad reciente");
+  }
+  return res.json();
+}
+
+export interface PizarraTriviaHoy {
+  pregunta: string;
+  opciones: string[];
+  yaRespondida: boolean;
+  correcta: boolean | null;
+  correctaIndex: number | null;
+}
+
+export async function fetchPizarraTriviaHoy(slug: string): Promise<PizarraTriviaHoy> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/trivia-hoy`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar la trivia de hoy");
+  }
+  return res.json();
+}
+
+export async function responderPizarraTrivia(slug: string, opcionIndex: number): Promise<PizarraTriviaHoy> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/trivia-hoy/responder`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify({ opcionIndex }),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo responder la trivia");
+  }
+  return res.json();
+}
+
+export interface PizarraTriviaRankingItem {
+  usuarioId: string;
+  nombre: string;
+  fotoUrl: string | null;
+  aciertos: number;
+}
+
+export async function fetchPizarraTriviaRanking(slug: string): Promise<PizarraTriviaRankingItem[]> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/trivia-ranking`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el ranking de trivia");
+  }
+  return res.json();
+}
