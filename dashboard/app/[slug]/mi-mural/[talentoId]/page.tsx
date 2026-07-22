@@ -104,7 +104,7 @@ export default function MuralDeCompaneroPage() {
         </div>
       </header>
 
-      <MiMuralView slug={slug} talentoId={talentoId} miTalentoId={estado.miTalentoId} />
+      <MiMuralView slug={slug} talentoId={talentoId} miTalentoId={estado.miTalentoId} rol={estado.rol} />
     </div>
   );
 }

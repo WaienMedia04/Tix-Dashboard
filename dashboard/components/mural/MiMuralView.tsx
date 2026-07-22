@@ -18,6 +18,7 @@ import { MuralCanvas } from "./MuralCanvas";
 import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
 import { EstadoModal } from "./EstadoModal";
+import { PizarraSocial } from "@/components/pizarra/PizarraSocial";
 
 export function MiMuralView({
   slug,
@@ -81,6 +82,7 @@ export function MiMuralView({
   const texto = fondoMuralTexto(mural.perfil.fondoId);
 
   return (
+    <>
     <div
       className="min-h-[calc(100vh-73px)] transition-[background] duration-500"
       style={{ background: fondoMuralCss(mural.perfil.fondoId) }}
@@ -96,46 +98,57 @@ export function MiMuralView({
             frontImage={mural.talento.carnetFotoUrl ?? mural.talento.fotoUrl}
             logoUrl={mural.empresa.logoUrl}
           />
-          {mural.perfil.estado &&
-            (() => {
-              const contenido = (
-                <>
-                  <span className="relative flex h-2 w-2 shrink-0">
-                    <span
-                      className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
-                      style={{ background: colorParaEstado(mural.perfil.estado!) }}
-                    />
-                    <span
-                      className="relative inline-flex h-2 w-2 rounded-full"
-                      style={{ background: colorParaEstado(mural.perfil.estado!) }}
-                    />
-                  </span>
-                  {mural.perfil.estado}
-                </>
-              );
-              const clases =
-                "mt-3 inline-flex items-center gap-2 rounded-full bg-black/40 px-3.5 py-1.5 text-xs font-semibold backdrop-blur-sm";
-              return editable ? (
-                <button type="button" onClick={() => setMostrarEstado(true)} className={clases} style={{ color: texto.color }}>
-                  {contenido}
-                </button>
-              ) : (
-                <div className={clases} style={{ color: texto.color }}>
-                  {contenido}
-                </div>
-              );
-            })()}
-          {editable && !mural.perfil.estado && (
-            <button
-              type="button"
-              onClick={() => setMostrarEstado(true)}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-dashed border-white/30 px-3.5 py-1.5 text-xs font-medium opacity-80 backdrop-blur-sm transition-opacity hover:opacity-100"
-              style={{ color: texto.color }}
-            >
-              <Radio className="h-3.5 w-3.5" />
-              Poner un estado
-            </button>
-          )}
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            {mural.perfil.estado &&
+              (() => {
+                const contenido = (
+                  <>
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span
+                        className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
+                        style={{ background: colorParaEstado(mural.perfil.estado!) }}
+                      />
+                      <span
+                        className="relative inline-flex h-2 w-2 rounded-full"
+                        style={{ background: colorParaEstado(mural.perfil.estado!) }}
+                      />
+                    </span>
+                    {mural.perfil.estado}
+                  </>
+                );
+                const clases =
+                  "inline-flex items-center gap-2 rounded-full bg-black/40 px-3.5 py-1.5 text-xs font-semibold backdrop-blur-sm";
+                return editable ? (
+                  <button type="button" onClick={() => setMostrarEstado(true)} className={clases} style={{ color: texto.color }}>
+                    {contenido}
+                  </button>
+                ) : (
+                  <div className={clases} style={{ color: texto.color }}>
+                    {contenido}
+                  </div>
+                );
+              })()}
+            {editable && !mural.perfil.estado && (
+              <button
+                type="button"
+                onClick={() => setMostrarEstado(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-white/30 px-3.5 py-1.5 text-xs font-medium opacity-80 backdrop-blur-sm transition-opacity hover:opacity-100"
+                style={{ color: texto.color }}
+              >
+                <Radio className="h-3.5 w-3.5" />
+                Poner un estado
+              </button>
+            )}
+            {mural.racha > 0 && (
+              <div
+                className="inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3.5 py-1.5 text-xs font-semibold backdrop-blur-sm"
+                style={{ color: texto.color }}
+                title="Días seguidos enviando bitácora"
+              >
+                🔥 {mural.racha} {mural.racha === 1 ? "día" : "días"}
+              </div>
+            )}
+          </div>
           <h1
             className="font-display mt-4 text-3xl font-bold sm:text-4xl"
             style={{ color: texto.color, textShadow: texto.sombra }}
@@ -322,5 +335,10 @@ export function MiMuralView({
         />
       )}
     </div>
+
+    <div className="border-t border-border bg-background">
+      <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} />
+    </div>
+    </>
   );
 }

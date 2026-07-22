@@ -6,11 +6,21 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { Actor } from '../auth/actor.types';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { esAusenciaAutorizada } from '../empresas/estado.util';
 import { ActualizarPerfilMuralDto } from './dto/actualizar-perfil-mural.dto';
 import { CrearNotaDto } from './dto/crear-nota.dto';
 import { EnviarNotaDto } from './dto/enviar-nota.dto';
 import { ActualizarNotaDto } from './dto/actualizar-nota.dto';
 import { ActualizarPosicionEstampaDto } from './dto/actualizar-posicion-estampa.dto';
+
+const LIMITE_DIAS_RACHA = 400;
+
+/** Suma (o resta) días a una fecha ISO (YYYY-MM-DD) trabajando siempre en UTC — mismo criterio con el que se guarda `Worklog.fecha`. */
+function sumarDiasISO(iso: string, delta: number): string {
+  const fecha = new Date(`${iso}T00:00:00.000Z`);
+  fecha.setUTCDate(fecha.getUTCDate() + delta);
+  return fecha.toISOString().slice(0, 10);
+}
 
 const SELECT_PERFIL = {
   apodo: true,
@@ -159,8 +169,48 @@ export class MuralService {
     return this.construirRespuestaMural(talentoId, empresaId);
   }
 
+  /**
+   * Días seguidos (hasta hoy o ayer, si hoy todavía no envió) con bitácora
+   * enviada — los días de ausencia autorizada (permiso/licencia/vacaciones)
+   * no rompen la racha, pero tampoco suman. Acotado a `LIMITE_DIAS_RACHA`
+   * días hacia atrás para no escanear el historial completo de alguien con
+   * años de antigüedad.
+   */
+  private async calcularRachaDiaria(talentoId: string): Promise<number> {
+    const hoy = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Santo_Domingo',
+    }).format(new Date());
+    const desde = sumarDiasISO(hoy, -LIMITE_DIAS_RACHA);
+
+    const worklogs = await this.prisma.worklog.findMany({
+      where: { talentoId, fecha: { gte: new Date(`${desde}T00:00:00.000Z`) } },
+      select: { fecha: true, estadoEnvio: true },
+    });
+
+    const porFecha = new Map<string, string>();
+    for (const w of worklogs) {
+      porFecha.set(w.fecha.toISOString().slice(0, 10), w.estadoEnvio);
+    }
+
+    const estadoHoy = porFecha.get(hoy);
+    let cursor = estadoHoy?.includes('✅') ? hoy : sumarDiasISO(hoy, -1);
+
+    let racha = 0;
+    for (let i = 0; i < LIMITE_DIAS_RACHA; i++) {
+      const estado = porFecha.get(cursor);
+      if (estado?.includes('✅')) {
+        racha += 1;
+      } else if (!estado || !esAusenciaAutorizada(estado)) {
+        break;
+      }
+      cursor = sumarDiasISO(cursor, -1);
+    }
+
+    return racha;
+  }
+
   private async construirRespuestaMural(talentoId: string, empresaId: string) {
-    const [talento, empresa, perfil, notas, estampasRecibidas] =
+    const [talento, empresa, perfil, notas, estampasRecibidas, racha] =
       await Promise.all([
         this.prisma.talento.findUniqueOrThrow({
           where: { id: talentoId },
@@ -190,12 +240,14 @@ export class MuralService {
           select: SELECT_ESTAMPA_OTORGADA,
           orderBy: { createdAt: 'asc' },
         }),
+        this.calcularRachaDiaria(talentoId),
       ]);
 
     return {
       perfil: perfil ?? PERFIL_POR_DEFECTO,
       notas: notas.map(serializarNota),
       estampasRecibidas: estampasRecibidas.map(serializarEstampaOtorgada),
+      racha,
       talento,
       empresa,
     };

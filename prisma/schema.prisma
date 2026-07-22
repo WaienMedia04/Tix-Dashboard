@@ -67,6 +67,7 @@ model Empresa {
   departamentos     DepartamentoDefinicion[]
   solicitudesSoporte SolicitudSoporte[]
   chatConversaciones ChatConversacion[]
+  pizarraPosts       PizarraPost[]
 }
 
 /**
@@ -154,6 +155,10 @@ model Usuario {
   chatConversacionesCreadas ChatConversacion[]  @relation("ChatConversacionesCreadas")
   chatParticipaciones  ChatParticipante[]
   chatMensajes         ChatMensaje[]
+  pizarraPostsCreados       PizarraPost[]       @relation("PizarraPostsCreados")
+  pizarraReacciones         PizarraReaccion[]
+  pizarraComentariosCreados PizarraComentario[] @relation("PizarraComentariosCreados")
+  pizarraMenciones          PizarraMencion[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
@@ -438,4 +443,67 @@ model ChatMensaje {
   autor        Usuario          @relation(fields: [autorUsuarioId], references: [id])
 
   @@index([conversacionId, createdAt])
+}
+
+/**
+ * Pizarra compartida de la empresa: un muro social visible igual desde el
+ * mural de cualquier talento (agradecimientos, avisos, menciones). El texto
+ * puede incluir menciones codificadas como `@[Nombre](usuarioId)` — el
+ * frontend las resuelve al renderizar y el backend las usa para crear las
+ * filas de PizarraMencion.
+ */
+model PizarraPost {
+  id             String   @id @default(cuid())
+  empresaId      String
+  autorUsuarioId String
+  texto          String
+  createdAt      DateTime @default(now())
+
+  empresa     Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  autor       Usuario             @relation("PizarraPostsCreados", fields: [autorUsuarioId], references: [id])
+  reacciones  PizarraReaccion[]
+  comentarios PizarraComentario[]
+  menciones   PizarraMencion[]
+
+  @@index([empresaId, createdAt])
+}
+
+/// Un usuario puede reaccionar a un mismo post con varios emojis distintos, pero no repetir el mismo emoji dos veces.
+model PizarraReaccion {
+  id        String   @id @default(cuid())
+  postId    String
+  usuarioId String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  post    PizarraPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  usuario Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, usuarioId, emoji])
+  @@index([postId])
+}
+
+model PizarraComentario {
+  id             String   @id @default(cuid())
+  postId         String
+  autorUsuarioId String
+  texto          String
+  createdAt      DateTime @default(now())
+
+  post  PizarraPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  autor Usuario     @relation("PizarraComentariosCreados", fields: [autorUsuarioId], references: [id])
+
+  @@index([postId, createdAt])
+}
+
+model PizarraMencion {
+  id        String @id @default(cuid())
+  postId    String
+  usuarioId String
+
+  post    PizarraPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  usuario Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, usuarioId])
+  @@index([usuarioId])
 }

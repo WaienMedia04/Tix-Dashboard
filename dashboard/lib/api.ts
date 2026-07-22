@@ -1093,6 +1093,8 @@ export interface MuralPropio {
   perfil: PerfilMural;
   notas: NotaMural[];
   estampasRecibidas: EstampaOtorgadaMural[];
+  /** Días seguidos con bitácora enviada (los permisos/licencias/vacaciones no la rompen). */
+  racha: number;
   talento: {
     nombreCompleto: string;
     rol: string;
@@ -1724,4 +1726,130 @@ export async function eliminarChatConversacion(slug: string, conversacionId: str
   if (!res.ok) {
     throw new Error("No se pudo eliminar la conversación");
   }
+}
+
+// ===== Pizarra (muro social compartido de la empresa) =====
+
+export interface PizarraPersona {
+  id: string;
+  nombre: string;
+  rol: Rol;
+  fotoUrl: string | null;
+}
+
+export interface PizarraReaccion {
+  emoji: string;
+  cantidad: number;
+  mia: boolean;
+}
+
+export interface PizarraComentario {
+  id: string;
+  texto: string;
+  createdAt: string;
+  autor: { id: string; nombre: string; fotoUrl: string | null };
+}
+
+export interface PizarraPost {
+  id: string;
+  texto: string;
+  createdAt: string;
+  propio: boolean;
+  autor: PizarraPersona;
+  reacciones: PizarraReaccion[];
+  comentarios: PizarraComentario[];
+}
+
+export interface PizarraPostsResponse {
+  data: PizarraPost[];
+  hayMas: boolean;
+}
+
+/** Directorio de la empresa para el autocompletado de @menciones — reutiliza el mismo directorio que el chat. */
+export const fetchPizarraDirectorio = fetchChatDirectorio;
+
+export async function fetchPizarraPosts(
+  slug: string,
+  opts?: { cursorId?: string; limit?: number },
+): Promise<PizarraPostsResponse> {
+  const params = new URLSearchParams();
+  if (opts?.cursorId) params.set("cursorId", opts.cursorId);
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  const query = params.toString();
+
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/posts${query ? `?${query}` : ""}`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar la pizarra");
+  }
+  return res.json();
+}
+
+export async function crearPizarraPost(slug: string, texto: string): Promise<PizarraPost> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/posts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify({ texto }),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo publicar en la pizarra");
+  }
+  return res.json();
+}
+
+export async function borrarPizarraPost(slug: string, postId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/posts/${encodeURIComponent(postId)}`, {
+    method: "DELETE",
+    headers: await authHeaders(),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo eliminar la publicación");
+  }
+}
+
+export async function reaccionarPizarraPost(slug: string, postId: string, emoji: string): Promise<PizarraPost> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/posts/${encodeURIComponent(postId)}/reacciones`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ emoji }),
+    },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo reaccionar");
+  }
+  return res.json();
+}
+
+export async function comentarPizarraPost(slug: string, postId: string, texto: string): Promise<PizarraPost> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/posts/${encodeURIComponent(postId)}/comentarios`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ texto }),
+    },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo comentar");
+  }
+  return res.json();
 }

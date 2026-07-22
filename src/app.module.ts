@@ -15,6 +15,7 @@ import { EstampasModule } from './estampas/estampas.module';
 import { MuralModule } from './mural/mural.module';
 import { NotificacionesModule } from './notificaciones/notificaciones.module';
 import { ChatModule } from './chat/chat.module';
+import { PizarraModule } from './pizarra/pizarra.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ChatModule } from './chat/chat.module';
     MuralModule,
     NotificacionesModule,
     ChatModule,
+    PizarraModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
