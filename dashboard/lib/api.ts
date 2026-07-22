@@ -2183,3 +2183,110 @@ export async function borrarBoletin(slug: string, id: string): Promise<void> {
     throw new Error("No se pudo borrar la publicación");
   }
 }
+
+// ===== Vacantes =====
+
+export type EstadoVacante = "ABIERTA" | "CERRADA";
+
+export interface VacanteItem {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  departamento: string | null;
+  estado: EstadoVacante;
+  createdAt: string;
+  updatedAt: string;
+  autorNombre: string;
+}
+
+export interface CandidatoInterno {
+  talentoId: string;
+  nombreCompleto: string;
+  fotoUrl: string | null;
+  departamento: string | null;
+  puntaje: number;
+  justificacion: string;
+}
+
+export interface CandidatosInternosResponse {
+  evaluados: boolean;
+  candidatos: CandidatoInterno[];
+}
+
+export async function fetchVacantes(slug: string): Promise<VacanteItem[]> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/vacantes`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar las vacantes");
+  }
+  return res.json();
+}
+
+export async function crearVacante(
+  slug: string,
+  datos: { titulo: string; descripcion: string; departamento?: string },
+): Promise<VacanteItem> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/vacantes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo publicar la vacante");
+  }
+  return res.json();
+}
+
+export async function actualizarVacante(
+  slug: string,
+  id: string,
+  datos: Partial<{ titulo: string; descripcion: string; departamento: string; estado: EstadoVacante }>,
+): Promise<VacanteItem> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/vacantes/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo actualizar la vacante");
+  }
+  return res.json();
+}
+
+export async function borrarVacante(slug: string, id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/vacantes/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: await authHeaders(),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo borrar la vacante");
+  }
+}
+
+export async function buscarCandidatosInternos(slug: string, id: string): Promise<CandidatosInternosResponse> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/vacantes/${encodeURIComponent(id)}/candidatos-internos`,
+    { method: "POST", headers: await authHeaders() },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo buscar candidatos internos");
+  }
+  return res.json();
+}

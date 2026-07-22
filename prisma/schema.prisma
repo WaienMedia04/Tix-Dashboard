@@ -51,6 +51,11 @@ enum TipoBoletin {
   BLOG
 }
 
+enum EstadoVacante {
+  ABIERTA
+  CERRADA
+}
+
 model Empresa {
   id                String               @id @default(cuid())
   nombre            String
@@ -79,6 +84,7 @@ model Empresa {
   pizarraReconocimientos PizarraReconocimiento[]
   pizarraTriviaRespuestas PizarraTriviaRespuesta[]
   boletines          Boletin[]
+  vacantes           Vacante[]
 }
 
 /**
@@ -180,6 +186,7 @@ model Usuario {
   pizarraReconocimientosCreados PizarraReconocimiento[]   @relation("PizarraReconocimientosCreados")
   pizarraTriviaRespuestas      PizarraTriviaRespuesta[]
   boletinesCreados             Boletin[]
+  vacantesCreadas              Vacante[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
@@ -619,4 +626,26 @@ model Boletin {
   creadoPor Usuario @relation(fields: [creadoPorUsuarioId], references: [id])
 
   @@index([empresaId, createdAt])
+}
+
+/// Vacantes publicadas por CEO/RRHH — visibles para los talentos en el
+/// mural informativo mientras están ABIERTA; el escaneo de candidatos
+/// internos compara la descripción contra el cvDatosExtraidos ya
+/// guardado de cada talento (no vuelve a leer el PDF).
+model Vacante {
+  id                 String        @id @default(cuid())
+  empresaId          String
+  titulo             String
+  descripcion        String
+  departamento       String?
+  estado             EstadoVacante @default(ABIERTA)
+  creadoPorUsuarioId String
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  creadoPor Usuario @relation(fields: [creadoPorUsuarioId], references: [id])
+
+  @@index([empresaId, createdAt])
+  @@index([empresaId, estado])
 }

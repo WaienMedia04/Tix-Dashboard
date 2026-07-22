@@ -20,6 +20,7 @@ import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
 import { EstadoModal } from "./EstadoModal";
 import { BoletinInformativo } from "@/components/boletin/BoletinInformativo";
+import { VacantesInformativo } from "@/components/vacantes/VacantesInformativo";
 import { PizarraSocial } from "@/components/pizarra/PizarraSocial";
 
 export function MiMuralView({
@@ -340,7 +341,10 @@ export function MiMuralView({
       <div className="relative z-10 px-4 pb-10 sm:px-8">
         <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-6 lg:flex-row">
           <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} />
-          <BoletinInformativo slug={slug} />
+          <div className="flex w-full min-w-0 flex-1 flex-col gap-6 lg:max-w-2xl">
+            <BoletinInformativo slug={slug} />
+            <VacantesInformativo slug={slug} />
+          </div>
         </div>
       </div>
     </div>

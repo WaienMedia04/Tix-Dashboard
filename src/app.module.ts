@@ -17,6 +17,7 @@ import { NotificacionesModule } from './notificaciones/notificaciones.module';
 import { ChatModule } from './chat/chat.module';
 import { PizarraModule } from './pizarra/pizarra.module';
 import { BoletinModule } from './boletin/boletin.module';
+import { VacantesModule } from './vacantes/vacantes.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { BoletinModule } from './boletin/boletin.module';
     ChatModule,
     PizarraModule,
     BoletinModule,
+    VacantesModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
