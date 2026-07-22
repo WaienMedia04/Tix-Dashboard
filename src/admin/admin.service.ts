@@ -406,6 +406,83 @@ export class AdminService {
     });
   }
 
+  // ── Sucursales: accesos vinculados a otra(s) empresa(s) ──────────────────
+
+  async vinculosDeEmpresa(empresaId: string) {
+    await this.validarEmpresaExiste(empresaId);
+    const vinculos = await this.prisma.usuarioEmpresaAcceso.findMany({
+      where: { empresaId },
+      select: {
+        createdAt: true,
+        usuario: {
+          select: {
+            id: true,
+            nombre: true,
+            email: true,
+            rol: true,
+            empresa: { select: { nombre: true, slug: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return vinculos.map((v) => ({
+      usuarioId: v.usuario.id,
+      nombre: v.usuario.nombre,
+      email: v.usuario.email,
+      rol: v.usuario.rol,
+      empresaCasa: v.usuario.empresa.nombre,
+      vinculadoDesde: v.createdAt,
+    }));
+  }
+
+  /**
+   * Da a un CEO/RRHH de otra empresa acceso a esta también (sucursal) —
+   * sigue siendo el mismo login, cambia de contexto desde el selector del
+   * panel. Su empresa "casa" (Usuario.empresaId) no cambia.
+   */
+  async vincularUsuario(empresaId: string, email: string) {
+    const empresa = await this.validarEmpresaExiste(empresaId);
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { email: email.trim().toLowerCase() },
+    });
+    if (!usuario) {
+      throw new NotFoundException('No existe un usuario con ese correo');
+    }
+    if (usuario.rol !== 'CEO' && usuario.rol !== 'RRHH') {
+      throw new ConflictException(
+        'Solo se puede vincular a usuarios con rol CEO o RRHH',
+      );
+    }
+    if (usuario.empresaId === empresa.id) {
+      throw new ConflictException('Este usuario ya pertenece a esta empresa');
+    }
+    const existente = await this.prisma.usuarioEmpresaAcceso.findUnique({
+      where: {
+        usuarioId_empresaId: { usuarioId: usuario.id, empresaId: empresa.id },
+      },
+    });
+    if (existente) {
+      throw new ConflictException(
+        'Este usuario ya está vinculado a esta empresa',
+      );
+    }
+
+    await this.prisma.usuarioEmpresaAcceso.create({
+      data: { usuarioId: usuario.id, empresaId: empresa.id },
+    });
+    return { ok: true };
+  }
+
+  async desvincularUsuario(empresaId: string, usuarioId: string) {
+    await this.validarEmpresaExiste(empresaId);
+    await this.prisma.usuarioEmpresaAcceso.deleteMany({
+      where: { empresaId, usuarioId },
+    });
+    return { ok: true };
+  }
+
   async cambiarCorreoUsuario(usuarioId: string, email: string) {
     return cambiarCorreoUsuario(this.prisma, usuarioId, email);
   }

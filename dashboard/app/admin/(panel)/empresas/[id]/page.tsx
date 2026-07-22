@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { upload } from "@vercel/blob/client";
-import { Bot, Building2, ChevronLeft, Copy, Eye, EyeOff, KeyRound, Mail, Plus, Trash2, UserCog, X } from "lucide-react";
+import { Bot, Building2, ChevronLeft, Copy, Eye, EyeOff, KeyRound, Link2, Mail, Plus, Trash2, UserCog, X } from "lucide-react";
 import {
   type EmpresaAdmin,
   type EmpleadoAdmin,
   type RolAdmin,
   type UsuarioAdmin,
   type DepartamentoAdmin,
+  type VinculoAdmin,
   AdminNoAutorizadoError,
   AdminConflictoError,
   fetchAdminDashboard,
@@ -29,6 +30,9 @@ import {
   fetchDepartamentosAdmin,
   crearDepartamentoAdmin,
   borrarDepartamentoAdmin,
+  fetchVinculosAdmin,
+  vincularUsuarioAdmin,
+  desvincularUsuarioAdmin,
 } from "@/lib/admin-api";
 import { leerTokenAdmin, borrarTokenAdmin } from "@/lib/admin-auth";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -433,6 +437,12 @@ export default function AdminEmpresaDetallePage() {
   const [departamentoError, setDepartamentoError] = useState<string | null>(null);
   const [eliminandoDepartamentoId, setEliminandoDepartamentoId] = useState<string | null>(null);
 
+  const [vinculos, setVinculos] = useState<VinculoAdmin[]>([]);
+  const [nuevoVinculoEmail, setNuevoVinculoEmail] = useState("");
+  const [guardandoVinculo, setGuardandoVinculo] = useState(false);
+  const [vinculoError, setVinculoError] = useState<string | null>(null);
+  const [desvinculandoId, setDesvinculandoId] = useState<string | null>(null);
+
   useEffect(() => {
     const token = leerTokenAdmin();
     if (!token) { router.replace("/admin"); return; }
@@ -442,14 +452,16 @@ export default function AdminEmpresaDetallePage() {
       fetchEmpleadosAdmin(token, id),
       fetchUsuariosAdmin(token, id),
       fetchDepartamentosAdmin(token, id),
+      fetchVinculosAdmin(token, id),
     ])
-      .then(([dash, emps, usrs, deptos]) => {
+      .then(([dash, emps, usrs, deptos, vincs]) => {
         const emp = dash.empresas.find((e) => e.id === id) ?? null;
         setEmpresa(emp);
         if (emp) setEditForm({ nombre: emp.nombre, plan: emp.plan, codigoAcceso: emp.codigoAcceso ?? "" });
         setEmpleados(emps);
         setUsuarios(usrs);
         setDepartamentos(deptos);
+        setVinculos(vincs);
         setCargando(false);
       })
       .catch((err) => {
@@ -457,6 +469,38 @@ export default function AdminEmpresaDetallePage() {
         else setCargando(false);
       });
   }, [id, router]);
+
+  async function handleVincular(e: React.FormEvent) {
+    e.preventDefault();
+    const token = leerTokenAdmin();
+    if (!token || !nuevoVinculoEmail.trim()) return;
+    setGuardandoVinculo(true);
+    setVinculoError(null);
+    try {
+      await vincularUsuarioAdmin(token, id, nuevoVinculoEmail.trim());
+      const actualizados = await fetchVinculosAdmin(token, id);
+      setVinculos(actualizados);
+      setNuevoVinculoEmail("");
+    } catch (err) {
+      setVinculoError(
+        err instanceof AdminConflictoError ? err.detail : err instanceof Error ? err.message : "No se pudo vincular",
+      );
+    } finally {
+      setGuardandoVinculo(false);
+    }
+  }
+
+  async function handleDesvincular(usuarioId: string) {
+    const token = leerTokenAdmin();
+    if (!token) return;
+    setDesvinculandoId(usuarioId);
+    try {
+      await desvincularUsuarioAdmin(token, id, usuarioId);
+      setVinculos((prev) => prev.filter((v) => v.usuarioId !== usuarioId));
+    } finally {
+      setDesvinculandoId(null);
+    }
+  }
 
   async function handleCrearDepartamento(e: React.FormEvent) {
     e.preventDefault();
@@ -1156,6 +1200,67 @@ export default function AdminEmpresaDetallePage() {
                   {resetErrorId === u.id && (
                     <p className="text-xs text-destructive">No se pudo enviar el restablecimiento.</p>
                   )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Sucursales: accesos vinculados */}
+        <div className="rounded-xl border border-border bg-card shadow-card">
+          <div className="border-b border-border px-5 py-4">
+            <h2 className="font-display flex items-center gap-2 text-base font-semibold text-foreground">
+              <Link2 className="h-4 w-4" /> Sucursales — accesos vinculados ({vinculos.length})
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Da a un CEO o RRHH de otra empresa acceso a esta también — le aparecerá un selector para cambiar entre
+              ambas desde su panel, sin crear un login nuevo.
+            </p>
+          </div>
+
+          <form onSubmit={(e) => void handleVincular(e)} className="flex items-end gap-2 border-b border-border px-5 py-4">
+            <div className="flex-1">
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                Correo del usuario CEO/RRHH (de cualquier empresa)
+              </label>
+              <input
+                type="email"
+                value={nuevoVinculoEmail}
+                onChange={(e) => setNuevoVinculoEmail(e.target.value)}
+                placeholder="ceo@otraempresa.com"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={guardandoVinculo || !nuevoVinculoEmail.trim()}
+              className="flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
+            >
+              <Plus className="h-3.5 w-3.5" /> {guardandoVinculo ? "Vinculando..." : "Vincular"}
+            </button>
+          </form>
+          {vinculoError && <p className="px-5 pb-2 text-sm text-destructive">{vinculoError}</p>}
+
+          <div className="divide-y divide-border">
+            {vinculos.length === 0 ? (
+              <p className="px-5 py-6 text-sm text-muted-foreground">Sin accesos vinculados todavía.</p>
+            ) : (
+              vinculos.map((v) => (
+                <div key={v.usuarioId} className="flex items-center justify-between gap-3 px-5 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{v.nombre}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {v.email} · {v.rol} · empresa casa: {v.empresaCasa}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => void handleDesvincular(v.usuarioId)}
+                    disabled={desvinculandoId === v.usuarioId}
+                    className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                    title="Quitar acceso vinculado"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               ))
             )}

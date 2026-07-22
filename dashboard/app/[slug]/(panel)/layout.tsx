@@ -5,6 +5,7 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   DashboardData,
+  EmpresaDisponible,
   EmpresaNoEncontradaError,
   SesionInvalidaError,
   fetchDashboard,
@@ -32,6 +33,7 @@ type Estado =
       usuarioEmail: string;
       usuarioFotoUrl: string | null;
       departamentosSupervisados: string[];
+      empresasDisponibles: EmpresaDisponible[];
     };
 
 function PanelInterno({ slug, children }: { slug: string; children: React.ReactNode }) {
@@ -53,7 +55,9 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
     async function cargar() {
       try {
         const sesion = await me();
-        if (!sesion.empresa || sesion.empresa.slug !== slug) {
+        // Sucursales: el slug activo puede ser la empresa "casa" del usuario
+        // o cualquier otra a la que tenga acceso vinculado — nunca solo la casa.
+        if (!sesion.empresasDisponibles.some((e) => e.slug === slug)) {
           if (!cancelado) router.replace("/");
           return;
         }
@@ -82,6 +86,7 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
             usuarioEmail: sesion.usuario.email,
             usuarioFotoUrl: sesion.usuario.fotoUrl,
             departamentosSupervisados: sesion.usuario.departamentosSupervisados,
+            empresasDisponibles: sesion.empresasDisponibles,
           });
         }
       } catch (err) {
@@ -115,6 +120,7 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
         usuarioEmail: estado.usuarioEmail,
         usuarioFotoUrl: estado.usuarioFotoUrl,
         departamentosSupervisados: estado.departamentosSupervisados,
+        empresasDisponibles: estado.empresasDisponibles,
         empresa: estado.data.empresa,
         dashboardInicial: estado.data,
       }}

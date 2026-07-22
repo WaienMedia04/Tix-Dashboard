@@ -21,6 +21,7 @@ import { CrearTalentoAdminDto } from './dto/crear-talento-admin.dto';
 import { EditarTalentoAdminDto } from './dto/editar-talento-admin.dto';
 import { CrearUsuarioAdminDto } from './dto/crear-usuario-admin.dto';
 import { CrearDepartamentoAdminDto } from './dto/crear-departamento-admin.dto';
+import { VincularUsuarioEmpresaDto } from './dto/vincular-usuario-empresa.dto';
 import { CambiarCorreoDto } from '../auth/dto/cambiar-correo.dto';
 import { CambiarRolDto } from '../auth/dto/cambiar-rol.dto';
 
@@ -79,6 +80,32 @@ export class AdminController {
   @UseGuards(AdminGuard)
   usuariosDeEmpresa(@Param('id') id: string) {
     return this.adminService.usuariosDeEmpresa(id);
+  }
+
+  // ── Sucursales: accesos vinculados a otra(s) empresa(s) ───────────────────
+
+  @Get('empresas/:id/vinculos')
+  @UseGuards(AdminGuard)
+  vinculosDeEmpresa(@Param('id') id: string) {
+    return this.adminService.vinculosDeEmpresa(id);
+  }
+
+  @Post('empresas/:id/vinculos')
+  @UseGuards(AdminGuard)
+  vincularUsuario(
+    @Param('id') id: string,
+    @Body() dto: VincularUsuarioEmpresaDto,
+  ) {
+    return this.adminService.vincularUsuario(id, dto.email);
+  }
+
+  @Delete('empresas/:id/vinculos/:usuarioId')
+  @UseGuards(AdminGuard)
+  desvincularUsuario(
+    @Param('id') id: string,
+    @Param('usuarioId') usuarioId: string,
+  ) {
+    return this.adminService.desvincularUsuario(id, usuarioId);
   }
 
   @Patch('usuarios/:id/correo')

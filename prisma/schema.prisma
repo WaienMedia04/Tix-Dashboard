@@ -85,6 +85,7 @@ model Empresa {
   pizarraTriviaRespuestas PizarraTriviaRespuesta[]
   boletines          Boletin[]
   vacantes           Vacante[]
+  usuariosVinculados UsuarioEmpresaAcceso[]
 }
 
 /**
@@ -187,9 +188,30 @@ model Usuario {
   pizarraTriviaRespuestas      PizarraTriviaRespuesta[]
   boletinesCreados             Boletin[]
   vacantesCreadas              Vacante[]
+  empresasVinculadas           UsuarioEmpresaAcceso[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
+}
+
+/// Acceso adicional de un usuario CEO/RRHH a OTRA empresa (sucursal), más
+/// allá de su empresa "casa" (Usuario.empresaId) — CompanyAccessGuard lo
+/// consulta cuando el slug de la request no coincide con la empresa casa.
+/// Cada sucursal sigue siendo una Empresa independiente (plan, código de
+/// acceso y métricas propias); esta tabla solo habilita el cambio de
+/// contexto desde el panel, nunca mezcla datos entre empresas.
+model UsuarioEmpresaAcceso {
+  id        String   @id @default(cuid())
+  usuarioId String
+  empresaId String
+  createdAt DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, empresaId])
+  @@index([usuarioId])
+  @@index([empresaId])
 }
 
 enum TipoSoporte {

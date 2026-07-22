@@ -289,6 +289,36 @@ export function cambiarRolUsuarioAdmin(
   });
 }
 
+// ── Sucursales: accesos vinculados a otra(s) empresa(s) ────────────────────
+
+export interface VinculoAdmin {
+  usuarioId: string;
+  nombre: string;
+  email: string;
+  rol: RolAdmin;
+  empresaCasa: string;
+  vinculadoDesde: string;
+}
+
+export function fetchVinculosAdmin(token: string, empresaId: string): Promise<VinculoAdmin[]> {
+  return adminFetch(`/admin/empresas/${empresaId}/vinculos`, token);
+}
+
+export function vincularUsuarioAdmin(token: string, empresaId: string, email: string): Promise<{ ok: boolean }> {
+  return adminFetch(`/admin/empresas/${empresaId}/vinculos`, token, {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function desvincularUsuarioAdmin(
+  token: string,
+  empresaId: string,
+  usuarioId: string,
+): Promise<{ ok: boolean }> {
+  return adminFetch(`/admin/empresas/${empresaId}/vinculos/${usuarioId}`, token, { method: "DELETE" });
+}
+
 // ── Solicitudes de soporte (Dock del panel) ────────────────────────────────
 
 export interface SolicitudSoporteAdmin {

@@ -7,10 +7,10 @@ export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
   async me(usuario: Usuario) {
-    const [empresa, talento] = await Promise.all([
+    const [empresa, talento, vinculos] = await Promise.all([
       this.prisma.empresa.findUnique({
         where: { id: usuario.empresaId },
-        select: { slug: true, nombre: true },
+        select: { slug: true, nombre: true, logoUrl: true },
       }),
       usuario.talentoId
         ? this.prisma.talento.findUnique({
@@ -18,7 +18,21 @@ export class AuthService {
             select: { fotoUrl: true },
           })
         : null,
+      // Sucursales: otras empresas a las que este usuario tiene acceso
+      // vinculado (además de la suya) — solo lo otorga el panel admin, y
+      // solo se crean vínculos para CEO/RRHH, así que esta consulta ya
+      // sale vacía para cualquier otro rol.
+      this.prisma.usuarioEmpresaAcceso.findMany({
+        where: { usuarioId: usuario.id },
+        select: {
+          empresa: { select: { slug: true, nombre: true, logoUrl: true } },
+        },
+      }),
     ]);
+
+    const vinculadas = vinculos.map((v) => v.empresa);
+    const empresasDisponibles = empresa ? [empresa, ...vinculadas] : vinculadas;
+
     return {
       usuario: {
         id: usuario.id,
@@ -32,6 +46,7 @@ export class AuthService {
         departamentosSupervisados: usuario.departamentosSupervisados,
       },
       empresa,
+      empresasDisponibles,
     };
   }
 

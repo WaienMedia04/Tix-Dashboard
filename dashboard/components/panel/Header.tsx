@@ -6,6 +6,7 @@ import { Menu, PenSquare } from "lucide-react";
 import { usePanel } from "./PanelContext";
 import { CampanaNotificaciones } from "@/components/notificaciones/CampanaNotificaciones";
 import { MenuUsuario } from "./MenuUsuario";
+import { SelectorSucursal } from "./SelectorSucursal";
 
 export function Header({
   empresaNombre,
@@ -54,6 +55,7 @@ export function Header({
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-3">
+        <SelectorSucursal />
         <Link
           href={`/${slug}/mi-mural`}
           aria-label="Mi Mural"

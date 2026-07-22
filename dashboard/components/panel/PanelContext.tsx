@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { DashboardData, Rol } from "@/lib/api";
+import type { DashboardData, EmpresaDisponible, Rol } from "@/lib/api";
 
 export interface PanelContextValue {
   slug: string;
@@ -12,6 +12,8 @@ export interface PanelContextValue {
   usuarioFotoUrl: string | null;
   departamentosSupervisados: string[];
   empresa: { nombre: string; slug: string; plan: string; logoUrl: string | null };
+  /** Sucursales: empresa propia + cualquiera vinculada (solo CEO/RRHH puede tener más de una). */
+  empresasDisponibles: EmpresaDisponible[];
   dashboardInicial: DashboardData;
 }
 

@@ -63,7 +63,23 @@ export class CompanyAccessGuard implements CanActivate {
     const usuario = await resolverUsuarioPorBearer(req, this.prisma);
     if (usuario) {
       if (usuario.empresaId !== empresa.id) {
-        throw new UnauthorizedException();
+        // Sucursales: un CEO/RRHH puede tener acceso vinculado a OTRAS
+        // empresas además de la suya — solo lo otorga el panel admin
+        // (UsuarioEmpresaAcceso), nunca algo que el cliente pueda mandar.
+        const tieneAccesoVinculado =
+          (usuario.rol === 'CEO' || usuario.rol === 'RRHH') &&
+          (await this.prisma.usuarioEmpresaAcceso.findUnique({
+            where: {
+              usuarioId_empresaId: {
+                usuarioId: usuario.id,
+                empresaId: empresa.id,
+              },
+            },
+            select: { id: true },
+          })) !== null;
+        if (!tieneAccesoVinculado) {
+          throw new UnauthorizedException();
+        }
       }
       const permitirSinActivar = this.reflector.getAllAndOverride<boolean>(
         PERMITIR_SIN_ACTIVAR_KEY,

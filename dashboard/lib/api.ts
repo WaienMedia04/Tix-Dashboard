@@ -343,9 +343,17 @@ export interface SesionUsuario {
   departamentosSupervisados: string[];
 }
 
+export interface EmpresaDisponible {
+  slug: string;
+  nombre: string;
+  logoUrl: string | null;
+}
+
 export interface MeResponse {
   usuario: SesionUsuario;
-  empresa: { slug: string; nombre: string } | null;
+  empresa: EmpresaDisponible | null;
+  /** Sucursales: empresa propia + cualquiera vinculada (solo CEO/RRHH puede tener más de una). */
+  empresasDisponibles: EmpresaDisponible[];
 }
 
 export class SesionInvalidaError extends Error {}
