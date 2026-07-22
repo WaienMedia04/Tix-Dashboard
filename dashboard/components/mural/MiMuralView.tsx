@@ -23,6 +23,7 @@ import { MisEstampasModal } from "./MisEstampasModal";
 import { EstadoModal } from "./EstadoModal";
 import { BoletinInformativo } from "@/components/boletin/BoletinInformativo";
 import { VacantesInformativo } from "@/components/vacantes/VacantesInformativo";
+import { ClimaWidget } from "./ClimaWidget";
 import { PizarraSocial } from "@/components/pizarra/PizarraSocial";
 
 export function MiMuralView({
@@ -365,6 +366,10 @@ export function MiMuralView({
             <BoletinInformativo slug={slug} />
             <VacantesInformativo slug={slug} />
           </div>
+        </div>
+
+        <div className="mx-auto mt-6 w-full max-w-5xl">
+          <ClimaWidget />
         </div>
       </div>
     </div>

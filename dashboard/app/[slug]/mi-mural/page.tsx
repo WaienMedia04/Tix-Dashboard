@@ -87,7 +87,7 @@ export default function MiMuralPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="pt-safe flex items-center justify-between border-b border-border px-4 py-4 sm:px-8">
+      <header className="pt-safe flex min-h-16 items-center justify-between border-b border-border px-4 py-4 sm:px-8">
         <div className="flex items-center gap-3">
           <Link
             href={volver()}
