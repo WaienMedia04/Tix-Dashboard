@@ -20,9 +20,6 @@ import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
 import { EstadoModal } from "./EstadoModal";
 import { BoletinInformativo } from "@/components/boletin/BoletinInformativo";
-
-/** Gris claro de fondo de la sección de la Pizarra — también es el color final del difuminado que la une con el mural de arriba. */
-const COLOR_FONDO_PIZARRA = "#e4e4e7";
 import { PizarraSocial } from "@/components/pizarra/PizarraSocial";
 
 export function MiMuralView({
@@ -87,7 +84,6 @@ export function MiMuralView({
   const texto = fondoMuralTexto(mural.perfil.fondoId);
 
   return (
-    <>
     <div
       className="relative min-h-[calc(100vh-73px)] transition-[background] duration-500"
       style={{ background: fondoMuralCss(mural.perfil.fondoId) }}
@@ -341,24 +337,12 @@ export function MiMuralView({
         />
       )}
 
-      {/* Difumina el borde inferior del mural hacia el gris de la Pizarra: el blur y el color se enmascaran
-          para que ambos entren de forma gradual desde arriba, sin dejar un borde donde "empieza" el efecto. */}
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-44 backdrop-blur-2xl sm:h-64"
-        style={{
-          background: `linear-gradient(to bottom, transparent 0%, ${COLOR_FONDO_PIZARRA} 92%)`,
-          maskImage: "linear-gradient(to bottom, transparent 0%, black 65%)",
-          WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 65%)",
-        }}
-      />
-    </div>
-
-    <div className="px-4 py-10 sm:px-8" style={{ background: COLOR_FONDO_PIZARRA }}>
-      <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-6 lg:flex-row">
-        <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} />
-        <BoletinInformativo slug={slug} />
+      <div className="relative z-10 px-4 pb-10 sm:px-8">
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-6 lg:flex-row">
+          <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} />
+          <BoletinInformativo slug={slug} />
+        </div>
       </div>
     </div>
-    </>
   );
 }
