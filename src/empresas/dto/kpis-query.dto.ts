@@ -1,4 +1,4 @@
-import { IsOptional, Matches } from 'class-validator';
+import { IsOptional, IsString, Matches } from 'class-validator';
 
 export class KpisQueryDto {
   @IsOptional()
@@ -6,4 +6,8 @@ export class KpisQueryDto {
     message: 'periodo debe tener el formato YYYY-MM',
   })
   periodo?: string;
+
+  @IsOptional()
+  @IsString()
+  departamento?: string;
 }

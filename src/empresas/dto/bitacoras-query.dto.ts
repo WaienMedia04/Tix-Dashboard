@@ -17,6 +17,10 @@ export class BitacorasQueryDto {
   talentoId?: string;
 
   @IsOptional()
+  @IsString()
+  departamento?: string;
+
+  @IsOptional()
   @IsIn(['enviada', 'no_enviada', 'permiso'])
   estado?: EstadoFiltro;
 

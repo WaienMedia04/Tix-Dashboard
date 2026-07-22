@@ -11,4 +11,8 @@ export class RankingsQueryDto {
   @IsOptional()
   @IsString()
   valor?: string;
+
+  @IsOptional()
+  @IsString()
+  departamento?: string;
 }

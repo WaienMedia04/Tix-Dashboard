@@ -23,7 +23,7 @@ function hoyIso(): string {
 }
 
 function filtroInicial(): FiltroReporteState {
-  return { periodo: "mensual", valor: mesActual(), fechaInicio: primerDiaMes(), fechaFin: hoyIso() };
+  return { periodo: "mensual", valor: mesActual(), fechaInicio: primerDiaMes(), fechaFin: hoyIso(), departamento: "" };
 }
 
 function semanaActualIso(): string {
@@ -108,6 +108,7 @@ function ReporteEjecutivoResultado({ slug, filtro }: { slug: string; filtro: Fil
       valor: filtro.periodo === "personalizado" ? undefined : filtro.valor,
       fechaInicio: filtro.periodo === "personalizado" ? filtro.fechaInicio : undefined,
       fechaFin: filtro.periodo === "personalizado" ? filtro.fechaFin : undefined,
+      departamento: filtro.departamento || undefined,
     })
       .then((datos) => {
         if (!cancelado) setEstado({ tipo: "listo", datos });
@@ -118,7 +119,7 @@ function ReporteEjecutivoResultado({ slug, filtro }: { slug: string; filtro: Fil
     return () => {
       cancelado = true;
     };
-  }, [slug, filtro.periodo, filtro.valor, filtro.fechaInicio, filtro.fechaFin]);
+  }, [slug, filtro.periodo, filtro.valor, filtro.fechaInicio, filtro.fechaFin, filtro.departamento]);
 
   if (estado.tipo === "cargando") {
     return (
@@ -226,10 +227,11 @@ export function ReportesEjecutivosView() {
         onCambiarValor={(valor) => setFiltro((prev) => ({ ...prev, valor }))}
         onCambiarFechaInicio={(fechaInicio) => setFiltro((prev) => ({ ...prev, fechaInicio }))}
         onCambiarFechaFin={(fechaFin) => setFiltro((prev) => ({ ...prev, fechaFin }))}
+        onCambiarDepartamento={(departamento) => setFiltro((prev) => ({ ...prev, departamento }))}
       />
 
       <ReporteEjecutivoResultado
-        key={`${filtro.periodo}-${filtro.valor}-${filtro.fechaInicio}-${filtro.fechaFin}`}
+        key={`${filtro.periodo}-${filtro.valor}-${filtro.fechaInicio}-${filtro.fechaFin}-${filtro.departamento}`}
         slug={slug}
         filtro={filtro}
       />

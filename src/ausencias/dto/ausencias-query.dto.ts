@@ -4,4 +4,8 @@ export class AusenciasQueryDto {
   @IsOptional()
   @IsString()
   talentoId?: string;
+
+  @IsOptional()
+  @IsString()
+  departamento?: string;
 }

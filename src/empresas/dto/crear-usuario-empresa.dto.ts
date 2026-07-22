@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsEmail,
   IsIn,
   IsNotEmpty,
@@ -10,7 +11,10 @@ import {
  * Roles que CEO/RRHH pueden invitar directamente desde el panel (a
  * diferencia del panel admin, que además permite dar de alta CEO/RRHH).
  */
-export type RolInvitableDesdeEmpresa = 'TALENTO' | 'MANAGER';
+export type RolInvitableDesdeEmpresa =
+  | 'TALENTO'
+  | 'MANAGER'
+  | 'GERENTE_GENERAL';
 
 export class CrearUsuarioEmpresaDto {
   @IsEmail()
@@ -20,7 +24,7 @@ export class CrearUsuarioEmpresaDto {
   @IsNotEmpty()
   nombre!: string;
 
-  @IsIn(['TALENTO', 'MANAGER'])
+  @IsIn(['TALENTO', 'MANAGER', 'GERENTE_GENERAL'])
   rol!: RolInvitableDesdeEmpresa;
 
   @IsString()
@@ -31,4 +35,10 @@ export class CrearUsuarioEmpresaDto {
   @IsString()
   @IsOptional()
   departamentoGestionado?: string;
+
+  /** Solo tiene efecto cuando rol es GERENTE_GENERAL. */
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  departamentosSupervisados?: string[];
 }

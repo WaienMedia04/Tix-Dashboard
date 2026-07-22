@@ -212,7 +212,7 @@ export class EmpresasService {
     return { hoy, esteMes, porMes };
   }
 
-  async dashboard(slug: string, actor: Actor) {
+  async dashboard(slug: string, actor: Actor, departamento?: string) {
     const empresa = await this.resolverEmpresa(slug, actor);
 
     // TODO: filtrar por empresaId es manual porque todavia no hay RLS en Postgres.
@@ -225,7 +225,9 @@ export class EmpresasService {
         include: { talento: { select: { nombreCompleto: true } } },
         orderBy: { fecha: 'desc' },
       }),
-      this.prisma.talento.findMany({ where: talentoActivoScopeWhere(actor) }),
+      this.prisma.talento.findMany({
+        where: talentoActivoScopeWhere(actor, departamento),
+      }),
     ]);
 
     const talentoIdsVisibles = new Set(talentos.map((t) => t.id));
@@ -400,7 +402,11 @@ export class EmpresasService {
     // TODO: filtrar por empresaId es manual porque todavia no hay RLS en Postgres.
     const where: Prisma.WorklogWhereInput = { empresaId: empresa.id };
 
-    const alcance = await resolverAlcanceTalentoIds(actor, this.prisma);
+    const alcance = await resolverAlcanceTalentoIds(
+      actor,
+      this.prisma,
+      query.departamento,
+    );
     if (alcance !== null) {
       // MANAGER/TALENTO: si piden un talentoId puntual fuera de su alcance,
       // no se les revela que existe — mismo resultado que "sin datos".
@@ -468,11 +474,11 @@ export class EmpresasService {
     };
   }
 
-  async empleados(slug: string, actor: Actor) {
+  async empleados(slug: string, actor: Actor, departamento?: string) {
     await this.resolverEmpresa(slug, actor);
 
     const talentos = await this.prisma.talento.findMany({
-      where: talentoScopeWhere(actor),
+      where: talentoScopeWhere(actor, departamento),
       include: {
         worklogs: {
           select: {
@@ -662,7 +668,11 @@ export class EmpresasService {
 
   async kpis(slug: string, actor: Actor, query: KpisQueryDto) {
     const empresa = await this.resolverEmpresa(slug, actor);
-    const alcance = await resolverAlcanceTalentoIds(actor, this.prisma);
+    const alcance = await resolverAlcanceTalentoIds(
+      actor,
+      this.prisma,
+      query.departamento,
+    );
     const talentoIdFiltro = alcance !== null ? { in: alcance } : undefined;
 
     const ahora = new Date();
@@ -766,7 +776,9 @@ export class EmpresasService {
         },
         select: { talentoId: true, puntajeIA: true },
       }),
-      this.prisma.talento.findMany({ where: talentoActivoScopeWhere(actor) }),
+      this.prisma.talento.findMany({
+        where: talentoActivoScopeWhere(actor, query.departamento),
+      }),
       this.prisma.worklog.findMany({
         where: {
           empresaId: empresa.id,
@@ -997,7 +1009,11 @@ export class EmpresasService {
 
   async reportes(slug: string, actor: Actor, query: ReportesQueryDto) {
     const empresa = await this.resolverEmpresa(slug, actor);
-    const alcance = await resolverAlcanceTalentoIds(actor, this.prisma);
+    const alcance = await resolverAlcanceTalentoIds(
+      actor,
+      this.prisma,
+      query.departamento,
+    );
     const talentoIdFiltro = alcance !== null ? { in: alcance } : undefined;
 
     let inicio: Date;
@@ -1041,7 +1057,9 @@ export class EmpresasService {
           cumplimientoTareas: true,
         },
       }),
-      this.prisma.talento.findMany({ where: talentoActivoScopeWhere(actor) }),
+      this.prisma.talento.findMany({
+        where: talentoActivoScopeWhere(actor, query.departamento),
+      }),
     ]);
 
     // talentoIdFiltro no distingue activo/inactivo — se re-filtra contra
@@ -1229,6 +1247,15 @@ export class EmpresasService {
         dto.departamentoGestionado?.trim(),
       );
     }
+    if (dto.rol === 'GERENTE_GENERAL') {
+      for (const departamento of dto.departamentosSupervisados ?? []) {
+        await validarDepartamentoPermitido(
+          this.prisma,
+          empresa.id,
+          departamento.trim(),
+        );
+      }
+    }
 
     if (dto.talentoId) {
       const talento = await this.prisma.talento.findUnique({
@@ -1246,6 +1273,7 @@ export class EmpresasService {
       rol: dto.rol,
       talentoId: dto.talentoId,
       departamentoGestionado: dto.departamentoGestionado,
+      departamentosSupervisados: dto.departamentosSupervisados,
     });
 
     return { usuario, invitacionEnviada: true };
@@ -1255,7 +1283,10 @@ export class EmpresasService {
   async usuarios(slug: string, actor: Actor) {
     const empresa = await this.resolverEmpresa(slug, actor);
     return this.prisma.usuario.findMany({
-      where: { empresaId: empresa.id, rol: { in: ['TALENTO', 'MANAGER'] } },
+      where: {
+        empresaId: empresa.id,
+        rol: { in: ['TALENTO', 'MANAGER', 'GERENTE_GENERAL'] },
+      },
       select: {
         id: true,
         email: true,
@@ -1265,6 +1296,7 @@ export class EmpresasService {
         passwordEstablecida: true,
         talentoId: true,
         departamentoGestionado: true,
+        departamentosSupervisados: true,
       },
       orderBy: { nombre: 'asc' },
     });
@@ -1280,7 +1312,11 @@ export class EmpresasService {
     if (!usuario || usuario.empresaId !== empresaId) {
       throw new NotFoundException('Usuario no encontrado');
     }
-    if (usuario.rol !== 'TALENTO' && usuario.rol !== 'MANAGER') {
+    if (
+      usuario.rol !== 'TALENTO' &&
+      usuario.rol !== 'MANAGER' &&
+      usuario.rol !== 'GERENTE_GENERAL'
+    ) {
       throw new ForbiddenException(
         'No puedes gestionar este acceso desde aquí',
       );
@@ -1340,6 +1376,35 @@ export class EmpresasService {
     });
   }
 
+  async actualizarDepartamentosSupervisados(
+    slug: string,
+    actor: Actor,
+    usuarioId: string,
+    departamentosSupervisados: string[],
+  ) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+    const usuario = await this.validarUsuarioGestionable(empresa.id, usuarioId);
+    if (usuario.rol !== 'GERENTE_GENERAL') {
+      throw new ForbiddenException(
+        'Solo un usuario con rol Gerente General puede tener departamentos supervisados',
+      );
+    }
+    for (const departamento of departamentosSupervisados) {
+      await validarDepartamentoPermitido(this.prisma, empresa.id, departamento);
+    }
+    return this.prisma.usuario.update({
+      where: { id: usuarioId },
+      data: { departamentosSupervisados },
+      select: {
+        id: true,
+        email: true,
+        nombre: true,
+        rol: true,
+        departamentosSupervisados: true,
+      },
+    });
+  }
+
   async rankings(slug: string, actor: Actor, query: RankingsQueryDto) {
     const empresa = await this.resolverEmpresa(slug, actor);
 
@@ -1358,7 +1423,9 @@ export class EmpresasService {
     }
 
     const [talentos, worklogs] = await Promise.all([
-      this.prisma.talento.findMany({ where: talentoActivoScopeWhere(actor) }),
+      this.prisma.talento.findMany({
+        where: talentoActivoScopeWhere(actor, query.departamento),
+      }),
       this.prisma.worklog.findMany({
         where: {
           empresaId: empresa.id,
@@ -1437,11 +1504,13 @@ export class EmpresasService {
    * de mes, para detectar inactividad). Siempre refleja el estado real,
    * nunca queda desactualizada.
    */
-  async alertas(slug: string, actor: Actor) {
+  async alertas(slug: string, actor: Actor, departamento?: string) {
     const empresa = await this.resolverEmpresa(slug, actor);
 
     const [talentos, worklogsDesc] = await Promise.all([
-      this.prisma.talento.findMany({ where: talentoActivoScopeWhere(actor) }),
+      this.prisma.talento.findMany({
+        where: talentoActivoScopeWhere(actor, departamento),
+      }),
       this.prisma.worklog.findMany({
         where: { empresaId: empresa.id },
         select: {

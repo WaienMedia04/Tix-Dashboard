@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { type PeriodoRanking, type RankingsResponse, fetchRankings } from "@/lib/api";
 import { usePanel } from "../PanelContext";
+import { FiltroDepartamento } from "../FiltroDepartamento";
 import { RankingTalentos } from "@/components/RankingTalentos";
 import { SkeletonChart } from "@/components/motion/Skeleton";
 
@@ -29,13 +30,21 @@ function BotonPill({ activo, onClick, children }: { activo: boolean; onClick: ()
 
 type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; datos: RankingsResponse };
 
-function RankingsResultado({ slug, periodo }: { slug: string; periodo: PeriodoRanking }) {
+function RankingsResultado({
+  slug,
+  periodo,
+  departamento,
+}: {
+  slug: string;
+  periodo: PeriodoRanking;
+  departamento: string;
+}) {
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [vista, setVista] = useState<Vista>("empresa");
 
   useEffect(() => {
     let cancelado = false;
-    fetchRankings(slug, periodo)
+    fetchRankings(slug, periodo, undefined, departamento || undefined)
       .then((datos) => {
         if (!cancelado) setEstado({ tipo: "listo", datos });
       })
@@ -45,7 +54,7 @@ function RankingsResultado({ slug, periodo }: { slug: string; periodo: PeriodoRa
     return () => {
       cancelado = true;
     };
-  }, [slug, periodo]);
+  }, [slug, periodo, departamento]);
 
   if (estado.tipo === "cargando") return <SkeletonChart />;
   if (estado.tipo === "error") return <p className="text-sm text-destructive">No se pudo cargar el ranking.</p>;
@@ -99,6 +108,7 @@ function RankingsResultado({ slug, periodo }: { slug: string; periodo: PeriodoRa
 export function RankingsView() {
   const { slug } = usePanel();
   const [periodo, setPeriodo] = useState<PeriodoRanking>("mensual");
+  const [departamento, setDepartamento] = useState("");
 
   return (
     <div className="space-y-4">
@@ -107,16 +117,19 @@ export function RankingsView() {
           <h1 className="font-display text-lg font-semibold text-foreground">Rankings</h1>
           <p className="text-sm text-muted-foreground">Comparativa de desempeño por puntaje IA</p>
         </div>
-        <div className="flex gap-2">
-          {(Object.keys(ETIQUETA_PERIODO) as PeriodoRanking[]).map((p) => (
-            <BotonPill key={p} activo={periodo === p} onClick={() => setPeriodo(p)}>
-              {ETIQUETA_PERIODO[p]}
-            </BotonPill>
-          ))}
+        <div className="flex flex-wrap items-end gap-3">
+          <FiltroDepartamento value={departamento} onChange={setDepartamento} />
+          <div className="flex gap-2">
+            {(Object.keys(ETIQUETA_PERIODO) as PeriodoRanking[]).map((p) => (
+              <BotonPill key={p} activo={periodo === p} onClick={() => setPeriodo(p)}>
+                {ETIQUETA_PERIODO[p]}
+              </BotonPill>
+            ))}
+          </div>
         </div>
       </div>
 
-      <RankingsResultado key={periodo} slug={slug} periodo={periodo} />
+      <RankingsResultado key={`${periodo}-${departamento}`} slug={slug} periodo={periodo} departamento={departamento} />
     </div>
   );
 }

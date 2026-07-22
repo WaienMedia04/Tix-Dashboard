@@ -74,7 +74,7 @@ export class NovedadesService {
     const novedades = await this.prisma.novedad.findMany({
       where: {
         empresaId: empresa.id,
-        talento: talentoScopeWhere(actor),
+        talento: talentoScopeWhere(actor, query.departamento),
         ...(query.talentoId && { talentoId: query.talentoId }),
         ...(query.tipo && { tipo: query.tipo }),
       },

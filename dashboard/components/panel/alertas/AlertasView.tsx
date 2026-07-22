@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertTriangle, CircleAlert, PartyPopper } from "lucide-react";
 import { type AlertaItem, type AlertasResponse, type SeveridadAlerta, fetchAlertas } from "@/lib/api";
 import { usePanel } from "../PanelContext";
+import { FiltroDepartamento } from "../FiltroDepartamento";
 import { Avatar } from "@/components/Avatar";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { SkeletonStatCards, SkeletonTableRows } from "@/components/motion/Skeleton";
@@ -48,10 +49,11 @@ type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; datos:
 export function AlertasView() {
   const { slug } = usePanel();
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
+  const [departamento, setDepartamento] = useState("");
 
   useEffect(() => {
     let cancelado = false;
-    fetchAlertas(slug)
+    fetchAlertas(slug, departamento || undefined)
       .then((datos) => {
         if (!cancelado) setEstado({ tipo: "listo", datos });
       })
@@ -61,13 +63,16 @@ export function AlertasView() {
     return () => {
       cancelado = true;
     };
-  }, [slug]);
+  }, [slug, departamento]);
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="font-display text-lg font-semibold text-foreground">Alertas</h1>
-        <p className="text-sm text-muted-foreground">Detección automática de riesgos y reconocimientos — calculada en vivo sobre el mes en curso</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-lg font-semibold text-foreground">Alertas</h1>
+          <p className="text-sm text-muted-foreground">Detección automática de riesgos y reconocimientos — calculada en vivo sobre el mes en curso</p>
+        </div>
+        <FiltroDepartamento value={departamento} onChange={setDepartamento} />
       </div>
 
       {estado.tipo === "cargando" && (

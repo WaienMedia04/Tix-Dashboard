@@ -19,4 +19,8 @@ export class ReportesQueryDto {
   @IsOptional()
   @IsDateString()
   fechaFin?: string;
+
+  @IsOptional()
+  @IsString()
+  departamento?: string;
 }

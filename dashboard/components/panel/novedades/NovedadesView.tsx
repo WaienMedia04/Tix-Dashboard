@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AlertOctagon, CalendarX, FileText, HeartHandshake, Plus, Trophy } from "lucide-react";
 import { type NovedadItem, type TipoNovedad, crearNovedad, fetchNovedades } from "@/lib/api";
 import { usePanel } from "../PanelContext";
+import { FiltroDepartamento } from "../FiltroDepartamento";
 import { Avatar } from "@/components/Avatar";
 import { EnlaceTalento } from "@/components/EnlaceTalento";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
@@ -165,10 +166,14 @@ export function NovedadesView() {
   const { slug } = usePanel();
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [filtroTipo, setFiltroTipo] = useState<TipoNovedad | "">("");
+  const [departamento, setDepartamento] = useState("");
 
   useEffect(() => {
     let cancelado = false;
-    fetchNovedades(slug, filtroTipo ? { tipo: filtroTipo } : {})
+    fetchNovedades(slug, {
+      tipo: filtroTipo || undefined,
+      departamento: departamento || undefined,
+    })
       .then((novedades) => {
         if (!cancelado) setEstado({ tipo: "listo", novedades });
       })
@@ -178,7 +183,7 @@ export function NovedadesView() {
     return () => {
       cancelado = true;
     };
-  }, [slug, filtroTipo]);
+  }, [slug, filtroTipo, departamento]);
 
   function handleCreada(novedad: NovedadItem) {
     setEstado((prev) => (prev.tipo === "listo" ? { tipo: "listo", novedades: [novedad, ...prev.novedades] } : prev));
@@ -193,26 +198,29 @@ export function NovedadesView() {
 
       <FormularioNovedad slug={slug} onCreada={handleCreada} />
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setFiltroTipo("")}
-          className={`rounded-full px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition-colors ${
-            filtroTipo === "" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          Todos
-        </button>
-        {TIPOS.map((t) => (
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
           <button
-            key={t.valor}
-            onClick={() => setFiltroTipo(t.valor)}
+            onClick={() => setFiltroTipo("")}
             className={`rounded-full px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition-colors ${
-              filtroTipo === t.valor ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:text-foreground"
+              filtroTipo === "" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t.label}
+            Todos
           </button>
-        ))}
+          {TIPOS.map((t) => (
+            <button
+              key={t.valor}
+              onClick={() => setFiltroTipo(t.valor)}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition-colors ${
+                filtroTipo === t.valor ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <FiltroDepartamento value={departamento} onChange={setDepartamento} />
       </div>
 
       {estado.tipo === "cargando" && (

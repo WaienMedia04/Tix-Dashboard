@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import type { EstadoFiltro } from "@/lib/api";
+import { FiltroDepartamento } from "../FiltroDepartamento";
 
 export interface FiltrosState {
   fechaInicio: string;
   fechaFin: string;
   talentoId: string;
   estado: EstadoFiltro | "";
+  departamento: string;
 }
 
 const OPCIONES_ESTADO: { value: EstadoFiltro | ""; label: string }[] = [
@@ -207,6 +209,7 @@ export function FiltrosBitacoras({
             ))}
           </select>
         </div>
+        <FiltroDepartamento value={valores.departamento} onChange={(v) => set("departamento", v)} />
         <button
           onClick={onLimpiar}
           className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"

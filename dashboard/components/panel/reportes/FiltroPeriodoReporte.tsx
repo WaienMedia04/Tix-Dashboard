@@ -1,6 +1,7 @@
 "use client";
 
 import type { PeriodoReporte } from "@/lib/api";
+import { FiltroDepartamento } from "../FiltroDepartamento";
 
 const CAMPO_CLASES =
   "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring";
@@ -10,6 +11,7 @@ export interface FiltroReporteState {
   valor: string;
   fechaInicio: string;
   fechaFin: string;
+  departamento: string;
 }
 
 export function FiltroPeriodoReporte({
@@ -18,12 +20,14 @@ export function FiltroPeriodoReporte({
   onCambiarValor,
   onCambiarFechaInicio,
   onCambiarFechaFin,
+  onCambiarDepartamento,
 }: {
   filtro: FiltroReporteState;
   onCambiarPeriodo: (periodo: PeriodoReporte) => void;
   onCambiarValor: (valor: string) => void;
   onCambiarFechaInicio: (fecha: string) => void;
   onCambiarFechaFin: (fecha: string) => void;
+  onCambiarDepartamento: (departamento: string) => void;
 }) {
   return (
     <div className="print:hidden flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-4 shadow-card">
@@ -93,6 +97,8 @@ export function FiltroPeriodoReporte({
           )}
         </div>
       )}
+
+      <FiltroDepartamento value={filtro.departamento} onChange={onCambiarDepartamento} />
     </div>
   );
 }

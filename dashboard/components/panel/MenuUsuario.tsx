@@ -11,6 +11,7 @@ import type { Rol } from "@/lib/api";
 const ROL_LABEL: Record<Rol, string> = {
   CEO: "CEO",
   RRHH: "RRHH",
+  GERENTE_GENERAL: "Gerente General",
   MANAGER: "Gerente",
   TALENTO: "Empleado",
 };

@@ -15,10 +15,12 @@ import {
   fetchUsuariosTalento,
   cambiarCorreoUsuarioTalento,
   actualizarDepartamentoGestionadoUsuario,
+  actualizarDepartamentosSupervisadosUsuario,
   restablecerPasswordUsuarioTalento,
 } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
 import { CampoDepartamento } from "@/components/CampoDepartamento";
+import { CampoDepartamentosMultiple } from "@/components/CampoDepartamentosMultiple";
 import { EnlaceTalento } from "@/components/EnlaceTalento";
 import { StaggerGroup, StaggerItem, StaggerRow, StaggerTableBody } from "@/components/motion/Stagger";
 import { SkeletonTableRows } from "@/components/motion/Skeleton";
@@ -29,6 +31,7 @@ const CAMPO_CLASES =
 const ROLES_INVITABLES: { value: RolInvitable; label: string }[] = [
   { value: "TALENTO", label: "Empleado" },
   { value: "MANAGER", label: "Gerente" },
+  { value: "GERENTE_GENERAL", label: "Gerente General" },
 ];
 
 type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; empleados: EmpleadoResumen[] };
@@ -71,6 +74,7 @@ export function ListaEmpleados({ slug }: { slug: string }) {
     nombreLogin: "",
     rolLogin: "TALENTO" as RolInvitable,
     departamentoGestionado: "",
+    departamentosSupervisados: [] as string[],
   });
   const [resultadoAcceso, setResultadoAcceso] = useState<
     { tipo: "ok"; correo: string } | { tipo: "error"; mensaje: string } | null
@@ -90,6 +94,11 @@ export function ListaEmpleados({ slug }: { slug: string }) {
   const [guardandoDeptoId, setGuardandoDeptoId] = useState<string | null>(null);
   const [deptoError, setDeptoError] = useState<string | null>(null);
 
+  const [editandoDeptosSupervisadosId, setEditandoDeptosSupervisadosId] = useState<string | null>(null);
+  const [nuevosDeptosSupervisadosValor, setNuevosDeptosSupervisadosValor] = useState<string[]>([]);
+  const [guardandoDeptosSupervisadosId, setGuardandoDeptosSupervisadosId] = useState<string | null>(null);
+  const [deptosSupervisadosError, setDeptosSupervisadosError] = useState<string | null>(null);
+
   const [departamentos, setDepartamentos] = useState<DepartamentoDefinicion[]>([]);
 
   const [invitandoTalentoId, setInvitandoTalentoId] = useState<string | null>(null);
@@ -98,6 +107,7 @@ export function ListaEmpleados({ slug }: { slug: string }) {
     nombreLogin: "",
     rolLogin: "TALENTO" as RolInvitable,
     departamentoGestionado: "",
+    departamentosSupervisados: [] as string[],
   });
   const [guardandoAccesoId, setGuardandoAccesoId] = useState<string | null>(null);
   const [accesoExistenteError, setAccesoExistenteError] = useState<string | null>(null);
@@ -172,6 +182,8 @@ export function ListaEmpleados({ slug }: { slug: string }) {
         talentoId,
         departamentoGestionado:
           formAcceso.rolLogin === "MANAGER" ? formAcceso.departamentoGestionado.trim() || undefined : undefined,
+        departamentosSupervisados:
+          formAcceso.rolLogin === "GERENTE_GENERAL" ? formAcceso.departamentosSupervisados : undefined,
       });
       setUsuarios((prev) => [
         ...prev,
@@ -181,10 +193,17 @@ export function ListaEmpleados({ slug }: { slug: string }) {
           passwordEstablecida: false,
           talentoId,
           departamentoGestionado: formAcceso.rolLogin === "MANAGER" ? formAcceso.departamentoGestionado.trim() || null : null,
+          departamentosSupervisados: formAcceso.rolLogin === "GERENTE_GENERAL" ? formAcceso.departamentosSupervisados : [],
         },
       ]);
       setInvitandoTalentoId(null);
-      setFormAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO", departamentoGestionado: "" });
+      setFormAcceso({
+        email: "",
+        nombreLogin: "",
+        rolLogin: "TALENTO",
+        departamentoGestionado: "",
+        departamentosSupervisados: [],
+      });
     } catch (err) {
       setAccesoExistenteError(err instanceof Error ? err.message : "No se pudo enviar la invitación");
     } finally {
@@ -204,6 +223,23 @@ export function ListaEmpleados({ slug }: { slug: string }) {
       setDeptoError(err instanceof Error ? err.message : "No se pudo actualizar el departamento");
     } finally {
       setGuardandoDeptoId(null);
+    }
+  }
+
+  async function handleGuardarDeptosSupervisados(usuarioId: string) {
+    setGuardandoDeptosSupervisadosId(usuarioId);
+    setDeptosSupervisadosError(null);
+    try {
+      const actualizado = await actualizarDepartamentosSupervisadosUsuario(slug, usuarioId, nuevosDeptosSupervisadosValor);
+      setUsuarios((prev) => prev.map((u) => (u.id === usuarioId ? actualizado : u)));
+      setEditandoDeptosSupervisadosId(null);
+      setNuevosDeptosSupervisadosValor([]);
+    } catch (err) {
+      setDeptosSupervisadosError(
+        err instanceof Error ? err.message : "No se pudieron actualizar los departamentos supervisados",
+      );
+    } finally {
+      setGuardandoDeptosSupervisadosId(null);
     }
   }
 
@@ -229,6 +265,8 @@ export function ListaEmpleados({ slug }: { slug: string }) {
             talentoId: nuevo.id,
             departamentoGestionado:
               nuevoAcceso.rolLogin === "MANAGER" ? nuevoAcceso.departamentoGestionado.trim() || undefined : undefined,
+            departamentosSupervisados:
+              nuevoAcceso.rolLogin === "GERENTE_GENERAL" ? nuevoAcceso.departamentosSupervisados : undefined,
           });
           setUsuarios((prev) => [
             ...prev,
@@ -239,10 +277,18 @@ export function ListaEmpleados({ slug }: { slug: string }) {
               talentoId: nuevo.id,
               departamentoGestionado:
                 nuevoAcceso.rolLogin === "MANAGER" ? nuevoAcceso.departamentoGestionado.trim() || null : null,
+              departamentosSupervisados:
+                nuevoAcceso.rolLogin === "GERENTE_GENERAL" ? nuevoAcceso.departamentosSupervisados : [],
             },
           ]);
           setResultadoAcceso({ tipo: "ok", correo: nuevoAcceso.email });
-          setNuevoAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO", departamentoGestionado: "" });
+          setNuevoAcceso({
+            email: "",
+            nombreLogin: "",
+            rolLogin: "TALENTO",
+            departamentoGestionado: "",
+            departamentosSupervisados: [],
+          });
           setCrearAcceso(false);
         } catch (err) {
           setResultadoAcceso({
@@ -419,6 +465,14 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                   departamentos={departamentos}
                 />
               )}
+              {nuevoAcceso.rolLogin === "GERENTE_GENERAL" && (
+                <CampoDepartamentosMultiple
+                  label="Departamentos a supervisar"
+                  value={nuevoAcceso.departamentosSupervisados}
+                  onChange={(v) => setNuevoAcceso((f) => ({ ...f, departamentosSupervisados: v }))}
+                  departamentos={departamentos}
+                />
+              )}
             </div>
           )}
 
@@ -518,7 +572,13 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                           <button
                             onClick={() => {
                               setInvitandoTalentoId(invitandoTalentoId === e.id ? null : e.id);
-                              setFormAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO", departamentoGestionado: "" });
+                              setFormAcceso({
+                                email: "",
+                                nombreLogin: "",
+                                rolLogin: "TALENTO",
+                                departamentoGestionado: "",
+                                departamentosSupervisados: [],
+                              });
                               setAccesoExistenteError(null);
                             }}
                             className="text-xs font-medium text-primary hover:underline"
@@ -577,6 +637,14 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                                 label="Departamento a gestionar"
                                 value={formAcceso.departamentoGestionado}
                                 onChange={(v) => setFormAcceso((f) => ({ ...f, departamentoGestionado: v }))}
+                                departamentos={departamentos}
+                              />
+                            )}
+                            {formAcceso.rolLogin === "GERENTE_GENERAL" && (
+                              <CampoDepartamentosMultiple
+                                label="Departamentos a supervisar"
+                                value={formAcceso.departamentosSupervisados}
+                                onChange={(v) => setFormAcceso((f) => ({ ...f, departamentosSupervisados: v }))}
                                 departamentos={departamentos}
                               />
                             )}
@@ -656,7 +724,13 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                         <button
                           onClick={() => {
                             setInvitandoTalentoId(invitandoTalentoId === e.id ? null : e.id);
-                            setFormAcceso({ email: "", nombreLogin: "", rolLogin: "TALENTO", departamentoGestionado: "" });
+                            setFormAcceso({
+                              email: "",
+                              nombreLogin: "",
+                              rolLogin: "TALENTO",
+                              departamentoGestionado: "",
+                              departamentosSupervisados: [],
+                            });
                             setAccesoExistenteError(null);
                           }}
                           className="text-xs font-medium text-primary hover:underline"
@@ -714,6 +788,14 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                             departamentos={departamentos}
                           />
                         )}
+                        {formAcceso.rolLogin === "GERENTE_GENERAL" && (
+                          <CampoDepartamentosMultiple
+                            label="Departamentos a supervisar"
+                            value={formAcceso.departamentosSupervisados}
+                            onChange={(v) => setFormAcceso((f) => ({ ...f, departamentosSupervisados: v }))}
+                            departamentos={departamentos}
+                          />
+                        )}
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => void handleDarAcceso(e.id, e.nombreCompleto)}
@@ -754,9 +836,19 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">{u.nombre}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {u.email} · {u.rol === "MANAGER" ? "Gerente" : "Empleado"}
+                      {u.email} ·{" "}
+                      {u.rol === "MANAGER" ? "Gerente" : u.rol === "GERENTE_GENERAL" ? "Gerente General" : "Empleado"}
                       {u.rol === "MANAGER" && (
                         <> · Departamento: {u.departamentoGestionado || "sin asignar"}</>
+                      )}
+                      {u.rol === "GERENTE_GENERAL" && (
+                        <>
+                          {" "}
+                          · Departamentos:{" "}
+                          {u.departamentosSupervisados.length > 0
+                            ? u.departamentosSupervisados.join(", ")
+                            : "sin asignar"}
+                        </>
                       )}
                       {!u.passwordEstablecida && (
                         <span className="ml-1.5 rounded-full bg-warning/10 px-1.5 py-0.5 text-warning">
@@ -775,6 +867,19 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                         }}
                         className="flex items-center gap-1 rounded p-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
                         title="Cambiar departamento gestionado"
+                      >
+                        <Building2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    {u.rol === "GERENTE_GENERAL" && (
+                      <button
+                        onClick={() => {
+                          setEditandoDeptosSupervisadosId(editandoDeptosSupervisadosId === u.id ? null : u.id);
+                          setNuevosDeptosSupervisadosValor(u.departamentosSupervisados);
+                          setDeptosSupervisadosError(null);
+                        }}
+                        className="flex items-center gap-1 rounded p-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+                        title="Cambiar departamentos supervisados"
                       >
                         <Building2 className="h-3.5 w-3.5" />
                       </button>
@@ -841,6 +946,38 @@ export function ListaEmpleados({ slug }: { slug: string }) {
                 )}
                 {editandoDeptoId === u.id && deptoError && (
                   <p className="text-xs text-destructive">{deptoError}</p>
+                )}
+
+                {editandoDeptosSupervisadosId === u.id && (
+                  <div className="flex items-center gap-2 rounded-md border border-border bg-background/50 p-2">
+                    <div className="flex-1">
+                      <CampoDepartamentosMultiple
+                        label="Departamentos supervisados"
+                        value={nuevosDeptosSupervisadosValor}
+                        onChange={setNuevosDeptosSupervisadosValor}
+                        departamentos={departamentos}
+                      />
+                    </div>
+                    <button
+                      onClick={() => void handleGuardarDeptosSupervisados(u.id)}
+                      disabled={guardandoDeptosSupervisadosId === u.id}
+                      className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                    >
+                      {guardandoDeptosSupervisadosId === u.id ? "..." : "Guardar"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditandoDeptosSupervisadosId(null);
+                        setDeptosSupervisadosError(null);
+                      }}
+                      className="rounded-md border border-border px-2.5 py-1.5 text-xs hover:bg-accent"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                )}
+                {editandoDeptosSupervisadosId === u.id && deptosSupervisadosError && (
+                  <p className="text-xs text-destructive">{deptosSupervisadosError}</p>
                 )}
 
                 {editandoCorreoId === u.id && (

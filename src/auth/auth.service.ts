@@ -28,6 +28,8 @@ export class AuthService {
         talentoId: usuario.talentoId,
         fotoUrl: talento?.fotoUrl ?? null,
         passwordEstablecida: usuario.passwordEstablecida,
+        departamentoGestionado: usuario.departamentoGestionado,
+        departamentosSupervisados: usuario.departamentosSupervisados,
       },
       empresa,
     };

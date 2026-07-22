@@ -31,6 +31,7 @@ type Estado =
       usuarioNombre: string;
       usuarioEmail: string;
       usuarioFotoUrl: string | null;
+      departamentosSupervisados: string[];
     };
 
 function PanelInterno({ slug, children }: { slug: string; children: React.ReactNode }) {
@@ -80,6 +81,7 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
             usuarioNombre: sesion.usuario.nombre,
             usuarioEmail: sesion.usuario.email,
             usuarioFotoUrl: sesion.usuario.fotoUrl,
+            departamentosSupervisados: sesion.usuario.departamentosSupervisados,
           });
         }
       } catch (err) {
@@ -112,6 +114,7 @@ function PanelInterno({ slug, children }: { slug: string; children: React.ReactN
         usuarioNombre: estado.usuarioNombre,
         usuarioEmail: estado.usuarioEmail,
         usuarioFotoUrl: estado.usuarioFotoUrl,
+        departamentosSupervisados: estado.departamentosSupervisados,
         empresa: estado.data.empresa,
         dashboardInicial: estado.data,
       }}

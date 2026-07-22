@@ -10,6 +10,7 @@ export interface PanelContextValue {
   usuarioNombre: string;
   usuarioEmail: string;
   usuarioFotoUrl: string | null;
+  departamentosSupervisados: string[];
   empresa: { nombre: string; slug: string; plan: string; logoUrl: string | null };
   dashboardInicial: DashboardData;
 }

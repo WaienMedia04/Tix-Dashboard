@@ -22,6 +22,7 @@ export async function invitarUsuario(
     rol: Rol;
     talentoId?: string;
     departamentoGestionado?: string;
+    departamentosSupervisados?: string[];
   },
 ) {
   const email = params.email.trim().toLowerCase();
@@ -60,6 +61,10 @@ export async function invitarUsuario(
       talentoId: params.talentoId,
       departamentoGestionado:
         params.rol === 'MANAGER' ? params.departamentoGestionado : undefined,
+      departamentosSupervisados:
+        params.rol === 'GERENTE_GENERAL'
+          ? (params.departamentosSupervisados ?? [])
+          : undefined,
       supabaseUserId: data.user.id,
     },
     select: {
@@ -68,6 +73,7 @@ export async function invitarUsuario(
       nombre: true,
       rol: true,
       departamentoGestionado: true,
+      departamentosSupervisados: true,
     },
   });
 }

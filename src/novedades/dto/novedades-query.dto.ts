@@ -9,4 +9,8 @@ export class NovedadesQueryDto {
   @IsOptional()
   @IsEnum(TipoNovedad)
   tipo?: TipoNovedad;
+
+  @IsOptional()
+  @IsString()
+  departamento?: string;
 }

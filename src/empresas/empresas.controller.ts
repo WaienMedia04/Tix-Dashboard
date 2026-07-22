@@ -21,6 +21,7 @@ import { CrearUsuarioEmpresaDto } from './dto/crear-usuario-empresa.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { ActualizarLogoEmpresaDto } from './dto/actualizar-logo-empresa.dto';
 import { ActualizarDepartamentoGestionadoDto } from './dto/actualizar-departamento-gestionado.dto';
+import { ActualizarDepartamentosSupervisadosDto } from './dto/actualizar-departamentos-supervisados.dto';
 import { CrearSolicitudSoporteDto } from './dto/crear-solicitud-soporte.dto';
 import { EnviarNotaDto } from '../mural/dto/enviar-nota.dto';
 import { CambiarCorreoDto } from '../auth/dto/cambiar-correo.dto';
@@ -43,8 +44,12 @@ export class EmpresasController {
 
   @Get(':slug/dashboard')
   @UseGuards(CompanyAccessGuard)
-  dashboard(@Param('slug') slug: string, @Req() req: RequestConActor) {
-    return this.empresasService.dashboard(slug, req.actor!);
+  dashboard(
+    @Param('slug') slug: string,
+    @Query('departamento') departamento: string | undefined,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.dashboard(slug, req.actor!, departamento);
   }
 
   @Get(':slug/bitacoras')
@@ -59,8 +64,12 @@ export class EmpresasController {
 
   @Get(':slug/empleados')
   @UseGuards(CompanyAccessGuard)
-  empleados(@Param('slug') slug: string, @Req() req: RequestConActor) {
-    return this.empresasService.empleados(slug, req.actor!);
+  empleados(
+    @Param('slug') slug: string,
+    @Query('departamento') departamento: string | undefined,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.empleados(slug, req.actor!, departamento);
   }
 
   @Get(':slug/empleados/:talentoId')
@@ -151,7 +160,7 @@ export class EmpresasController {
 
   @Get(':slug/rankings')
   @UseGuards(CompanyAccessGuard, RolesGuard)
-  @Roles('CEO', 'RRHH', 'MANAGER')
+  @Roles('CEO', 'RRHH', 'GERENTE_GENERAL', 'MANAGER')
   rankings(
     @Param('slug') slug: string,
     @Query() query: RankingsQueryDto,
@@ -173,9 +182,13 @@ export class EmpresasController {
 
   @Get(':slug/alertas')
   @UseGuards(CompanyAccessGuard, RolesGuard)
-  @Roles('CEO', 'RRHH', 'MANAGER')
-  alertas(@Param('slug') slug: string, @Req() req: RequestConActor) {
-    return this.empresasService.alertas(slug, req.actor!);
+  @Roles('CEO', 'RRHH', 'GERENTE_GENERAL', 'MANAGER')
+  alertas(
+    @Param('slug') slug: string,
+    @Query('departamento') departamento: string | undefined,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.alertas(slug, req.actor!, departamento);
   }
 
   /** Catálogo de departamentos configurado por Talentix (panel admin) — solo lectura. */
@@ -250,6 +263,23 @@ export class EmpresasController {
     );
   }
 
+  @Patch(':slug/usuarios/:usuarioId/departamentos-supervisados')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  actualizarDepartamentosSupervisados(
+    @Param('slug') slug: string,
+    @Param('usuarioId') usuarioId: string,
+    @Body() dto: ActualizarDepartamentosSupervisadosDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.actualizarDepartamentosSupervisados(
+      slug,
+      req.actor!,
+      usuarioId,
+      dto.departamentosSupervisados.map((d) => d.trim()).filter(Boolean),
+    );
+  }
+
   @Post(':slug/usuarios/:usuarioId/restablecer-password')
   @UseGuards(CompanyAccessGuard, RolesGuard)
   @Roles('CEO', 'RRHH')
@@ -268,7 +298,7 @@ export class EmpresasController {
   /** Solicitud de soporte (avería/sugerencia) desde el Dock del panel — la revisa el equipo de Talentix. */
   @Post(':slug/soporte')
   @UseGuards(CompanyAccessGuard, RolesGuard)
-  @Roles('CEO', 'RRHH', 'MANAGER')
+  @Roles('CEO', 'RRHH', 'GERENTE_GENERAL', 'MANAGER')
   crearSolicitudSoporte(
     @Param('slug') slug: string,
     @Body() dto: CrearSolicitudSoporteDto,

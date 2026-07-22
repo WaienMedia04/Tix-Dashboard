@@ -89,7 +89,7 @@ export class AusenciasService {
     const ausencias = await this.prisma.ausencia.findMany({
       where: {
         empresaId: empresa.id,
-        talento: talentoScopeWhere(actor),
+        talento: talentoScopeWhere(actor, query.departamento),
         ...(query.talentoId && { talentoId: query.talentoId }),
       },
       select: SELECT_AUSENCIA,

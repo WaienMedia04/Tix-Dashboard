@@ -134,6 +134,7 @@ export interface BitacorasFiltros {
   fechaFin?: string;
   talentoId?: string;
   estado?: EstadoFiltro;
+  departamento?: string;
   page?: number;
   limit?: number;
 }
@@ -301,13 +302,14 @@ export interface ReporteEjecutivoResponse extends ReporteResponse {
 export async function fetchReporteEjecutivo(
   slug: string,
   periodo: PeriodoReporte,
-  opciones: { valor?: string; fechaInicio?: string; fechaFin?: string },
+  opciones: { valor?: string; fechaInicio?: string; fechaFin?: string; departamento?: string },
 ): Promise<ReporteEjecutivoResponse> {
   const params = new URLSearchParams();
   params.set("periodo", periodo);
   if (opciones.valor) params.set("valor", opciones.valor);
   if (opciones.fechaInicio) params.set("fechaInicio", opciones.fechaInicio);
   if (opciones.fechaFin) params.set("fechaFin", opciones.fechaFin);
+  if (opciones.departamento) params.set("departamento", opciones.departamento);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/reportes-ejecutivos?${params.toString()}`, {
     headers: await authHeaders(),
@@ -325,7 +327,7 @@ export async function fetchReporteEjecutivo(
   return res.json();
 }
 
-export type Rol = "CEO" | "RRHH" | "MANAGER" | "TALENTO";
+export type Rol = "CEO" | "RRHH" | "GERENTE_GENERAL" | "MANAGER" | "TALENTO";
 
 export interface SesionUsuario {
   id: string;
@@ -335,6 +337,10 @@ export interface SesionUsuario {
   talentoId: string | null;
   fotoUrl: string | null;
   passwordEstablecida: boolean;
+  /** Solo aplica a rol "MANAGER". */
+  departamentoGestionado: string | null;
+  /** Solo aplica a rol "GERENTE_GENERAL". */
+  departamentosSupervisados: string[];
 }
 
 export interface MeResponse {
@@ -372,8 +378,11 @@ export async function activarCuenta(): Promise<{ ok: true }> {
   return res.json();
 }
 
-export async function fetchDashboard(slug: string): Promise<DashboardData> {
-  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/dashboard`, {
+export async function fetchDashboard(slug: string, departamento?: string): Promise<DashboardData> {
+  const params = new URLSearchParams();
+  if (departamento) params.set("departamento", departamento);
+
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/dashboard?${params.toString()}`, {
     headers: await authHeaders(),
     cache: "no-store",
   });
@@ -395,6 +404,7 @@ export async function fetchBitacoras(slug: string, filtros: BitacorasFiltros): P
   if (filtros.fechaFin) params.set("fechaFin", filtros.fechaFin);
   if (filtros.talentoId) params.set("talentoId", filtros.talentoId);
   if (filtros.estado) params.set("estado", filtros.estado);
+  if (filtros.departamento) params.set("departamento", filtros.departamento);
   params.set("page", String(filtros.page ?? 1));
   params.set("limit", String(filtros.limit ?? 20));
 
@@ -437,8 +447,11 @@ export async function fetchDepartamentos(slug: string): Promise<DepartamentoDefi
   return res.json();
 }
 
-export async function fetchEmpleados(slug: string): Promise<EmpleadoResumen[]> {
-  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/empleados`, {
+export async function fetchEmpleados(slug: string, departamento?: string): Promise<EmpleadoResumen[]> {
+  const params = new URLSearchParams();
+  if (departamento) params.set("departamento", departamento);
+
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/empleados?${params.toString()}`, {
     headers: await authHeaders(),
     cache: "no-store",
   });
@@ -532,9 +545,10 @@ export async function actualizarTalento(
   return res.json();
 }
 
-export async function fetchKpis(slug: string, periodo: string): Promise<KpisResponse> {
+export async function fetchKpis(slug: string, periodo: string, departamento?: string): Promise<KpisResponse> {
   const params = new URLSearchParams();
   params.set("periodo", periodo);
+  if (departamento) params.set("departamento", departamento);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/kpis?${params.toString()}`, {
     headers: await authHeaders(),
@@ -570,8 +584,11 @@ export interface AlertasResponse {
   alertas: AlertaItem[];
 }
 
-export async function fetchAlertas(slug: string): Promise<AlertasResponse> {
-  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/alertas`, {
+export async function fetchAlertas(slug: string, departamento?: string): Promise<AlertasResponse> {
+  const params = new URLSearchParams();
+  if (departamento) params.set("departamento", departamento);
+
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/alertas?${params.toString()}`, {
     headers: await authHeaders(),
     cache: "no-store",
   });
@@ -601,10 +618,14 @@ export interface NovedadItem {
   createdAt: string;
 }
 
-export async function fetchNovedades(slug: string, filtros: { talentoId?: string; tipo?: TipoNovedad } = {}): Promise<NovedadItem[]> {
+export async function fetchNovedades(
+  slug: string,
+  filtros: { talentoId?: string; tipo?: TipoNovedad; departamento?: string } = {},
+): Promise<NovedadItem[]> {
   const params = new URLSearchParams();
   if (filtros.talentoId) params.set("talentoId", filtros.talentoId);
   if (filtros.tipo) params.set("tipo", filtros.tipo);
+  if (filtros.departamento) params.set("departamento", filtros.departamento);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/novedades?${params.toString()}`, {
     headers: await authHeaders(),
@@ -658,9 +679,13 @@ export interface AusenciaItem {
   createdAt: string;
 }
 
-export async function fetchAusencias(slug: string, filtros: { talentoId?: string } = {}): Promise<AusenciaItem[]> {
+export async function fetchAusencias(
+  slug: string,
+  filtros: { talentoId?: string; departamento?: string } = {},
+): Promise<AusenciaItem[]> {
   const params = new URLSearchParams();
   if (filtros.talentoId) params.set("talentoId", filtros.talentoId);
+  if (filtros.departamento) params.set("departamento", filtros.departamento);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/ausencias?${params.toString()}`, {
     headers: await authHeaders(),
@@ -703,10 +728,12 @@ export async function fetchRankings(
   slug: string,
   periodo: PeriodoRanking,
   valor?: string,
+  departamento?: string,
 ): Promise<RankingsResponse> {
   const params = new URLSearchParams();
   params.set("periodo", periodo);
   if (valor) params.set("valor", valor);
+  if (departamento) params.set("departamento", departamento);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/rankings?${params.toString()}`, {
     headers: await authHeaders(),
@@ -727,13 +754,14 @@ export async function fetchRankings(
 export async function fetchReporte(
   slug: string,
   periodo: PeriodoReporte,
-  opciones: { valor?: string; fechaInicio?: string; fechaFin?: string },
+  opciones: { valor?: string; fechaInicio?: string; fechaFin?: string; departamento?: string },
 ): Promise<ReporteResponse> {
   const params = new URLSearchParams();
   params.set("periodo", periodo);
   if (opciones.valor) params.set("valor", opciones.valor);
   if (opciones.fechaInicio) params.set("fechaInicio", opciones.fechaInicio);
   if (opciones.fechaFin) params.set("fechaFin", opciones.fechaFin);
+  if (opciones.departamento) params.set("departamento", opciones.departamento);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/reportes?${params.toString()}`, {
     headers: await authHeaders(),
@@ -777,7 +805,7 @@ export async function crearTalento(
   return res.json();
 }
 
-export type RolInvitable = "TALENTO" | "MANAGER";
+export type RolInvitable = "TALENTO" | "MANAGER" | "GERENTE_GENERAL";
 
 /** CEO/RRHH invitan a su propio talento a entrar a la plataforma, igual que hace un admin. */
 export async function crearUsuarioTalento(
@@ -789,6 +817,8 @@ export async function crearUsuarioTalento(
     talentoId?: string;
     /** Solo tiene efecto cuando rol es "MANAGER". */
     departamentoGestionado?: string;
+    /** Solo tiene efecto cuando rol es "GERENTE_GENERAL". */
+    departamentosSupervisados?: string[];
   },
 ): Promise<{ usuario: { id: string; email: string; nombre: string; rol: RolInvitable }; invitacionEnviada: true }> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/usuarios`, {
@@ -819,6 +849,8 @@ export interface UsuarioTalento {
   talentoId: string | null;
   /** Solo aplica a rol "MANAGER". */
   departamentoGestionado: string | null;
+  /** Solo aplica a rol "GERENTE_GENERAL". */
+  departamentosSupervisados: string[];
 }
 
 export async function fetchUsuariosTalento(slug: string): Promise<UsuarioTalento[]> {
@@ -880,6 +912,29 @@ export async function actualizarDepartamentoGestionadoUsuario(
   if (!res.ok) {
     const cuerpo = await res.json().catch(() => null);
     throw new Error(cuerpo?.message ?? "No se pudo actualizar el departamento");
+  }
+  return res.json();
+}
+
+export async function actualizarDepartamentosSupervisadosUsuario(
+  slug: string,
+  usuarioId: string,
+  departamentosSupervisados: string[],
+): Promise<UsuarioTalento> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/usuarios/${encodeURIComponent(usuarioId)}/departamentos-supervisados`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ departamentosSupervisados }),
+    },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    const cuerpo = await res.json().catch(() => null);
+    throw new Error(cuerpo?.message ?? "No se pudieron actualizar los departamentos supervisados");
   }
   return res.json();
 }

@@ -9,6 +9,7 @@ datasource db {
 enum Rol {
   CEO
   RRHH
+  GERENTE_GENERAL
   MANAGER
   TALENTO
 }
@@ -148,6 +149,10 @@ model Usuario {
   /// que un MANAGER vea en dashboard/rankings/reportes/KPIs a los talentos
   /// activos cuyo `departamento` coincida exactamente con este valor.
   departamentoGestionado String?
+  /// Solo aplica a rol GERENTE_GENERAL: lista de departamentos que supervisa
+  /// (puede ser más de uno, a diferencia de MANAGER) — mismo mecanismo que
+  /// departamentoGestionado pero como arreglo, usado por talentoScopeWhere().
+  departamentosSupervisados String[] @default([])
   activo              Boolean   @default(true)
   ultimoLoginAt       DateTime?
   createdAt           DateTime  @default(now())

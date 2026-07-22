@@ -15,7 +15,7 @@ export class CrearUsuarioAdminDto {
   @IsNotEmpty()
   nombre!: string;
 
-  @IsIn(['CEO', 'RRHH', 'MANAGER', 'TALENTO'])
+  @IsIn(['CEO', 'RRHH', 'GERENTE_GENERAL', 'MANAGER', 'TALENTO'])
   rol!: Rol;
 
   @IsString()

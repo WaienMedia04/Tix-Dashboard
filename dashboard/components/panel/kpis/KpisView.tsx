@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, Award, CheckCircle2, Sparkles } from "lucide-react";
 import { type KpisResponse, fetchKpis } from "@/lib/api";
 import { usePanel } from "../PanelContext";
+import { FiltroDepartamento } from "../FiltroDepartamento";
 import { MetricCard } from "@/components/MetricCard";
 import { EvolucionPuntajeChart } from "./EvolucionPuntajeChart";
 import { BitacorasSemanalChart } from "./BitacorasSemanalChart";
@@ -21,13 +22,13 @@ function periodoActual(): string {
 
 type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; datos: KpisResponse };
 
-function KpisResultado({ slug, periodo }: { slug: string; periodo: string }) {
+function KpisResultado({ slug, periodo, departamento }: { slug: string; periodo: string; departamento: string }) {
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [detalleKey, setDetalleKey] = useState<KpisDetalleKey | null>(null);
 
   useEffect(() => {
     let cancelado = false;
-    fetchKpis(slug, periodo)
+    fetchKpis(slug, periodo, departamento || undefined)
       .then((datos) => {
         if (!cancelado) setEstado({ tipo: "listo", datos });
       })
@@ -37,7 +38,7 @@ function KpisResultado({ slug, periodo }: { slug: string; periodo: string }) {
     return () => {
       cancelado = true;
     };
-  }, [slug, periodo]);
+  }, [slug, periodo, departamento]);
 
   if (estado.tipo === "cargando") {
     return (
@@ -135,6 +136,7 @@ function KpisResultado({ slug, periodo }: { slug: string; periodo: string }) {
 export function KpisView() {
   const { slug } = usePanel();
   const [periodo, setPeriodo] = useState(periodoActual);
+  const [departamento, setDepartamento] = useState("");
 
   return (
     <div className="space-y-4">
@@ -148,9 +150,10 @@ export function KpisView() {
             className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
           />
         </div>
+        <FiltroDepartamento value={departamento} onChange={setDepartamento} />
       </div>
 
-      <KpisResultado key={periodo} slug={slug} periodo={periodo} />
+      <KpisResultado key={`${periodo}-${departamento}`} slug={slug} periodo={periodo} departamento={departamento} />
     </div>
   );
 }

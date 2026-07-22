@@ -20,7 +20,7 @@ function ultimoDiaMes(): string {
 }
 
 function filtrosIniciales(): FiltrosState {
-  return { fechaInicio: primerDiaMes(), fechaFin: ultimoDiaMes(), talentoId: "", estado: "" };
+  return { fechaInicio: primerDiaMes(), fechaFin: ultimoDiaMes(), talentoId: "", estado: "", departamento: "" };
 }
 
 type EstadoCarga =
@@ -49,6 +49,7 @@ function BitacorasResultado({
       fechaFin: filtros.fechaFin || undefined,
       talentoId: filtros.talentoId || undefined,
       estado: filtros.estado || undefined,
+      departamento: filtros.departamento || undefined,
       page,
       limit: 20,
     })

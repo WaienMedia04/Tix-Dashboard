@@ -54,7 +54,7 @@ const GRUPOS: { titulo: string; items: ItemGrupo[] }[] = [
         label: "Murales",
         icon: Images,
         color: "text-fuchsia-400",
-        rolesPermitidos: ["CEO", "RRHH", "MANAGER"],
+        rolesPermitidos: ["CEO", "RRHH", "GERENTE_GENERAL", "MANAGER"],
       },
       { href: "cumpleanos", label: "Cumpleaños", icon: Cake, color: "text-rose-400" },
       {
@@ -95,14 +95,14 @@ const GRUPOS: { titulo: string; items: ItemGrupo[] }[] = [
         label: "Rankings",
         icon: Trophy,
         color: "text-yellow-400",
-        rolesPermitidos: ["CEO", "RRHH", "MANAGER"],
+        rolesPermitidos: ["CEO", "RRHH", "GERENTE_GENERAL", "MANAGER"],
       },
       {
         href: "alertas",
         label: "Alertas",
         icon: AlertTriangle,
         color: "text-red-400",
-        rolesPermitidos: ["CEO", "RRHH", "MANAGER"],
+        rolesPermitidos: ["CEO", "RRHH", "GERENTE_GENERAL", "MANAGER"],
       },
       {
         href: "reportes-ejecutivos",
