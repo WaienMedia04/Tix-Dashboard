@@ -75,14 +75,14 @@ export function PizarraSocial({ slug, miRol }: { slug: string; miRol: string }) 
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-elegant">
-      <div className="flex items-center gap-2 border-b border-border px-4 py-3 sm:px-5">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
+    <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5">
+      <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 sm:px-5">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
           <ClipboardList className="h-4 w-4" />
         </span>
         <div>
-          <h2 className="font-display text-base font-semibold text-foreground">Pizarra del equipo</h2>
-          <p className="text-xs text-muted-foreground">Agradecimientos, avisos y menciones — la ve toda la empresa</p>
+          <h2 className="font-display text-base font-semibold text-zinc-900">Pizarra del equipo</h2>
+          <p className="text-xs text-zinc-500">Agradecimientos, avisos y menciones — la ve toda la empresa</p>
         </div>
       </div>
 
@@ -116,9 +116,9 @@ export function PizarraSocial({ slug, miRol }: { slug: string; miRol: string }) 
           prefill={prefillComposer}
         />
 
-        {posts === null && <div className="h-24 animate-pulse rounded-xl bg-muted" />}
+        {posts === null && <div className="h-24 animate-pulse rounded-xl bg-zinc-100" />}
         {posts !== null && posts.length === 0 && (
-          <p className="py-6 text-center text-sm text-muted-foreground">Todavía no hay nada en la pizarra. ¡Sé el primero!</p>
+          <p className="py-6 text-center text-sm text-zinc-500">Todavía no hay nada en la pizarra. ¡Sé el primero!</p>
         )}
         {posts?.map((post) => (
           <PizarraPostCard

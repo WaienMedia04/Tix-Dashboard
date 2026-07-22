@@ -93,7 +93,7 @@ export function PizarraComposer({
   return (
     <form
       onSubmit={(e) => void handleSubmit(e)}
-      className="relative rounded-xl border border-border/70 bg-background p-3"
+      className="relative rounded-xl border border-zinc-200 bg-zinc-50 p-3"
     >
       <textarea
         ref={textareaRef}
@@ -102,17 +102,17 @@ export function PizarraComposer({
         placeholder="Escribe un agradecimiento, un aviso, o menciona a alguien con @…"
         maxLength={500}
         rows={3}
-        className="w-full resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/60"
+        className="w-full resize-none bg-transparent text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
       />
 
       {mencionActiva && sugerencias.length > 0 && (
-        <div className="absolute bottom-full left-3 z-20 mb-1 w-56 overflow-hidden rounded-md border border-border bg-popover shadow-elegant">
+        <div className="absolute bottom-full left-3 z-20 mb-1 w-56 overflow-hidden rounded-md border border-zinc-200 bg-white shadow-lg">
           {sugerencias.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => elegirMencion(p)}
-              className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs hover:bg-accent"
+              className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs text-zinc-900 hover:bg-zinc-100"
             >
               <Avatar nombreCompleto={p.nombre} fotoUrl={p.fotoUrl} size="sm" />
               {p.nombre}
@@ -122,7 +122,7 @@ export function PizarraComposer({
       )}
 
       <div className="mt-2 flex items-center justify-between gap-2">
-        <span className="text-[11px] text-muted-foreground">{texto.length}/500 · usa @ para mencionar a alguien</span>
+        <span className="text-[11px] text-zinc-500">{texto.length}/500 · usa @ para mencionar a alguien</span>
         <button
           type="submit"
           disabled={!texto.trim() || enviando}

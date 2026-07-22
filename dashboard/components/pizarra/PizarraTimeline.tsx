@@ -35,16 +35,16 @@ export function PizarraTimeline({ slug }: { slug: string }) {
   if (eventos !== null && eventos.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-border/70 bg-background p-3.5">
+    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3.5">
       <button onClick={() => setAbierto((v) => !v)} className="flex w-full items-center justify-between gap-2 text-left">
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
           <History className="h-3.5 w-3.5" />
           Actividad reciente
         </span>
         {abierto ? (
-          <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+          <ChevronUp className="h-3.5 w-3.5 text-zinc-500" />
         ) : (
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          <ChevronDown className="h-3.5 w-3.5 text-zinc-500" />
         )}
       </button>
       {abierto && (
@@ -52,10 +52,10 @@ export function PizarraTimeline({ slug }: { slug: string }) {
           {eventos?.map((e) => (
             <li key={e.id} className="flex items-center gap-2 text-xs">
               <Avatar nombreCompleto={e.talento.nombreCompleto} fotoUrl={e.talento.fotoUrl} size="sm" />
-              <span className="flex-1 text-foreground">
+              <span className="flex-1 text-zinc-900">
                 <span className="font-medium">{e.talento.nombreCompleto}</span> {e.texto} {ICONO_POR_TIPO[e.tipo]}
               </span>
-              <span className="shrink-0 text-[10px] text-muted-foreground/70">{tiempoRelativo(e.fecha)}</span>
+              <span className="shrink-0 text-[10px] text-zinc-400">{tiempoRelativo(e.fecha)}</span>
             </li>
           ))}
         </ul>

@@ -49,9 +49,9 @@ export function PizarraTrivia({ slug }: { slug: string }) {
   if (!trivia) return null;
 
   return (
-    <div className="rounded-xl border border-border/70 bg-background p-3.5">
+    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3.5">
       <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
           <Brain className="h-3.5 w-3.5" />
           Trivia del día
         </span>
@@ -61,7 +61,7 @@ export function PizarraTrivia({ slug }: { slug: string }) {
         </button>
       </div>
 
-      <p className="mt-2 text-sm font-medium text-foreground">{trivia.pregunta}</p>
+      <p className="mt-2 text-sm font-medium text-zinc-900">{trivia.pregunta}</p>
 
       <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
         {trivia.opciones.map((opcion, i) => {
@@ -72,12 +72,12 @@ export function PizarraTrivia({ slug }: { slug: string }) {
               key={i}
               onClick={() => void responder(i)}
               disabled={trivia.yaRespondida || enviando}
-              className={`rounded-md border px-2.5 py-1.5 text-left text-xs transition-colors ${
+              className={`rounded-md border bg-white px-2.5 py-1.5 text-left text-xs transition-colors ${
                 mostrarResultado
                   ? esCorrecta
                     ? "border-success bg-success/10 text-success"
-                    : "border-border text-muted-foreground"
-                  : "border-border hover:bg-accent"
+                    : "border-zinc-200 text-zinc-400"
+                  : "border-zinc-200 text-zinc-900 hover:bg-zinc-100"
               }`}
             >
               {opcion}
@@ -93,17 +93,17 @@ export function PizarraTrivia({ slug }: { slug: string }) {
       )}
 
       {mostrarRanking && (
-        <div className="mt-3 space-y-1.5 border-t border-border pt-2.5">
-          {ranking === null && <p className="text-xs text-muted-foreground">Cargando…</p>}
+        <div className="mt-3 space-y-1.5 border-t border-zinc-200 pt-2.5">
+          {ranking === null && <p className="text-xs text-zinc-500">Cargando…</p>}
           {ranking !== null && ranking.length === 0 && (
-            <p className="text-xs text-muted-foreground">Todavía nadie ha respondido.</p>
+            <p className="text-xs text-zinc-500">Todavía nadie ha respondido.</p>
           )}
           {ranking?.map((r, i) => (
             <div key={r.usuarioId} className="flex items-center gap-2 text-xs">
-              <span className="w-4 text-muted-foreground">{i + 1}.</span>
+              <span className="w-4 text-zinc-500">{i + 1}.</span>
               <Avatar nombreCompleto={r.nombre} fotoUrl={r.fotoUrl} size="sm" />
-              <span className="flex-1 text-foreground">{r.nombre}</span>
-              <span className="text-muted-foreground">{r.aciertos} aciertos</span>
+              <span className="flex-1 text-zinc-900">{r.nombre}</span>
+              <span className="text-zinc-500">{r.aciertos} aciertos</span>
             </div>
           ))}
         </div>

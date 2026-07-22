@@ -26,21 +26,21 @@ export function PizarraReconocimientoBanner({
             size="sm"
           />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-semibold text-zinc-900">
               {reconocimiento.titulo}: {reconocimiento.talento.nombreCompleto}
             </p>
             {reconocimiento.descripcion && (
-              <p className="truncate text-xs text-muted-foreground">{reconocimiento.descripcion}</p>
+              <p className="truncate text-xs text-zinc-600">{reconocimiento.descripcion}</p>
             )}
           </div>
         </>
       ) : (
-        <p className="flex-1 text-xs text-muted-foreground">Todavía no hay ningún reconocimiento fijado.</p>
+        <p className="flex-1 text-xs text-zinc-500">Todavía no hay ningún reconocimiento fijado.</p>
       )}
       {puedeFijar && (
         <button
           onClick={onFijar}
-          className="flex shrink-0 items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium hover:bg-accent"
+          className="flex shrink-0 items-center gap-1 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-100"
         >
           <Plus className="h-3 w-3" />
           {reconocimiento ? "Cambiar" : "Fijar"}

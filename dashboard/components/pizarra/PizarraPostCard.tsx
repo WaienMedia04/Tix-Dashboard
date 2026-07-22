@@ -76,27 +76,27 @@ export function PizarraPostCard({
   const comentariosVisibles = mostrarComentarios ? post.comentarios : post.comentarios.slice(-2);
 
   return (
-    <div className="rounded-xl border border-border/70 bg-background p-3.5">
+    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3.5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <Avatar nombreCompleto={post.autor.nombre} fotoUrl={post.autor.fotoUrl} size="sm" />
           <div>
-            <p className="text-sm font-semibold text-foreground">{post.autor.nombre}</p>
-            <p className="text-[11px] text-muted-foreground">{tiempoRelativo(post.createdAt)}</p>
+            <p className="text-sm font-semibold text-zinc-900">{post.autor.nombre}</p>
+            <p className="text-[11px] text-zinc-500">{tiempoRelativo(post.createdAt)}</p>
           </div>
         </div>
         {puedeBorrar && (
           <button
             onClick={() => void eliminar()}
             aria-label="Eliminar publicación"
-            className="text-muted-foreground hover:text-destructive"
+            className="text-zinc-400 hover:text-destructive"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
 
-      <p className="mt-2 text-sm whitespace-pre-wrap break-words text-foreground">
+      <p className="mt-2 text-sm whitespace-pre-wrap break-words text-zinc-900">
         {renderizarTextoPizarra(post.texto)}
       </p>
 
@@ -106,27 +106,27 @@ export function PizarraPostCard({
             key={r.emoji}
             onClick={() => void reaccionar(r.emoji)}
             className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
-              r.mia ? "border-primary bg-primary/10" : "border-border hover:bg-accent"
+              r.mia ? "border-primary bg-primary/10" : "border-zinc-200 hover:bg-zinc-100"
             }`}
           >
             <span>{r.emoji}</span>
-            <span className="text-[11px] text-muted-foreground">{r.cantidad}</span>
+            <span className="text-[11px] text-zinc-500">{r.cantidad}</span>
           </button>
         ))}
         <button
           onClick={() => setMostrarSelector((v) => !v)}
           aria-label="Agregar reacción"
-          className="flex h-6 w-6 items-center justify-center rounded-full text-sm text-muted-foreground hover:bg-accent"
+          className="flex h-6 w-6 items-center justify-center rounded-full text-sm text-zinc-500 hover:bg-zinc-100"
         >
           +
         </button>
         {mostrarSelector && (
-          <div className="absolute top-full left-0 z-10 mt-1 flex gap-1 rounded-full border border-border bg-popover p-1 shadow-elegant">
+          <div className="absolute top-full left-0 z-10 mt-1 flex gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-lg">
             {EMOJIS_REACCION_PIZARRA.map((emoji) => (
               <button
                 key={emoji}
                 onClick={() => void reaccionar(emoji)}
-                className="rounded-full p-1 text-base hover:bg-accent"
+                className="rounded-full p-1 text-base hover:bg-zinc-100"
               >
                 {emoji}
               </button>
@@ -136,7 +136,7 @@ export function PizarraPostCard({
       </div>
 
       {post.comentarios.length > 0 && (
-        <div className="mt-3 space-y-2 border-t border-border pt-2.5">
+        <div className="mt-3 space-y-2 border-t border-zinc-200 pt-2.5">
           {post.comentarios.length > 2 && !mostrarComentarios && (
             <button
               onClick={() => setMostrarComentarios(true)}
@@ -149,8 +149,8 @@ export function PizarraPostCard({
             <div key={c.id} className="flex items-start gap-2 text-xs">
               <Avatar nombreCompleto={c.autor.nombre} fotoUrl={c.autor.fotoUrl} size="sm" />
               <p>
-                <span className="font-semibold text-foreground">{c.autor.nombre} </span>
-                <span className="text-foreground">{renderizarTextoPizarra(c.texto)}</span>
+                <span className="font-semibold text-zinc-900">{c.autor.nombre} </span>
+                <span className="text-zinc-700">{renderizarTextoPizarra(c.texto)}</span>
               </p>
             </div>
           ))}
@@ -163,7 +163,7 @@ export function PizarraPostCard({
           onChange={(e) => setComentario(e.target.value)}
           placeholder="Escribe un comentario…"
           maxLength={300}
-          className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-xs outline-none focus:border-ring"
+          className="flex-1 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-900 outline-none focus:border-primary"
         />
         <button
           type="submit"

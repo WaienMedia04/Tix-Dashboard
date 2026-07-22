@@ -21,7 +21,7 @@ import { MisEstampasModal } from "./MisEstampasModal";
 import { EstadoModal } from "./EstadoModal";
 
 /** Gris claro de fondo de la sección de la Pizarra — también es el color final del difuminado que la une con el mural de arriba. */
-const COLOR_FONDO_PIZARRA = "#f4f4f5";
+const COLOR_FONDO_PIZARRA = "#e4e4e7";
 import { PizarraSocial } from "@/components/pizarra/PizarraSocial";
 
 export function MiMuralView({
@@ -340,10 +340,15 @@ export function MiMuralView({
         />
       )}
 
-      {/* Difumina el borde inferior del mural hacia el gris de la Pizarra, para que no se note el corte entre las dos secciones. */}
+      {/* Difumina el borde inferior del mural hacia el gris de la Pizarra: el blur y el color se enmascaran
+          para que ambos entren de forma gradual desde arriba, sin dejar un borde donde "empieza" el efecto. */}
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-28 sm:h-40"
-        style={{ background: `linear-gradient(to bottom, transparent, ${COLOR_FONDO_PIZARRA})` }}
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-44 backdrop-blur-2xl sm:h-64"
+        style={{
+          background: `linear-gradient(to bottom, transparent 0%, ${COLOR_FONDO_PIZARRA} 92%)`,
+          maskImage: "linear-gradient(to bottom, transparent 0%, black 65%)",
+          WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 65%)",
+        }}
       />
     </div>
 
