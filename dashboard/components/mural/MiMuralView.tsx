@@ -10,6 +10,7 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import { Modal } from "@/components/Modal";
 import Dock from "@/components/vendor/Dock/Dock";
 import TextType from "@/components/vendor/TextType/TextType";
+import GradientText from "@/components/vendor/GradientText/GradientText";
 import { LanyardBadge } from "./LanyardBadge";
 import { PerfilDivertidoForm } from "./PerfilDivertidoForm";
 import { SobreMiSoloLectura } from "./SobreMiSoloLectura";
@@ -149,12 +150,13 @@ export function MiMuralView({
               </div>
             )}
           </div>
-          <h1
+          <GradientText
+            colors={["#00F2FF", "#BC00FF", "#00F2FF"]}
+            animationSpeed={4}
             className="font-display mt-4 text-3xl font-bold sm:text-4xl"
-            style={{ color: texto.color, textShadow: texto.sombra }}
           >
             {nombreCompleto}
-          </h1>
+          </GradientText>
           {mural.perfil.apodo && (
             <p className="mt-1 text-lg font-medium italic" style={{ color: texto.color, textShadow: texto.sombra }}>
               &ldquo;{mural.perfil.apodo}&rdquo;
