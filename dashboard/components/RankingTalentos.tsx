@@ -1,6 +1,7 @@
 "use client";
 
-import { Crown } from "lucide-react";
+import { useState } from "react";
+import { Crown, Sparkles } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { TalentoRanking } from "@/lib/api";
 import { Avatar } from "./Avatar";
@@ -10,6 +11,7 @@ import { useCountUp } from "@/hooks/useCountUp";
 import { StaggerGroup, StaggerItem } from "./motion/Stagger";
 
 const ANILLO_GRADIENTE = "conic-gradient(from 0deg, #00F2FF, #BC00FF, #00F2FF)";
+const CLAVE_GALAXIA = "tix-ranking-galaxia";
 
 function colorPuntaje(puntaje: number | null): string {
   if (puntaje === null) return "text-muted-foreground";
@@ -107,17 +109,45 @@ export function RankingTalentos({
   fondoGalaxia?: boolean;
 }) {
   const [primero, segundo, tercero, ...resto] = talentos;
+  const [galaxiaActiva, setGalaxiaActiva] = useState(() => {
+    if (!fondoGalaxia) return false;
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem(CLAVE_GALAXIA) !== "0";
+  });
+
+  function alternarGalaxia() {
+    setGalaxiaActiva((prev) => {
+      const siguiente = !prev;
+      localStorage.setItem(CLAVE_GALAXIA, siguiente ? "1" : "0");
+      return siguiente;
+    });
+  }
 
   return (
     <div
       className={`relative flex h-full select-none flex-col overflow-hidden rounded-xl border border-border shadow-card ${
-        fondoGalaxia ? "dark bg-black" : "bg-card"
+        fondoGalaxia && galaxiaActiva ? "dark bg-black" : "bg-card"
       }`}
     >
-      {fondoGalaxia && (
+      {fondoGalaxia && galaxiaActiva && (
         <div className="absolute inset-0 z-0">
           <Galaxy density={1.2} hueShift={220} saturation={0.6} glowIntensity={0.4} twinkleIntensity={0.5} />
         </div>
+      )}
+
+      {fondoGalaxia && (
+        <button
+          onClick={alternarGalaxia}
+          aria-label={galaxiaActiva ? "Desactivar efecto galaxia" : "Activar efecto galaxia"}
+          title={galaxiaActiva ? "Desactivar efecto galaxia" : "Activar efecto galaxia"}
+          className={`absolute top-3 right-3 z-20 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm transition-colors ${
+            galaxiaActiva
+              ? "bg-white/10 text-white hover:bg-white/20"
+              : "bg-accent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Sparkles className={`h-4 w-4 ${galaxiaActiva ? "opacity-100" : "opacity-40"}`} />
+        </button>
       )}
 
       <div className="relative z-10 flex h-full flex-col">
