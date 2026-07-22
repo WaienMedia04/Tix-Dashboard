@@ -323,6 +323,9 @@ model TalentoPerfilMural {
   /// libre) — se muestra como una píldora animada arriba del nombre.
   estado          String?
   fondoId         String   @default("corcho")
+  /// Paleta de colores del efecto degradado animado del nombre en el mural
+  /// (dashboard/lib/mural-colores-nombre.ts tiene los valores CSS reales).
+  colorNombreId   String   @default("cian_magenta")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

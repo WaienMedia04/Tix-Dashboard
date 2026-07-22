@@ -1152,6 +1152,8 @@ export interface PerfilMural {
   /** Estado actual (ej. "Trabajando", "En reunión") — se muestra como píldora animada arriba del nombre. */
   estado: string | null;
   fondoId: string;
+  /** Paleta del degradado animado del nombre — ver dashboard/lib/mural-colores-nombre.ts. */
+  colorNombreId: string;
 }
 
 export interface NotaMural {

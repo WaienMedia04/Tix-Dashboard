@@ -7,6 +7,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { FONDOS_MURAL_IDS } from '../mural-fondos.constant';
+import { COLORES_NOMBRE_MURAL_IDS } from '../mural-colores-nombre.constant';
 
 export class ActualizarPerfilMuralDto {
   @IsString()
@@ -50,4 +51,9 @@ export class ActualizarPerfilMuralDto {
   @IsOptional()
   @IsIn(FONDOS_MURAL_IDS)
   fondoId?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsIn(COLORES_NOMBRE_MURAL_IDS)
+  colorNombreId?: string;
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Building2, Gift, NotebookPen, Palette, Radio, Sparkles, StickyNote, Users } from "lucide-react";
 import { type MuralPropio, fetchMuralDeTalento, fetchMuralPropio } from "@/lib/api";
 import { fondoMuralCss, fondoMuralTexto } from "@/lib/mural-fondos";
+import { coloresNombreMural } from "@/lib/mural-colores-nombre";
 import { colorParaEstado } from "@/lib/estados-mural";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Modal } from "@/components/Modal";
@@ -15,6 +16,7 @@ import { LanyardBadge } from "./LanyardBadge";
 import { PerfilDivertidoForm } from "./PerfilDivertidoForm";
 import { SobreMiSoloLectura } from "./SobreMiSoloLectura";
 import { SelectorFondo } from "./SelectorFondo";
+import { SelectorColorNombre } from "./SelectorColorNombre";
 import { MuralCanvas } from "./MuralCanvas";
 import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
@@ -100,7 +102,7 @@ export function MiMuralView({
             frontImage={mural.talento.carnetFotoUrl ?? mural.talento.fotoUrl}
             logoUrl={mural.empresa.logoUrl}
           />
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
             {mural.perfil.estado &&
               (() => {
                 const contenido = (
@@ -143,7 +145,7 @@ export function MiMuralView({
             )}
           </div>
           <GradientText
-            colors={["#00F2FF", "#BC00FF", "#00F2FF"]}
+            colors={coloresNombreMural(mural.perfil.colorNombreId)}
             animationSpeed={4}
             className="font-display mt-4 text-3xl font-bold sm:text-4xl"
           >
@@ -286,13 +288,31 @@ export function MiMuralView({
       </Modal>
 
       {editable && (
-        <Modal open={mostrarFondo} onClose={() => setMostrarFondo(false)} title="Fondo del mural">
-          <SelectorFondo
-            fondoId={mural.perfil.fondoId}
-            onCambiado={(fondoId) =>
-              setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, fondoId } } : prev))
-            }
-          />
+        <Modal open={mostrarFondo} onClose={() => setMostrarFondo(false)} title="Personalizar mural">
+          <div className="space-y-5">
+            <div>
+              <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Fondo del mural
+              </p>
+              <SelectorFondo
+                fondoId={mural.perfil.fondoId}
+                onCambiado={(fondoId) =>
+                  setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, fondoId } } : prev))
+                }
+              />
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Color del nombre
+              </p>
+              <SelectorColorNombre
+                colorNombreId={mural.perfil.colorNombreId}
+                onCambiado={(colorNombreId) =>
+                  setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, colorNombreId } } : prev))
+                }
+              />
+            </div>
+          </div>
         </Modal>
       )}
 
