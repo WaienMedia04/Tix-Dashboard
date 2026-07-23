@@ -11,7 +11,7 @@ export const FONDOS_MURAL: FondoMural[] = [
   {
     id: "corcho",
     label: "Corcho",
-    css: "url('/mural/fondo-corcho.jpg') center center / cover no-repeat",
+    css: "url('/mural/fondo-corcho.jpg') repeat",
     claro: true,
   },
   { id: "aurora", label: "Aurora", css: "linear-gradient(135deg, #22D3EE 0%, #8B5CF6 55%, #D946EF 100%)", claro: false },
