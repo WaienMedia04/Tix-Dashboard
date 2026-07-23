@@ -1562,7 +1562,8 @@ export type TipoNotificacion =
   | "CUMPLEANOS"
   | "AUSENCIA_REGISTRADA"
   | "NOVEDAD_PUBLICADA"
-  | "CV_LISTO_PARA_REVISAR";
+  | "CV_LISTO_PARA_REVISAR"
+  | "NOTA_RECIBIDA";
 
 export interface Notificacion {
   id: string;

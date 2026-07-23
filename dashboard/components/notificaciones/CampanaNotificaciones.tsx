@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Cake, CalendarClock, FileText, Gift, Megaphone } from "lucide-react";
+import { Bell, Cake, CalendarClock, FileText, Gift, Megaphone, StickyNote } from "lucide-react";
 import {
   fetchContadorNotificaciones,
   fetchNotificaciones,
@@ -20,6 +20,7 @@ const ICONO_POR_TIPO: Record<TipoNotificacion, { Icon: typeof Bell; color: strin
   AUSENCIA_REGISTRADA: { Icon: CalendarClock, color: "text-amber-400" },
   NOVEDAD_PUBLICADA: { Icon: Megaphone, color: "text-sky-400" },
   CV_LISTO_PARA_REVISAR: { Icon: FileText, color: "text-emerald-400" },
+  NOTA_RECIBIDA: { Icon: StickyNote, color: "text-yellow-400" },
 };
 
 function tiempoRelativo(iso: string): string {
@@ -146,7 +147,7 @@ export function CampanaNotificaciones({ slug }: { slug: string }) {
             {!cargando &&
               notificaciones !== null &&
               notificaciones.map((n) => {
-                const { Icon, color } = ICONO_POR_TIPO[n.tipo];
+                const { Icon, color } = ICONO_POR_TIPO[n.tipo] ?? { Icon: Bell, color: "text-muted-foreground" };
                 return (
                   <button
                     key={n.id}
