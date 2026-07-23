@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Cake } from "lucide-react";
 import { type CumpleanosResponse, fetchCumpleanos } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
-import { EnlaceTalento } from "@/components/EnlaceTalento";
 
 const MESES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -34,9 +33,7 @@ export function WidgetCumpleanosProximos({ slug }: { slug: string }) {
         {datos.hoy.map((t) => (
           <div key={t.id} className="flex items-center gap-2 text-sm">
             <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="sm" />
-            <span className="min-w-0 flex-1 truncate text-zinc-900">
-              <EnlaceTalento talentoId={t.id}>{t.nombreCompleto}</EnlaceTalento>
-            </span>
+            <span className="min-w-0 flex-1 truncate text-zinc-900">{t.nombreCompleto}</span>
             <span className="shrink-0 rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-medium text-rose-600">
               Hoy 🎂
             </span>
@@ -45,9 +42,7 @@ export function WidgetCumpleanosProximos({ slug }: { slug: string }) {
         {proximos.map((t) => (
           <div key={t.id} className="flex items-center gap-2 text-sm">
             <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="sm" />
-            <span className="min-w-0 flex-1 truncate text-zinc-900">
-              <EnlaceTalento talentoId={t.id}>{t.nombreCompleto}</EnlaceTalento>
-            </span>
+            <span className="min-w-0 flex-1 truncate text-zinc-900">{t.nombreCompleto}</span>
             <span className="shrink-0 text-xs text-zinc-500">
               {t.dia} de {MESES[new Date().getMonth()]}
             </span>

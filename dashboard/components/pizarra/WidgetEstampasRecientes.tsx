@@ -1,6 +1,5 @@
 import { Award } from "lucide-react";
 import type { PizarraEstampaReciente } from "@/lib/api";
-import { EnlaceTalento } from "@/components/EnlaceTalento";
 
 export function WidgetEstampasRecientes({ estampas }: { estampas: PizarraEstampaReciente[] }) {
   return (
@@ -26,7 +25,7 @@ export function WidgetEstampasRecientes({ estampas }: { estampas: PizarraEstampa
                 className="h-9 w-9 rounded-full border border-zinc-200 bg-white object-contain p-0.5"
               />
               <span className="max-w-14 truncate text-[10px] text-zinc-500">
-                <EnlaceTalento talentoId={e.talento.id}>{e.talento.nombreCompleto.split(" ")[0]}</EnlaceTalento>
+                {e.talento.nombreCompleto.split(" ")[0]}
               </span>
             </div>
           ))}

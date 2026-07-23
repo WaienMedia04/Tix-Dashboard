@@ -1,7 +1,6 @@
 import { Trophy } from "lucide-react";
 import type { PizarraRankingSemanalItem } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
-import { EnlaceTalento } from "@/components/EnlaceTalento";
 
 export function WidgetRankingSemanal({ ranking }: { ranking: PizarraRankingSemanalItem[] }) {
   return (
@@ -18,9 +17,7 @@ export function WidgetRankingSemanal({ ranking }: { ranking: PizarraRankingSeman
             <div key={t.talentoId} className="flex items-center gap-2 text-sm">
               <span className="w-4 shrink-0 text-xs text-zinc-500">{i + 1}.</span>
               <Avatar nombreCompleto={t.nombreCompleto} fotoUrl={t.fotoUrl} size="sm" />
-              <span className="min-w-0 flex-1 truncate text-zinc-900">
-                <EnlaceTalento talentoId={t.talentoId}>{t.nombreCompleto}</EnlaceTalento>
-              </span>
+              <span className="min-w-0 flex-1 truncate text-zinc-900">{t.nombreCompleto}</span>
               <span className="shrink-0 text-xs font-medium text-zinc-500">{t.puntaje.toFixed(1)}</span>
             </div>
           ))}
