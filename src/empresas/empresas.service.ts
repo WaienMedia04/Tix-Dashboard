@@ -234,6 +234,9 @@ export class EmpresasService {
     const worklogs = worklogsTodos.filter((w) =>
       talentoIdsVisibles.has(w.talentoId),
     );
+    // Un día de vacaciones/permiso/licencia no es una bitácora real — no debe
+    // aparecer como "más reciente" ni como "última actividad" de nadie.
+    const worklogsSinAusencias = excluirAusencias(worklogs);
 
     // "Total de bitácoras" del dashboard es del mes en curso, no histórico
     // — para eso está la página de Bitácoras (que ya soporta rango libre).
@@ -284,7 +287,7 @@ export class EmpresasService {
         (a, b) => (b.puntajeIAPromedio ?? -1) - (a.puntajeIAPromedio ?? -1),
       );
 
-    const worklogsRecientes = worklogs.slice(0, 10).map((w) => ({
+    const worklogsRecientes = worklogsSinAusencias.slice(0, 10).map((w) => ({
       id: w.id,
       talento: w.talento.nombreCompleto,
       fecha: w.fecha,
@@ -351,7 +354,7 @@ export class EmpresasService {
 
     const actividadEquipo = talentos
       .map((t) => {
-        const ultimo = worklogs.find((w) => w.talentoId === t.id);
+        const ultimo = worklogsSinAusencias.find((w) => w.talentoId === t.id);
         return {
           talentoId: t.id,
           nombreCompleto: t.nombreCompleto,
