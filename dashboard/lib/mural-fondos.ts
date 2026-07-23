@@ -11,9 +11,7 @@ export const FONDOS_MURAL: FondoMural[] = [
   {
     id: "corcho",
     label: "Corcho",
-    // Imagen a resolución original (pesada a propósito) — el color al final
-    // se pinta de inmediato y se ve mientras la imagen todavía descarga.
-    css: "url('/mural/fondo-corcho.jpg') center center / cover no-repeat #dfa76b",
+    css: "radial-gradient(circle at 22% 18%, rgba(94,58,23,0.22) 1.4px, transparent 1.6px) 0 0/26px 26px, radial-gradient(circle at 68% 62%, rgba(94,58,23,0.18) 1.1px, transparent 1.3px) 0 0/19px 19px, radial-gradient(circle at 42% 82%, rgba(120,80,40,0.16) 1.3px, transparent 1.5px) 0 0/31px 31px, radial-gradient(circle at 85% 30%, rgba(70,42,15,0.15) 1px, transparent 1.2px) 0 0/22px 22px, linear-gradient(160deg, #d3a86c 0%, #c99a5c 45%, #b98748 100%)",
     claro: true,
   },
   { id: "aurora", label: "Aurora", css: "linear-gradient(135deg, #22D3EE 0%, #8B5CF6 55%, #D946EF 100%)", claro: false },
