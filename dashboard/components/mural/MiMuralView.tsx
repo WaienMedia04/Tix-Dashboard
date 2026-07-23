@@ -280,8 +280,10 @@ export function MiMuralView({
         </div>
       )}
 
-      <div className="fixed top-14 right-3 z-30 w-[260px] max-w-[70vw] print:hidden">
-        <ClimaWidget />
+      <div className="fixed top-14 right-3 -z-10 w-[190px] max-w-[50vw] origin-top-right scale-[0.72] print:hidden">
+        <div className="-rotate-2 rounded-md border-4 border-white bg-white p-1 shadow-lg">
+          <ClimaWidget />
+        </div>
       </div>
 
       {editable && (
