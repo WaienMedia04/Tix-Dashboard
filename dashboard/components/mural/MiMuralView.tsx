@@ -17,6 +17,7 @@ import { PerfilDivertidoForm } from "./PerfilDivertidoForm";
 import { SobreMiSoloLectura } from "./SobreMiSoloLectura";
 import { SelectorFondo } from "./SelectorFondo";
 import { SelectorColorNombre } from "./SelectorColorNombre";
+import { SelectorColorWidgets } from "./SelectorColorWidgets";
 import { MuralCanvas } from "./MuralCanvas";
 import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
@@ -313,6 +314,17 @@ export function MiMuralView({
                 }
               />
             </div>
+            <div>
+              <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Color de los widgets de la Pizarra
+              </p>
+              <SelectorColorWidgets
+                colorWidgetsId={mural.perfil.colorWidgetsId}
+                onCambiado={(colorWidgetsId) =>
+                  setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, colorWidgetsId } } : prev))
+                }
+              />
+            </div>
           </div>
         </Modal>
       )}
@@ -360,9 +372,9 @@ export function MiMuralView({
       )}
 
       <div className="relative z-10 px-4 pb-10 sm:px-8">
-        <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-6 lg:flex-row">
-          <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} />
-          <div className="flex w-full min-w-0 flex-1 flex-col gap-6 lg:max-w-2xl">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+          <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} temaWidgets={mural.perfil.colorWidgetsId} />
+          <div className="flex w-full min-w-0 flex-col gap-6">
             <BoletinInformativo slug={slug} />
             <VacantesInformativo slug={slug} />
           </div>

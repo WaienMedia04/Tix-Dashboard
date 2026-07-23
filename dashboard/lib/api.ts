@@ -1154,6 +1154,8 @@ export interface PerfilMural {
   fondoId: string;
   /** Paleta del degradado animado del nombre — ver dashboard/lib/mural-colores-nombre.ts. */
   colorNombreId: string;
+  /** Tema de color de las tarjetas de la Pizarra: "vibrante" | "solido" — ver dashboard/lib/pizarra-temas.ts. */
+  colorWidgetsId: string;
 }
 
 export interface NotaMural {

@@ -1,13 +1,24 @@
 import { Trophy } from "lucide-react";
 import type { PizarraRankingSemanalItem } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
+import { estiloWidget, type TemaWidgets } from "@/lib/pizarra-temas";
 
-export function WidgetRankingSemanal({ ranking }: { ranking: PizarraRankingSemanalItem[] }) {
+export function WidgetRankingSemanal({
+  ranking,
+  tema,
+}: {
+  ranking: PizarraRankingSemanalItem[];
+  tema: TemaWidgets;
+}) {
+  const estilo = estiloWidget(tema, "amarillo");
+
   return (
-    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3.5 sm:col-span-2">
-      <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
-        <Trophy className="h-3.5 w-3.5 text-yellow-500" />
-        Ranking semanal
+    <div className={`rounded-xl border p-3.5 sm:col-span-2 ${estilo.card}`}>
+      <div className="flex items-center gap-2">
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${estilo.badge}`}>
+          <Trophy className={`h-3.5 w-3.5 ${estilo.icon}`} />
+        </span>
+        <span className="text-xs font-semibold text-zinc-500">Ranking semanal</span>
       </div>
       {ranking.length === 0 ? (
         <p className="mt-2 text-xs text-zinc-500">Todavía no hay suficientes bitácoras esta semana.</p>

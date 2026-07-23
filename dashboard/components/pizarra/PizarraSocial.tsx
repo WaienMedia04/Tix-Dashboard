@@ -20,13 +20,24 @@ import { WidgetEstampasRecientes } from "./WidgetEstampasRecientes";
 import { WidgetEventosProximos } from "./WidgetEventosProximos";
 import { WidgetCumpleanosProximos } from "./WidgetCumpleanosProximos";
 import { WidgetTimeCapsule } from "./WidgetTimeCapsule";
+import type { TemaWidgets } from "@/lib/pizarra-temas";
 
 const INTERVALO_POLLING_MS = 15_000;
 const INTERVALO_PANEL_MS = 60_000;
 
 /** Pizarra compartida por toda la empresa — mismo contenido se vea desde el mural de quien se vea. */
-export function PizarraSocial({ slug, miRol }: { slug: string; miRol: string }) {
+export function PizarraSocial({
+  slug,
+  miRol,
+  temaWidgets,
+}: {
+  slug: string;
+  miRol: string;
+  /** Preferencia de quien es dueño del mural que se está viendo — no del usuario logueado. */
+  temaWidgets: string;
+}) {
   const esModerador = miRol === "CEO" || miRol === "RRHH";
+  const tema: TemaWidgets = temaWidgets === "solido" ? "solido" : "vibrante";
 
   const [posts, setPosts] = useState<PizarraPost[] | null>(null);
   const [cargandoMas, setCargandoMas] = useState(false);
@@ -83,7 +94,7 @@ export function PizarraSocial({ slug, miRol }: { slug: string; miRol: string }) 
   }
 
   return (
-    <div className="w-full min-w-0 flex-1 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5 lg:max-w-2xl">
+    <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5">
       <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 sm:px-5">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
           <ClipboardList className="h-4 w-4" />
@@ -111,9 +122,10 @@ export function PizarraSocial({ slug, miRol }: { slug: string; miRol: string }) 
             onRespondido={(emoji: EmojiClima) =>
               setPanel((prev) => (prev ? { ...prev, climaHoy: emoji } : prev))
             }
+            tema={tema}
           />
-          <WidgetRacha racha={panel?.rachaPropia ?? null} />
-          <WidgetMisionDelDia mision={panel?.misionDelDia ?? ""} />
+          <WidgetRacha racha={panel?.rachaPropia ?? null} tema={tema} />
+          <WidgetMisionDelDia mision={panel?.misionDelDia ?? ""} tema={tema} />
 
           <PizarraContenidoDiarioBanner
             contenido={panel?.contenidoDiario ?? null}
@@ -132,14 +144,14 @@ export function PizarraSocial({ slug, miRol }: { slug: string; miRol: string }) 
 
           {panel && (
             <div className="sm:col-span-2">
-              <WidgetRankingSemanal ranking={panel.rankingSemanal} />
+              <WidgetRankingSemanal ranking={panel.rankingSemanal} tema={tema} />
             </div>
           )}
 
-          {panel && <WidgetEstampasRecientes estampas={panel.estampasRecientes} />}
-          {panel && <WidgetEventosProximos eventos={panel.eventosProximos} />}
-          <WidgetCumpleanosProximos slug={slug} />
-          <WidgetTimeCapsule slug={slug} />
+          {panel && <WidgetEstampasRecientes estampas={panel.estampasRecientes} tema={tema} />}
+          {panel && <WidgetEventosProximos eventos={panel.eventosProximos} tema={tema} />}
+          <WidgetCumpleanosProximos slug={slug} tema={tema} />
+          <WidgetTimeCapsule slug={slug} tema={tema} />
 
           <div className="sm:col-span-2">
             <PizarraTimeline slug={slug} />

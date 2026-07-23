@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Lock, Mail, Plus, Rocket } from "lucide-react";
 import { type PizarraTimeCapsula, crearPizarraTimeCapsula, fetchPizarraTimeCapsulas } from "@/lib/api";
+import { estiloWidget, type TemaWidgets } from "@/lib/pizarra-temas";
 
 const CAMPO_CLASES =
   "w-full rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs text-zinc-900 outline-none focus:border-primary";
@@ -17,7 +18,7 @@ function formatearFecha(iso: string): string {
   return new Date(iso).toLocaleDateString("es-DO", { day: "2-digit", month: "long", year: "numeric" });
 }
 
-export function WidgetTimeCapsule({ slug }: { slug: string }) {
+export function WidgetTimeCapsule({ slug, tema }: { slug: string; tema: TemaWidgets }) {
   const [capsulas, setCapsulas] = useState<PizarraTimeCapsula[] | null>(null);
   const [abierto, setAbierto] = useState(false);
   const [mensaje, setMensaje] = useState("");
@@ -49,11 +50,15 @@ export function WidgetTimeCapsule({ slug }: { slug: string }) {
     }
   }
 
+  const estilo = estiloWidget(tema, "indigo");
+
   return (
-    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3.5">
+    <div className={`rounded-xl border p-3.5 ${estilo.card}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
-          <Rocket className="h-3.5 w-3.5 text-indigo-500" />
+        <span className="flex items-center gap-2 text-xs font-semibold text-zinc-500">
+          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${estilo.badge}`}>
+            <Rocket className={`h-3.5 w-3.5 ${estilo.icon}`} />
+          </span>
           Time Capsule
         </span>
         <button

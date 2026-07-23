@@ -338,6 +338,9 @@ model TalentoPerfilMural {
   /// Paleta de colores del efecto degradado animado del nombre en el mural
   /// (dashboard/lib/mural-colores-nombre.ts tiene los valores CSS reales).
   colorNombreId   String   @default("cian_magenta")
+  /// Tema de color de las tarjetas de la Pizarra: "vibrante" (cada widget
+  /// con su propio color de acento) o "solido" (gris plano, como antes).
+  colorWidgetsId  String   @default("vibrante")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import { Cake } from "lucide-react";
 import { type CumpleanosResponse, fetchCumpleanos } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
+import { estiloWidget, type TemaWidgets } from "@/lib/pizarra-temas";
 
 const MESES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
 
-export function WidgetCumpleanosProximos({ slug }: { slug: string }) {
+export function WidgetCumpleanosProximos({ slug, tema }: { slug: string; tema: TemaWidgets }) {
   const [datos, setDatos] = useState<CumpleanosResponse | null>(null);
 
   useEffect(() => {
@@ -22,12 +23,15 @@ export function WidgetCumpleanosProximos({ slug }: { slug: string }) {
   if (!datos || (datos.hoy.length === 0 && datos.esteMes.length === 0)) return null;
 
   const proximos = datos.esteMes.slice(0, 3);
+  const estilo = estiloWidget(tema, "rosado");
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3.5">
-      <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
-        <Cake className="h-3.5 w-3.5 text-rose-500" />
-        Cumpleaños
+    <div className={`rounded-xl border p-3.5 ${estilo.card}`}>
+      <div className="flex items-center gap-2">
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${estilo.badge}`}>
+          <Cake className={`h-3.5 w-3.5 ${estilo.icon}`} />
+        </span>
+        <span className="text-xs font-semibold text-zinc-500">Cumpleaños</span>
       </div>
       <div className="mt-2 space-y-1.5">
         {datos.hoy.map((t) => (

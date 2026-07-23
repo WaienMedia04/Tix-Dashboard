@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { FONDOS_MURAL_IDS } from '../mural-fondos.constant';
 import { COLORES_NOMBRE_MURAL_IDS } from '../mural-colores-nombre.constant';
+import { COLOR_WIDGETS_IDS } from '../mural-color-widgets.constant';
 
 export class ActualizarPerfilMuralDto {
   @IsString()
@@ -56,4 +57,9 @@ export class ActualizarPerfilMuralDto {
   @IsOptional()
   @IsIn(COLORES_NOMBRE_MURAL_IDS)
   colorNombreId?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsIn(COLOR_WIDGETS_IDS)
+  colorWidgetsId?: string;
 }
