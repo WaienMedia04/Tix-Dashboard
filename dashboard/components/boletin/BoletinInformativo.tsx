@@ -137,7 +137,7 @@ export function BoletinInformativo({
     <div
       className={
         dentroDeVentana
-          ? "w-full min-w-0 flex-1 bg-white"
+          ? "w-full min-w-0 flex-1 bg-transparent"
           : "w-full min-w-0 flex-1 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5 lg:max-w-2xl"
       }
     >

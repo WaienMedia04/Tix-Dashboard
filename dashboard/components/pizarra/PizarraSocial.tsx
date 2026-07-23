@@ -100,7 +100,7 @@ export function PizarraSocial({
     <div
       className={
         dentroDeVentana
-          ? "w-full min-w-0 bg-white"
+          ? "w-full min-w-0 bg-transparent"
           : "w-full min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5"
       }
     >
