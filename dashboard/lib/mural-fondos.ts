@@ -11,7 +11,9 @@ export const FONDOS_MURAL: FondoMural[] = [
   {
     id: "corcho",
     label: "Corcho",
-    css: "url('/mural/fondo-corcho.jpg') repeat",
+    // Imagen a resolución original (pesada a propósito) — el color al final
+    // se pinta de inmediato y se ve mientras la imagen todavía descarga.
+    css: "url('/mural/fondo-corcho.jpg') center center / cover no-repeat #c99a5c",
     claro: true,
   },
   { id: "aurora", label: "Aurora", css: "linear-gradient(135deg, #22D3EE 0%, #8B5CF6 55%, #D946EF 100%)", claro: false },
