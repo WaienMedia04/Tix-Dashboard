@@ -17,6 +17,8 @@ import { CrearEncuestaDto } from './dto/crear-encuesta.dto';
 import { VotarEncuestaDto } from './dto/votar-encuesta.dto';
 import { CrearReconocimientoDto } from './dto/crear-reconocimiento.dto';
 import { ResponderTriviaDto } from './dto/responder-trivia.dto';
+import { ResponderClimaDto } from './dto/responder-clima.dto';
+import { CrearTimeCapsulaDto } from './dto/crear-time-capsula.dto';
 import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 import type { RequestConActor } from '../auth/actor.types';
 
@@ -136,5 +138,34 @@ export class PizarraController {
   @Get('trivia-ranking')
   triviaRanking(@Param('slug') slug: string, @Req() req: RequestConActor) {
     return this.pizarraService.triviaRanking(slug, req.actor!);
+  }
+
+  @Post('clima')
+  responderClima(
+    @Param('slug') slug: string,
+    @Body() dto: ResponderClimaDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.pizarraService.responderClima(slug, req.actor!, dto);
+  }
+
+  /** Solo CEO/RRHH — PizarraService.exigirModerador rechaza cualquier otro rol. */
+  @Get('clima/equipo')
+  climaEquipoHoy(@Param('slug') slug: string, @Req() req: RequestConActor) {
+    return this.pizarraService.climaEquipoHoy(slug, req.actor!);
+  }
+
+  @Post('time-capsulas')
+  crearTimeCapsula(
+    @Param('slug') slug: string,
+    @Body() dto: CrearTimeCapsulaDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.pizarraService.crearTimeCapsula(slug, req.actor!, dto);
+  }
+
+  @Get('time-capsulas')
+  misTimeCapsulas(@Param('slug') slug: string, @Req() req: RequestConActor) {
+    return this.pizarraService.misTimeCapsulas(slug, req.actor!);
   }
 }

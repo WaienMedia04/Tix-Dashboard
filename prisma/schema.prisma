@@ -56,6 +56,14 @@ enum EstadoVacante {
   CERRADA
 }
 
+enum EmojiClima {
+  FELIZ
+  NEUTRAL
+  TRISTE
+  CANSADO
+  EMOCIONADO
+}
+
 model Empresa {
   id                String               @id @default(cuid())
   nombre            String
@@ -86,6 +94,8 @@ model Empresa {
   boletines          Boletin[]
   vacantes           Vacante[]
   usuariosVinculados UsuarioEmpresaAcceso[]
+  pizarraClimaRespuestas PizarraClimaRespuesta[]
+  pizarraTimeCapsulas    PizarraTimeCapsula[]
 }
 
 /**
@@ -186,6 +196,8 @@ model Usuario {
   pizarraEncuestaVotos         PizarraEncuestaVoto[]
   pizarraReconocimientosCreados PizarraReconocimiento[]   @relation("PizarraReconocimientosCreados")
   pizarraTriviaRespuestas      PizarraTriviaRespuesta[]
+  pizarraClimaRespuestas       PizarraClimaRespuesta[]
+  pizarraTimeCapsulas          PizarraTimeCapsula[]
   boletinesCreados             Boletin[]
   vacantesCreadas              Vacante[]
   empresasVinculadas           UsuarioEmpresaAcceso[]
@@ -628,6 +640,41 @@ model PizarraTriviaRespuesta {
 
   @@unique([empresaId, usuarioId, fecha])
   @@index([empresaId, fecha])
+}
+
+/// Check-in diario de "¿cómo te sientes hoy?" — un registro por usuario por
+/// día. Los compañeros no ven respuestas individuales (solo se agregan);
+/// CEO/RRHH sí puede ver quién respondió qué.
+model PizarraClimaRespuesta {
+  id        String     @id @default(cuid())
+  empresaId String
+  usuarioId String
+  fecha     String
+  emoji     EmojiClima
+  createdAt DateTime   @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([empresaId, usuarioId, fecha])
+  @@index([empresaId, fecha])
+}
+
+/// Nota que el usuario se escribe a sí mismo, sellada hasta `fechaApertura`
+/// — el backend no revela `mensaje` antes de esa fecha aunque sea su propio
+/// dueño quien la pida.
+model PizarraTimeCapsula {
+  id            String   @id @default(cuid())
+  empresaId     String
+  usuarioId     String
+  mensaje       String
+  fechaApertura DateTime
+  createdAt     DateTime @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, usuarioId])
 }
 
 /**

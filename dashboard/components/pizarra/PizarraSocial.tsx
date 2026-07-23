@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ClipboardList } from "lucide-react";
-import { type PizarraPanel, type PizarraPost, fetchPizarraPanel, fetchPizarraPosts } from "@/lib/api";
+import { type EmojiClima, type PizarraPanel, type PizarraPost, fetchPizarraPanel, fetchPizarraPosts } from "@/lib/api";
 import { PizarraComposer } from "./PizarraComposer";
 import { PizarraPostCard } from "./PizarraPostCard";
 import { PizarraReconocimientoBanner } from "./PizarraReconocimientoBanner";
@@ -12,6 +12,14 @@ import { PizarraNuevaEncuestaModal } from "./PizarraNuevaEncuestaModal";
 import { PizarraContenidoDiarioBanner } from "./PizarraContenidoDiario";
 import { PizarraTimeline } from "./PizarraTimeline";
 import { PizarraTrivia } from "./PizarraTrivia";
+import { WidgetClimaLaboral } from "./WidgetClimaLaboral";
+import { WidgetRacha } from "./WidgetRacha";
+import { WidgetMisionDelDia } from "./WidgetMisionDelDia";
+import { WidgetRankingSemanal } from "./WidgetRankingSemanal";
+import { WidgetEstampasRecientes } from "./WidgetEstampasRecientes";
+import { WidgetEventosProximos } from "./WidgetEventosProximos";
+import { WidgetCumpleanosProximos } from "./WidgetCumpleanosProximos";
+import { WidgetTimeCapsule } from "./WidgetTimeCapsule";
 
 const INTERVALO_POLLING_MS = 15_000;
 const INTERVALO_PANEL_MS = 60_000;
@@ -87,28 +95,56 @@ export function PizarraSocial({ slug, miRol }: { slug: string; miRol: string }) 
       </div>
 
       <div className="space-y-4 p-4 sm:p-5">
-        <PizarraReconocimientoBanner
-          reconocimiento={panel?.reconocimientoActivo ?? null}
-          puedeFijar={esModerador}
-          onFijar={() => setMostrarNuevoReconocimiento(true)}
-        />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <PizarraReconocimientoBanner
+              reconocimiento={panel?.reconocimientoActivo ?? null}
+              puedeFijar={esModerador}
+              onFijar={() => setMostrarNuevoReconocimiento(true)}
+            />
+          </div>
 
-        <PizarraEncuestaCard
-          slug={slug}
-          encuesta={panel?.encuestaActiva ?? null}
-          puedeCrear={esModerador}
-          onActualizada={(e) => setPanel((prev) => (prev ? { ...prev, encuestaActiva: e } : prev))}
-          onCrear={() => setMostrarNuevaEncuesta(true)}
-        />
+          <WidgetClimaLaboral
+            slug={slug}
+            climaHoy={panel?.climaHoy ?? null}
+            esModerador={esModerador}
+            onRespondido={(emoji: EmojiClima) =>
+              setPanel((prev) => (prev ? { ...prev, climaHoy: emoji } : prev))
+            }
+          />
+          <WidgetRacha racha={panel?.rachaPropia ?? null} />
+          <WidgetMisionDelDia mision={panel?.misionDelDia ?? ""} />
 
-        <PizarraContenidoDiarioBanner
-          contenido={panel?.contenidoDiario ?? null}
-          onResponder={(pregunta) => setPrefillComposer({ texto: `❓ ${pregunta}: ` })}
-        />
+          <PizarraContenidoDiarioBanner
+            contenido={panel?.contenidoDiario ?? null}
+            onResponder={(pregunta) => setPrefillComposer({ texto: `❓ ${pregunta}: ` })}
+          />
 
-        <PizarraTimeline slug={slug} />
+          <PizarraEncuestaCard
+            slug={slug}
+            encuesta={panel?.encuestaActiva ?? null}
+            puedeCrear={esModerador}
+            onActualizada={(e) => setPanel((prev) => (prev ? { ...prev, encuestaActiva: e } : prev))}
+            onCrear={() => setMostrarNuevaEncuesta(true)}
+          />
 
-        <PizarraTrivia slug={slug} />
+          <PizarraTrivia slug={slug} />
+
+          {panel && (
+            <div className="sm:col-span-2">
+              <WidgetRankingSemanal ranking={panel.rankingSemanal} />
+            </div>
+          )}
+
+          {panel && <WidgetEstampasRecientes estampas={panel.estampasRecientes} />}
+          {panel && <WidgetEventosProximos eventos={panel.eventosProximos} />}
+          <WidgetCumpleanosProximos slug={slug} />
+          <WidgetTimeCapsule slug={slug} />
+
+          <div className="sm:col-span-2">
+            <PizarraTimeline slug={slug} />
+          </div>
+        </div>
 
         <PizarraComposer
           slug={slug}

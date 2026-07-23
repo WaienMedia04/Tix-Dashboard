@@ -1973,10 +1973,44 @@ export interface PizarraReconocimientoActivo {
   talento: { id: string; nombreCompleto: string; fotoUrl: string | null; rol: string };
 }
 
+export type EmojiClima = "FELIZ" | "NEUTRAL" | "TRISTE" | "CANSADO" | "EMOCIONADO";
+
+export interface PizarraRachaPropia {
+  actual: number;
+  mejor: number;
+}
+
+export interface PizarraRankingSemanalItem {
+  talentoId: string;
+  nombreCompleto: string;
+  fotoUrl: string | null;
+  puntaje: number;
+}
+
+export interface PizarraEstampaReciente {
+  id: string;
+  createdAt: string;
+  talento: { id: string; nombreCompleto: string; fotoUrl: string | null };
+  estampaNombre: string;
+  estampaImagenUrl: string;
+}
+
+export interface PizarraEventoProximo {
+  id: string;
+  titulo: string;
+  fechaEvento: string;
+}
+
 export interface PizarraPanel {
   contenidoDiario: PizarraContenidoDiario;
+  misionDelDia: string;
   encuestaActiva: PizarraEncuestaActiva | null;
   reconocimientoActivo: PizarraReconocimientoActivo | null;
+  rachaPropia: PizarraRachaPropia | null;
+  climaHoy: EmojiClima | null;
+  rankingSemanal: PizarraRankingSemanalItem[];
+  estampasRecientes: PizarraEstampaReciente[];
+  eventosProximos: PizarraEventoProximo[];
 }
 
 export async function fetchPizarraPanel(slug: string): Promise<PizarraPanel> {
@@ -2127,6 +2161,94 @@ export async function fetchPizarraTriviaRanking(slug: string): Promise<PizarraTr
   }
   if (!res.ok) {
     throw new Error("No se pudo cargar el ranking de trivia");
+  }
+  return res.json();
+}
+
+// ===== Clima laboral =====
+
+export async function responderPizarraClima(slug: string, emoji: EmojiClima): Promise<{ emoji: EmojiClima }> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/clima`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify({ emoji }),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo registrar tu respuesta");
+  }
+  return res.json();
+}
+
+export interface PizarraClimaEquipoRespuesta {
+  usuarioId: string;
+  nombre: string;
+  fotoUrl: string | null;
+  emoji: EmojiClima;
+}
+
+export interface PizarraClimaEquipo {
+  total: number;
+  resumen: { emoji: EmojiClima; cantidad: number }[];
+  respuestas: PizarraClimaEquipoRespuesta[];
+}
+
+/** Solo CEO/RRHH — quién respondió qué hoy. */
+export async function fetchPizarraClimaEquipo(slug: string): Promise<PizarraClimaEquipo> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/clima/equipo`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el clima del equipo");
+  }
+  return res.json();
+}
+
+// ===== Time Capsule =====
+
+export interface PizarraTimeCapsula {
+  id: string;
+  fechaApertura: string;
+  createdAt: string;
+  abierta: boolean;
+  mensaje: string | null;
+}
+
+export async function crearPizarraTimeCapsula(
+  slug: string,
+  datos: { mensaje: string; fechaApertura: string },
+): Promise<PizarraTimeCapsula> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/time-capsulas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    const cuerpo = await res.json().catch(() => null);
+    throw new Error(cuerpo?.message ?? "No se pudo crear la cápsula del tiempo");
+  }
+  return res.json();
+}
+
+export async function fetchPizarraTimeCapsulas(slug: string): Promise<PizarraTimeCapsula[]> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/time-capsulas`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudieron cargar las cápsulas del tiempo");
   }
   return res.json();
 }

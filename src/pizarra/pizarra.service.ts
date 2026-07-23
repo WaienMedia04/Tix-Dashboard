@@ -4,9 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { EmojiClima, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Actor } from '../auth/actor.types';
+import { calcularRachas } from '../mural/racha.util';
 import { CrearPostDto } from './dto/crear-post.dto';
 import { CrearComentarioDto } from './dto/crear-comentario.dto';
 import { ReaccionarDto } from './dto/reaccionar.dto';
@@ -14,8 +15,11 @@ import { CrearEncuestaDto } from './dto/crear-encuesta.dto';
 import { VotarEncuestaDto } from './dto/votar-encuesta.dto';
 import { CrearReconocimientoDto } from './dto/crear-reconocimiento.dto';
 import { ResponderTriviaDto } from './dto/responder-trivia.dto';
+import { ResponderClimaDto } from './dto/responder-clima.dto';
+import { CrearTimeCapsulaDto } from './dto/crear-time-capsula.dto';
 import { PREGUNTAS_DEL_DIA, FRASES_DEL_DIA } from './contenido-diario.constant';
 import { TRIVIA_PREGUNTAS } from './trivia.constant';
+import { MISIONES_DEL_DIA } from './mision-diaria.constant';
 
 const LIMITE_POSTS = 20;
 const LIMITE_TIMELINE = 15;
@@ -309,6 +313,13 @@ export class PizarraService {
     };
   }
 
+  private misionDelDia(): string {
+    const hoy = this.hoyISO();
+    return MISIONES_DEL_DIA[
+      this.indiceDelDia(`mision-${hoy}`, MISIONES_DEL_DIA.length)
+    ];
+  }
+
   private async encuestaActivaParaUsuario(
     empresaId: string,
     usuarioId: string,
@@ -359,21 +370,259 @@ export class PizarraService {
     };
   }
 
-  /** Todo lo que necesita la cabecera de la pizarra en una sola consulta: contenido del día, encuesta y reconocimiento activos. */
+  private async climaHoyPropio(
+    empresaId: string,
+    usuarioId: string,
+  ): Promise<EmojiClima | null> {
+    const hoy = this.hoyISO();
+    const respuesta = await this.prisma.pizarraClimaRespuesta.findUnique({
+      where: {
+        empresaId_usuarioId_fecha: { empresaId, usuarioId, fecha: hoy },
+      },
+      select: { emoji: true },
+    });
+    return respuesta?.emoji ?? null;
+  }
+
+  /** Top 5 de la última semana por puntaje IA promedio — leaderboard social, no el reporte gerencial de Rankings. */
+  private async rankingSemanal(empresaId: string) {
+    const hace7Dias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const [talentos, worklogs] = await Promise.all([
+      this.prisma.talento.findMany({
+        where: {
+          empresaId,
+          estado: 'activo',
+          OR: [
+            { usuario: null },
+            { usuario: { rol: { notIn: ['CEO', 'RRHH'] } } },
+          ],
+        },
+        select: { id: true, nombreCompleto: true, fotoUrl: true },
+      }),
+      this.prisma.worklog.findMany({
+        where: {
+          empresaId,
+          fecha: { gte: hace7Dias },
+          puntajeIA: { not: null },
+        },
+        select: { talentoId: true, puntajeIA: true },
+      }),
+    ]);
+
+    const porTalento = new Map<string, number[]>();
+    for (const w of worklogs) {
+      if (w.puntajeIA === null) continue;
+      const lista = porTalento.get(w.talentoId) ?? [];
+      lista.push(w.puntajeIA);
+      porTalento.set(w.talentoId, lista);
+    }
+
+    return talentos
+      .map((t) => {
+        const puntajes = porTalento.get(t.id) ?? [];
+        const promedio =
+          puntajes.length === 0
+            ? null
+            : puntajes.reduce((a, b) => a + b, 0) / puntajes.length;
+        return {
+          talentoId: t.id,
+          nombreCompleto: t.nombreCompleto,
+          fotoUrl: t.fotoUrl,
+          puntaje: promedio,
+        };
+      })
+      .filter((t): t is typeof t & { puntaje: number } => t.puntaje !== null)
+      .sort((a, b) => b.puntaje - a.puntaje)
+      .slice(0, 5)
+      .map((t) => ({ ...t, puntaje: Math.round(t.puntaje * 10) / 10 }));
+  }
+
+  private async estampasRecientes(empresaId: string) {
+    const estampas = await this.prisma.estampaOtorgada.findMany({
+      where: { empresaId },
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+      select: {
+        id: true,
+        createdAt: true,
+        talento: { select: { id: true, nombreCompleto: true, fotoUrl: true } },
+        estampaDefinicion: { select: { nombre: true, imagenUrl: true } },
+      },
+    });
+
+    return estampas.map((e) => ({
+      id: e.id,
+      createdAt: e.createdAt,
+      talento: e.talento,
+      estampaNombre: e.estampaDefinicion.nombre,
+      estampaImagenUrl: e.estampaDefinicion.imagenUrl,
+    }));
+  }
+
+  private async eventosProximos(empresaId: string) {
+    return this.prisma.boletin.findMany({
+      where: { empresaId, tipo: 'EVENTO', fechaEvento: { gte: new Date() } },
+      orderBy: { fechaEvento: 'asc' },
+      take: 3,
+      select: { id: true, titulo: true, fechaEvento: true },
+    });
+  }
+
+  /** Todo lo que necesita la cabecera de la pizarra en una sola consulta. */
   async panel(slug: string, actor: Actor) {
     const usuario = this.exigirUsuario(actor);
     const empresaId = await this.resolverEmpresaId(slug, actor);
 
-    const [encuestaActiva, reconocimientoActivo] = await Promise.all([
+    const [
+      encuestaActiva,
+      reconocimientoActivo,
+      rachaPropia,
+      climaHoy,
+      rankingSemanal,
+      estampasRecientes,
+      eventosProximos,
+    ] = await Promise.all([
       this.encuestaActivaParaUsuario(empresaId, usuario.id),
       this.reconocimientoActivo(empresaId),
+      usuario.talentoId
+        ? calcularRachas(this.prisma, usuario.talentoId)
+        : Promise.resolve(null),
+      this.climaHoyPropio(empresaId, usuario.id),
+      this.rankingSemanal(empresaId),
+      this.estampasRecientes(empresaId),
+      this.eventosProximos(empresaId),
     ]);
 
     return {
       contenidoDiario: this.contenidoDiario(),
+      misionDelDia: this.misionDelDia(),
       encuestaActiva,
       reconocimientoActivo,
+      rachaPropia,
+      climaHoy,
+      rankingSemanal,
+      estampasRecientes,
+      eventosProximos,
     };
+  }
+
+  // ===== Clima laboral =====
+
+  async responderClima(slug: string, actor: Actor, dto: ResponderClimaDto) {
+    const usuario = this.exigirUsuario(actor);
+    const empresaId = await this.resolverEmpresaId(slug, actor);
+    const hoy = this.hoyISO();
+
+    await this.prisma.pizarraClimaRespuesta.upsert({
+      where: {
+        empresaId_usuarioId_fecha: {
+          empresaId,
+          usuarioId: usuario.id,
+          fecha: hoy,
+        },
+      },
+      create: {
+        empresaId,
+        usuarioId: usuario.id,
+        fecha: hoy,
+        emoji: dto.emoji,
+      },
+      update: { emoji: dto.emoji },
+    });
+
+    return { emoji: dto.emoji };
+  }
+
+  /** Quién respondió qué hoy — solo CEO/RRHH. Los compañeros nunca ven esto. */
+  async climaEquipoHoy(slug: string, actor: Actor) {
+    const usuario = this.exigirUsuario(actor);
+    this.exigirModerador(usuario);
+    const empresaId = await this.resolverEmpresaId(slug, actor);
+    const hoy = this.hoyISO();
+
+    const respuestas = await this.prisma.pizarraClimaRespuesta.findMany({
+      where: { empresaId, fecha: hoy },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        emoji: true,
+        usuario: {
+          select: {
+            id: true,
+            nombre: true,
+            talento: { select: { fotoUrl: true } },
+          },
+        },
+      },
+    });
+
+    const resumen = new Map<EmojiClima, number>();
+    for (const r of respuestas) {
+      resumen.set(r.emoji, (resumen.get(r.emoji) ?? 0) + 1);
+    }
+
+    return {
+      total: respuestas.length,
+      resumen: Array.from(resumen.entries()).map(([emoji, cantidad]) => ({
+        emoji,
+        cantidad,
+      })),
+      respuestas: respuestas.map((r) => ({
+        usuarioId: r.usuario.id,
+        nombre: r.usuario.nombre,
+        fotoUrl: r.usuario.talento?.fotoUrl ?? null,
+        emoji: r.emoji,
+      })),
+    };
+  }
+
+  // ===== Time Capsule =====
+
+  async crearTimeCapsula(slug: string, actor: Actor, dto: CrearTimeCapsulaDto) {
+    const usuario = this.exigirUsuario(actor);
+    const empresaId = await this.resolverEmpresaId(slug, actor);
+
+    const fechaApertura = new Date(dto.fechaApertura);
+    if (fechaApertura.getTime() <= Date.now()) {
+      throw new BadRequestException(
+        'La fecha de apertura debe ser en el futuro',
+      );
+    }
+
+    const capsula = await this.prisma.pizarraTimeCapsula.create({
+      data: {
+        empresaId,
+        usuarioId: usuario.id,
+        mensaje: dto.mensaje.trim(),
+        fechaApertura,
+      },
+      select: { id: true, fechaApertura: true, createdAt: true },
+    });
+
+    return { ...capsula, abierta: false, mensaje: null as string | null };
+  }
+
+  async misTimeCapsulas(slug: string, actor: Actor) {
+    const usuario = this.exigirUsuario(actor);
+    const empresaId = await this.resolverEmpresaId(slug, actor);
+
+    const capsulas = await this.prisma.pizarraTimeCapsula.findMany({
+      where: { empresaId, usuarioId: usuario.id },
+      orderBy: { fechaApertura: 'asc' },
+      select: { id: true, mensaje: true, fechaApertura: true, createdAt: true },
+    });
+
+    const ahora = Date.now();
+    return capsulas.map((c) => {
+      const abierta = c.fechaApertura.getTime() <= ahora;
+      return {
+        id: c.id,
+        fechaApertura: c.fechaApertura,
+        createdAt: c.createdAt,
+        abierta,
+        mensaje: abierta ? c.mensaje : null,
+      };
+    });
   }
 
   async crearEncuesta(slug: string, actor: Actor, dto: CrearEncuestaDto) {
