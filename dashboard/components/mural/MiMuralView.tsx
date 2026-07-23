@@ -150,7 +150,7 @@ export function MiMuralView({
       {/* Muro libre: un solo contenedor cubre encabezado + lienzo, para que
           notas y estampas se puedan arrastrar a cualquier parte de la página
           (incluso sobre el carnet), no solo debajo del encabezado. */}
-      <div ref={contenedorRef} className="relative">
+      <div ref={contenedorRef} className="relative z-0">
         {/* Encabezado: carnet grande y centrado, nombre y rol debajo */}
         <div className="flex flex-col items-center px-4 pb-4 text-center">
           <LanyardBadge
