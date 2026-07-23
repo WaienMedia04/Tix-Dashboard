@@ -4,7 +4,7 @@ import type { HTMLAttributes } from "react";
 import Script from "next/script";
 
 const CONFIG_WIDGET = JSON.stringify({
-  t: "responsive",
+  t: "horizontal",
   lang: "es",
   sl_lpl: 1,
   ids: [],
@@ -29,22 +29,22 @@ const atributosWidget = {
   a: CONFIG_WIDGET,
 } as unknown as HTMLAttributes<HTMLDivElement>;
 
-/** Widget de clima (weatherwidget.org) — se muestra al final del mural. */
+/** Widget de clima (weatherwidget.org) — flota en la esquina superior derecha del mural. */
 export function ClimaWidget() {
   return (
     <>
-      <div id="ww_43af629b1bb" {...atributosWidget}>
+      <div id="ww_f41a6dcd1a6dc" {...atributosWidget}>
         Más previsiones:{" "}
         <a
-          href="https://tiempolargo.com/madrid_tiempo_25_dias/"
-          id="ww_43af629b1bb_u"
+          href="https://tiempolargo.com/buenos_aires_tiempo_25_dias/"
+          id="ww_f41a6dcd1a6dc_u"
           target="_blank"
           rel="noreferrer"
         >
-          El tiempo para 25 días
+          Tiempo en Buenos Aires 25 días
         </a>
       </div>
-      <Script async src="https://app3.weatherwidget.org/js/?id=ww_43af629b1bb" strategy="lazyOnload" />
+      <Script async src="https://app3.weatherwidget.org/js/?id=ww_f41a6dcd1a6dc" strategy="lazyOnload" />
     </>
   );
 }

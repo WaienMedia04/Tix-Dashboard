@@ -280,6 +280,10 @@ export function MiMuralView({
         </div>
       )}
 
+      <div className="fixed top-14 right-3 z-30 w-[260px] max-w-[70vw] print:hidden">
+        <ClimaWidget />
+      </div>
+
       {editable && (
         <div className="pointer-events-none fixed inset-0 z-40 print:hidden">
           <Dock
@@ -470,18 +474,6 @@ export function MiMuralView({
               <BoletinInformativo slug={slug} />
               <VacantesInformativo slug={slug} />
             </div>
-          </div>
-
-          <div className="mx-auto mt-6 w-full max-w-5xl">
-            <ClimaWidget />
-          </div>
-        </div>
-      )}
-
-      {editable && (
-        <div className="relative z-10 px-4 pb-10 sm:px-8">
-          <div className="mx-auto w-full max-w-5xl">
-            <ClimaWidget />
           </div>
         </div>
       )}
