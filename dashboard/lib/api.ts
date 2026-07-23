@@ -432,6 +432,40 @@ export async function fetchBitacoras(slug: string, filtros: BitacorasFiltros): P
   return res.json();
 }
 
+export interface ActualizarBitacoraDatos {
+  tareasPlanificadas?: string;
+  actividadesRealizadas?: string;
+  capacitacion?: string;
+  queSeEjecuto?: string;
+  detallesRelevantes?: string;
+  informeAvances?: string;
+  objetivoDia?: string;
+  estadoEnvio?: string;
+  puntajeIA?: number;
+  cumplimientoTareas?: number;
+  calificacionCeo?: string;
+  notasTix?: string;
+}
+
+export async function actualizarBitacora(
+  slug: string,
+  id: string,
+  datos: ActualizarBitacoraDatos,
+): Promise<BitacoraItem> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/bitacoras/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify(datos),
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo guardar la bitácora");
+  }
+  return res.json();
+}
+
 export interface DepartamentoDefinicion {
   id: string;
   nombre: string;
@@ -714,7 +748,7 @@ export async function fetchAusencias(
 export async function crearAusencia(
   slug: string,
   datos: { talentoId: string; tipo: TipoAusencia; fechaInicio: string; fechaFin: string; motivo?: string },
-): Promise<{ ausencia: AusenciaItem; fechasOmitidas: string[] }> {
+): Promise<{ ausencia: AusenciaItem; fechasOmitidas: string[]; fechasCorregidas: string[] }> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/ausencias`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(await authHeaders()) },

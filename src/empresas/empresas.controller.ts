@@ -20,6 +20,7 @@ import { CrearTalentoDto } from './dto/crear-talento.dto';
 import { CrearUsuarioEmpresaDto } from './dto/crear-usuario-empresa.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { ActualizarLogoEmpresaDto } from './dto/actualizar-logo-empresa.dto';
+import { ActualizarBitacoraDto } from './dto/actualizar-bitacora.dto';
 import { ActualizarDepartamentoGestionadoDto } from './dto/actualizar-departamento-gestionado.dto';
 import { ActualizarDepartamentosSupervisadosDto } from './dto/actualizar-departamentos-supervisados.dto';
 import { CrearSolicitudSoporteDto } from './dto/crear-solicitud-soporte.dto';
@@ -60,6 +61,18 @@ export class EmpresasController {
     @Req() req: RequestConActor,
   ) {
     return this.empresasService.bitacoras(slug, req.actor!, query);
+  }
+
+  @Patch(':slug/bitacoras/:id')
+  @UseGuards(CompanyAccessGuard, RolesGuard)
+  @Roles('CEO', 'RRHH')
+  actualizarBitacora(
+    @Param('slug') slug: string,
+    @Param('id') id: string,
+    @Body() dto: ActualizarBitacoraDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.actualizarBitacora(slug, req.actor!, id, dto);
   }
 
   @Get(':slug/empleados')

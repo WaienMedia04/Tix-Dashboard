@@ -30,11 +30,13 @@ type EstadoCarga =
 
 function BitacorasResultado({
   slug,
+  puedeEditar,
   filtros,
   page,
   onPageChange,
 }: {
   slug: string;
+  puedeEditar: boolean;
   filtros: FiltrosState;
   page: number;
   onPageChange: (page: number) => void;
@@ -104,13 +106,39 @@ function BitacorasResultado({
       <WorklogDetalleModal
         detalle={seleccionada ? bitacoraItemADetalle(seleccionada) : null}
         onClose={() => setSeleccionada(null)}
+        slug={slug}
+        puedeEditar={puedeEditar}
+        onActualizado={(d) => {
+          const aplicado = (item: BitacoraItem): BitacoraItem => ({
+            ...item,
+            tareasPlanificadas: d.tareasPlanificadas,
+            cumplimientoTareas: d.cumplimientoTareas,
+            estadoEnvio: d.estadoEnvio,
+            puntajeIA: d.puntajeIA,
+            calificacionCeo: d.calificacionCeo,
+            actividadesRealizadas: d.actividadesRealizadas,
+            capacitacion: d.capacitacion ?? null,
+            queSeEjecuto: d.queSeEjecuto,
+            detallesRelevantes: d.detallesRelevantes,
+            informeAvances: d.informeAvances,
+            objetivoDia: d.objetivoDia,
+            notasTix: d.notasTix,
+          });
+          setSeleccionada((prev) => (prev ? aplicado(prev) : prev));
+          setEstado((prev) =>
+            prev.tipo === "listo"
+              ? { tipo: "listo", data: { ...prev.data, data: prev.data.data.map((i) => (i.id === d.id ? aplicado(i) : i)) } }
+              : prev,
+          );
+        }}
       />
     </>
   );
 }
 
 export function BitacorasView() {
-  const { slug, dashboardInicial } = usePanel();
+  const { slug, rol, dashboardInicial } = usePanel();
+  const puedeEditar = rol === "CEO" || rol === "RRHH";
   const [filtros, setFiltros] = useState<FiltrosState>(filtrosIniciales);
   const [page, setPage] = useState(1);
 
@@ -135,7 +163,14 @@ export function BitacorasView() {
         onLimpiar={() => handleFiltrosChange(filtrosIniciales())}
       />
 
-      <BitacorasResultado key={clave} slug={slug} filtros={filtros} page={page} onPageChange={setPage} />
+      <BitacorasResultado
+        key={clave}
+        slug={slug}
+        puedeEditar={puedeEditar}
+        filtros={filtros}
+        page={page}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

@@ -9,6 +9,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Actor } from '../auth/actor.types';
 import { talentoScopeWhere } from '../auth/talento-scope.util';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import {
+  esAusenciaAutorizada,
+  esNoEnviadaOPendiente,
+} from '../empresas/estado.util';
 import { CrearAusenciaDto } from './dto/crear-ausencia.dto';
 import { AusenciasQueryDto } from './dto/ausencias-query.dto';
 
@@ -130,12 +134,33 @@ export class AusenciasService {
 
     const marcador = MARCADOR_AUSENCIA[dto.tipo];
     const fechasOmitidas: string[] = [];
+    const fechasCorregidas: string[] = [];
 
     for (const fecha of dias) {
       const existente = await this.prisma.worklog.findUnique({
         where: { talentoId_fecha: { talentoId: talento.id, fecha } },
       });
       if (existente) {
+        // Ya es una ausencia autorizada — nada que hacer.
+        if (esAusenciaAutorizada(existente.estadoEnvio)) continue;
+        // "❌ No enviada" (auto-generada) o "⏳ Pendiente" (check-in sin
+        // check-out) no son una bitácora real — es seguro corregirlas a la
+        // ausencia justificada. Se limpian puntajeIA/cumplimiento para que
+        // el día no siga penalizando el promedio del talento.
+        if (esNoEnviadaOPendiente(existente.estadoEnvio)) {
+          await this.prisma.worklog.update({
+            where: { id: existente.id },
+            data: {
+              estadoEnvio: marcador,
+              puntajeIA: null,
+              cumplimientoTareas: null,
+              calificacionCeo: null,
+            },
+          });
+          fechasCorregidas.push(fecha.toISOString().slice(0, 10));
+          continue;
+        }
+        // Bitácora real ya enviada — no se sobrescribe.
         fechasOmitidas.push(fecha.toISOString().slice(0, 10));
         continue;
       }
@@ -173,6 +198,6 @@ export class AusenciasService {
       enlace: '/empleados',
     });
 
-    return { ausencia: serializar(ausencia), fechasOmitidas };
+    return { ausencia: serializar(ausencia), fechasOmitidas, fechasCorregidas };
   }
 }

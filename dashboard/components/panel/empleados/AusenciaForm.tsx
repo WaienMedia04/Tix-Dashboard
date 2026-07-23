@@ -24,7 +24,9 @@ export function AusenciaForm({ slug, talentoId }: { slug: string; talentoId: str
   const [fechaFin, setFechaFin] = useState(hoyIso());
   const [motivo, setMotivo] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const [resultado, setResultado] = useState<{ tipo: "ok"; omitidas: string[] } | { tipo: "error" } | null>(null);
+  const [resultado, setResultado] = useState<
+    { tipo: "ok"; omitidas: string[]; corregidas: string[] } | { tipo: "error" } | null
+  >(null);
 
   function reiniciar() {
     setTipo("VACACIONES");
@@ -39,7 +41,7 @@ export function AusenciaForm({ slug, talentoId }: { slug: string; talentoId: str
     setResultado(null);
     crearAusencia(slug, { talentoId, tipo, fechaInicio, fechaFin, motivo: motivo.trim() || undefined })
       .then((res) => {
-        setResultado({ tipo: "ok", omitidas: res.fechasOmitidas });
+        setResultado({ tipo: "ok", omitidas: res.fechasOmitidas, corregidas: res.fechasCorregidas });
       })
       .catch(() => setResultado({ tipo: "error" }))
       .finally(() => setEnviando(false));
@@ -107,11 +109,21 @@ export function AusenciaForm({ slug, talentoId }: { slug: string; talentoId: str
       </div>
 
       {resultado?.tipo === "ok" && (
-        <p className="mt-3 text-xs text-success">
-          Registrado.{" "}
-          {resultado.omitidas.length > 0 &&
-            `${resultado.omitidas.length} fecha(s) ya tenían una bitácora y no se modificaron: ${resultado.omitidas.join(", ")}.`}
-        </p>
+        <div className="mt-3 space-y-1">
+          <p className="text-xs text-success">Registrado.</p>
+          {resultado.corregidas.length > 0 && (
+            <p className="text-xs text-success">
+              {resultado.corregidas.length} fecha(s) que figuraban como no enviadas o pendientes se corrigieron a la
+              ausencia justificada, sin afectar el puntaje: {resultado.corregidas.join(", ")}.
+            </p>
+          )}
+          {resultado.omitidas.length > 0 && (
+            <p className="text-xs text-warning">
+              {resultado.omitidas.length} fecha(s) ya tenían una bitácora enviada y no se modificaron:{" "}
+              {resultado.omitidas.join(", ")}.
+            </p>
+          )}
+        </div>
       )}
       {resultado?.tipo === "error" && (
         <p className="mt-3 text-xs text-destructive">No se pudo registrar. Intenta de nuevo.</p>

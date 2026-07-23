@@ -46,3 +46,19 @@ export function esAusenciaAutorizada(raw: string): boolean {
     texto.includes('licencia')
   );
 }
+
+/**
+ * Un Worklog en este estado no representa una bitácora real (nadie la
+ * completó) — al registrar una ausencia retroactiva sobre este día es
+ * seguro sobrescribirlo. Una bitácora ✅ Enviada (con contenido real)
+ * nunca cae aquí y no se toca.
+ */
+export function esNoEnviadaOPendiente(raw: string): boolean {
+  const texto = raw.toLowerCase();
+  return (
+    raw.includes('❌') ||
+    raw.includes('⏳') ||
+    texto.includes('no enviada') ||
+    texto.includes('pendiente')
+  );
+}

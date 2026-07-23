@@ -13,6 +13,7 @@ import { CrearTalentoDto } from './dto/crear-talento.dto';
 import { CrearUsuarioEmpresaDto } from './dto/crear-usuario-empresa.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { ActualizarLogoEmpresaDto } from './dto/actualizar-logo-empresa.dto';
+import { ActualizarBitacoraDto } from './dto/actualizar-bitacora.dto';
 import { MuralService } from '../mural/mural.service';
 import { EnviarNotaDto } from '../mural/dto/enviar-nota.dto';
 import { AnalisisEjecutivoService } from './analisis-ejecutivo.service';
@@ -475,6 +476,66 @@ export class EmpresasService {
       totalPages,
       resumen: { totalBitacoras: total, porcentajeEnviadas, puntajeProm },
     };
+  }
+
+  /**
+   * Edición manual de una bitácora por CEO/RRHH — corrige un error del
+   * agente de IA (evaluación equivocada, contenido mal transcrito, etc.).
+   * El guard de rol vive en el controller (@Roles('CEO', 'RRHH')).
+   */
+  async actualizarBitacora(
+    slug: string,
+    actor: Actor,
+    id: string,
+    dto: ActualizarBitacoraDto,
+  ) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+
+    const worklog = await this.prisma.worklog.findFirst({
+      where: { id, empresaId: empresa.id },
+    });
+    if (!worklog) {
+      throw new NotFoundException('Bitácora no encontrada');
+    }
+
+    const actualizado = await this.prisma.worklog.update({
+      where: { id },
+      data: {
+        ...(dto.tareasPlanificadas !== undefined && {
+          tareasPlanificadas: dto.tareasPlanificadas,
+        }),
+        ...(dto.actividadesRealizadas !== undefined && {
+          actividadesRealizadas: dto.actividadesRealizadas,
+        }),
+        ...(dto.capacitacion !== undefined && {
+          capacitacion: dto.capacitacion,
+        }),
+        ...(dto.queSeEjecuto !== undefined && {
+          queSeEjecuto: dto.queSeEjecuto,
+        }),
+        ...(dto.detallesRelevantes !== undefined && {
+          detallesRelevantes: dto.detallesRelevantes,
+        }),
+        ...(dto.informeAvances !== undefined && {
+          informeAvances: dto.informeAvances,
+        }),
+        ...(dto.objetivoDia !== undefined && { objetivoDia: dto.objetivoDia }),
+        ...(dto.estadoEnvio !== undefined && { estadoEnvio: dto.estadoEnvio }),
+        ...(dto.puntajeIA !== undefined && { puntajeIA: dto.puntajeIA }),
+        ...(dto.cumplimientoTareas !== undefined && {
+          cumplimientoTareas: dto.cumplimientoTareas,
+        }),
+        ...(dto.calificacionCeo !== undefined && {
+          calificacionCeo: dto.calificacionCeo,
+        }),
+        ...(dto.notasTix !== undefined && { notasTix: dto.notasTix }),
+      },
+      include: {
+        talento: { select: { id: true, nombreCompleto: true, rol: true } },
+      },
+    });
+
+    return actualizado;
   }
 
   async empleados(slug: string, actor: Actor, departamento?: string) {
