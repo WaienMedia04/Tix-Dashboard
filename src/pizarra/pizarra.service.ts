@@ -7,6 +7,7 @@ import {
 import { EmojiClima, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Actor } from '../auth/actor.types';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { calcularRachas } from '../mural/racha.util';
 import { CrearPostDto } from './dto/crear-post.dto';
 import { CrearComentarioDto } from './dto/crear-comentario.dto';
@@ -63,9 +64,14 @@ type PostConIncludes = Prisma.PizarraPostGetPayload<{
 
 const REGEX_MENCION = /@\[[^\]]+\]\(([a-zA-Z0-9_-]+)\)/g;
 
+const ENLACE_PIZARRA = '/mi-mural';
+
 @Injectable()
 export class PizarraService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificaciones: NotificacionesService,
+  ) {}
 
   /** La pizarra es solo para cuentas humanas — nunca para el tráfico de servicio de ClawLink. */
   private exigirUsuario(actor: Actor) {
@@ -207,10 +213,38 @@ export class PizarraService {
           data: validos.map((u) => ({ postId: post.id, usuarioId: u.id })),
           skipDuplicates: true,
         });
+        await this.notificarMenciones(
+          empresaId,
+          usuario.id,
+          usuario.nombre,
+          validos.map((u) => u.id),
+        );
       }
     }
 
     return this.obtenerPostCompleto(post.id, usuario.id);
+  }
+
+  private async notificarMenciones(
+    empresaId: string,
+    autorId: string,
+    autorNombre: string,
+    usuarioIds: string[],
+  ) {
+    await Promise.all(
+      usuarioIds
+        .filter((id) => id !== autorId)
+        .map((usuarioId) =>
+          this.notificaciones.crearPersonal({
+            empresaId,
+            usuarioId,
+            tipo: 'PIZARRA_MENCION',
+            titulo: '📣 Te mencionaron',
+            mensaje: `${autorNombre} te mencionó en la pizarra`,
+            enlace: ENLACE_PIZARRA,
+          }),
+        ),
+    );
   }
 
   async reaccionar(
@@ -221,7 +255,7 @@ export class PizarraService {
   ) {
     const usuario = this.exigirUsuario(actor);
     const empresaId = await this.resolverEmpresaId(slug, actor);
-    await this.exigirPost(postId, empresaId);
+    const post = await this.exigirPost(postId, empresaId);
 
     const existente = await this.prisma.pizarraReaccion.findUnique({
       where: {
@@ -239,6 +273,16 @@ export class PizarraService {
       await this.prisma.pizarraReaccion.create({
         data: { postId, usuarioId: usuario.id, emoji: dto.emoji },
       });
+      if (post.autorUsuarioId !== usuario.id) {
+        await this.notificaciones.crearPersonal({
+          empresaId,
+          usuarioId: post.autorUsuarioId,
+          tipo: 'PIZARRA_REACCION',
+          titulo: '❤️ Nueva reacción',
+          mensaje: `${usuario.nombre} reaccionó ${dto.emoji} a tu publicación en la pizarra`,
+          enlace: ENLACE_PIZARRA,
+        });
+      }
     }
 
     return this.obtenerPostCompleto(postId, usuario.id);
@@ -252,11 +296,41 @@ export class PizarraService {
   ) {
     const usuario = this.exigirUsuario(actor);
     const empresaId = await this.resolverEmpresaId(slug, actor);
-    await this.exigirPost(postId, empresaId);
+    const post = await this.exigirPost(postId, empresaId);
 
+    const texto = dto.texto.trim();
     await this.prisma.pizarraComentario.create({
-      data: { postId, autorUsuarioId: usuario.id, texto: dto.texto.trim() },
+      data: { postId, autorUsuarioId: usuario.id, texto },
     });
+
+    if (post.autorUsuarioId !== usuario.id) {
+      await this.notificaciones.crearPersonal({
+        empresaId,
+        usuarioId: post.autorUsuarioId,
+        tipo: 'PIZARRA_COMENTARIO',
+        titulo: '💬 Nuevo comentario',
+        mensaje: `${usuario.nombre} comentó tu publicación en la pizarra`,
+        enlace: ENLACE_PIZARRA,
+      });
+    }
+
+    const idsCandidatos = this.extraerMenciones(texto).filter(
+      (id) => id !== post.autorUsuarioId,
+    );
+    if (idsCandidatos.length > 0) {
+      const validos = await this.prisma.usuario.findMany({
+        where: { id: { in: idsCandidatos }, empresaId, activo: true },
+        select: { id: true },
+      });
+      if (validos.length > 0) {
+        await this.notificarMenciones(
+          empresaId,
+          usuario.id,
+          usuario.nombre,
+          validos.map((u) => u.id),
+        );
+      }
+    }
 
     return this.obtenerPostCompleto(postId, usuario.id);
   }
@@ -710,6 +784,15 @@ export class PizarraService {
         descripcion: dto.descripcion?.trim() || null,
         creadoPorUsuarioId: usuario.id,
       },
+    });
+
+    await this.notificaciones.crearPersonal({
+      empresaId,
+      talentoId: dto.talentoId,
+      tipo: 'PIZARRA_RECONOCIMIENTO',
+      titulo: '🏆 Reconocimiento',
+      mensaje: `${usuario.nombre} te reconoció en la pizarra: "${dto.titulo.trim()}"`,
+      enlace: ENLACE_PIZARRA,
     });
 
     return this.reconocimientoActivo(empresaId);

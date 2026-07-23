@@ -1565,7 +1565,11 @@ export type TipoNotificacion =
   | "AUSENCIA_REGISTRADA"
   | "NOVEDAD_PUBLICADA"
   | "CV_LISTO_PARA_REVISAR"
-  | "NOTA_RECIBIDA";
+  | "NOTA_RECIBIDA"
+  | "PIZARRA_REACCION"
+  | "PIZARRA_COMENTARIO"
+  | "PIZARRA_MENCION"
+  | "PIZARRA_RECONOCIMIENTO";
 
 export interface Notificacion {
   id: string;

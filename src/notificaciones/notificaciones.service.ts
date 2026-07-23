@@ -31,15 +31,17 @@ export class NotificacionesService {
     return actor.usuario;
   }
 
-  /** Condición de visibilidad: personales del propio talento, o avisos generales para su rol. */
+  /** Condición de visibilidad: personales del propio usuario/talento, o avisos generales para su rol. */
   private whereVisible(
     empresaId: string,
     talentoId: string | null,
+    usuarioId: string,
     rol: Rol,
   ): Prisma.NotificacionWhereInput {
     const condiciones: Prisma.NotificacionWhereInput[] = [
       { personal: false, rolesDestino: { isEmpty: true } },
       { personal: false, rolesDestino: { has: rol } },
+      { personal: true, usuarioId },
     ];
     if (talentoId) {
       condiciones.push({ personal: true, talentoId });
@@ -106,7 +108,12 @@ export class NotificacionesService {
     await this.asegurarCumpleanosDeHoy(empresa.id);
 
     const notificaciones = await this.prisma.notificacion.findMany({
-      where: this.whereVisible(empresa.id, usuario.talentoId, usuario.rol),
+      where: this.whereVisible(
+        empresa.id,
+        usuario.talentoId,
+        usuario.id,
+        usuario.rol,
+      ),
       orderBy: { createdAt: 'desc' },
       take: LIMITE_LISTADO,
       include: {
@@ -132,7 +139,12 @@ export class NotificacionesService {
 
     const noLeidas = await this.prisma.notificacion.count({
       where: {
-        ...this.whereVisible(empresa.id, usuario.talentoId, usuario.rol),
+        ...this.whereVisible(
+          empresa.id,
+          usuario.talentoId,
+          usuario.id,
+          usuario.rol,
+        ),
         lecturas: { none: { usuarioId: usuario.id } },
       },
     });
@@ -147,7 +159,12 @@ export class NotificacionesService {
     const notificacion = await this.prisma.notificacion.findFirst({
       where: {
         id,
-        ...this.whereVisible(empresa.id, usuario.talentoId, usuario.rol),
+        ...this.whereVisible(
+          empresa.id,
+          usuario.talentoId,
+          usuario.id,
+          usuario.rol,
+        ),
       },
       select: { id: true },
     });
@@ -172,7 +189,12 @@ export class NotificacionesService {
 
     const pendientes = await this.prisma.notificacion.findMany({
       where: {
-        ...this.whereVisible(empresa.id, usuario.talentoId, usuario.rol),
+        ...this.whereVisible(
+          empresa.id,
+          usuario.talentoId,
+          usuario.id,
+          usuario.rol,
+        ),
         lecturas: { none: { usuarioId: usuario.id } },
       },
       select: { id: true },
@@ -190,11 +212,23 @@ export class NotificacionesService {
     return { ok: true };
   }
 
-  /** Notificación personal — solo la ve el talento que la recibe (ej. estampa regalada). */
+  /**
+   * Notificación personal — solo la ve quien recibe. La mayoría son sobre un
+   * Talento (ej. estampa regalada); las de la Pizarra (reacción, comentario,
+   * mención) son entre Usuarios y no siempre hay un Talento de por medio,
+   * así que aceptan usuarioId en su lugar (al menos uno de los dos debe venir).
+   */
   async crearPersonal(params: {
     empresaId: string;
-    talentoId: string;
-    tipo: 'ESTAMPA_RECIBIDA' | 'NOTA_RECIBIDA';
+    talentoId?: string;
+    usuarioId?: string;
+    tipo:
+      | 'ESTAMPA_RECIBIDA'
+      | 'NOTA_RECIBIDA'
+      | 'PIZARRA_REACCION'
+      | 'PIZARRA_COMENTARIO'
+      | 'PIZARRA_MENCION'
+      | 'PIZARRA_RECONOCIMIENTO';
     titulo: string;
     mensaje: string;
     enlace?: string;
@@ -203,6 +237,7 @@ export class NotificacionesService {
       data: {
         empresaId: params.empresaId,
         talentoId: params.talentoId,
+        usuarioId: params.usuarioId,
         tipo: params.tipo,
         titulo: params.titulo,
         mensaje: params.mensaje,

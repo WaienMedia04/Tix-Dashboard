@@ -2,7 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Cake, CalendarClock, FileText, Gift, Megaphone, StickyNote } from "lucide-react";
+import {
+  AtSign,
+  Bell,
+  Cake,
+  CalendarClock,
+  FileText,
+  Gift,
+  Heart,
+  Megaphone,
+  MessageCircle,
+  StickyNote,
+  Trophy,
+} from "lucide-react";
 import {
   fetchContadorNotificaciones,
   fetchNotificaciones,
@@ -21,6 +33,10 @@ const ICONO_POR_TIPO: Record<TipoNotificacion, { Icon: typeof Bell; color: strin
   NOVEDAD_PUBLICADA: { Icon: Megaphone, color: "text-sky-400" },
   CV_LISTO_PARA_REVISAR: { Icon: FileText, color: "text-emerald-400" },
   NOTA_RECIBIDA: { Icon: StickyNote, color: "text-yellow-400" },
+  PIZARRA_REACCION: { Icon: Heart, color: "text-rose-400" },
+  PIZARRA_COMENTARIO: { Icon: MessageCircle, color: "text-sky-400" },
+  PIZARRA_MENCION: { Icon: AtSign, color: "text-violet-400" },
+  PIZARRA_RECONOCIMIENTO: { Icon: Trophy, color: "text-amber-400" },
 };
 
 function tiempoRelativo(iso: string): string {
@@ -35,6 +51,11 @@ function tiempoRelativo(iso: string): string {
   return new Date(iso).toLocaleDateString("es-DO", { day: "2-digit", month: "short" });
 }
 
+/** true si el usuario ya decidió (permitir o bloquear) — "default" es "todavía no se le preguntó". */
+function notificacionesDeEscritorioDisponibles(): boolean {
+  return typeof window !== "undefined" && "Notification" in window;
+}
+
 export function CampanaNotificaciones({ slug }: { slug: string }) {
   const router = useRouter();
   const contenedorRef = useRef<HTMLDivElement>(null);
@@ -42,13 +63,49 @@ export function CampanaNotificaciones({ slug }: { slug: string }) {
   const [contador, setContador] = useState(0);
   const [notificaciones, setNotificaciones] = useState<Notificacion[] | null>(null);
   const [cargando, setCargando] = useState(false);
+  const contadorAnteriorRef = useRef<number | null>(null);
+
+  // Se pide una sola vez por sesión de navegador — si el usuario ya
+  // permitió o bloqueó antes, el navegador ni siquiera muestra el aviso.
+  useEffect(() => {
+    if (notificacionesDeEscritorioDisponibles() && Notification.permission === "default") {
+      void Notification.requestPermission();
+    }
+  }, []);
 
   useEffect(() => {
     let cancelado = false;
     function cargarContador() {
       fetchContadorNotificaciones(slug)
         .then((r) => {
-          if (!cancelado) setContador(r.noLeidas);
+          if (cancelado) return;
+          const anterior = contadorAnteriorRef.current;
+          setContador(r.noLeidas);
+
+          if (
+            anterior !== null &&
+            r.noLeidas > anterior &&
+            notificacionesDeEscritorioDisponibles() &&
+            Notification.permission === "granted"
+          ) {
+            const nuevas = r.noLeidas - anterior;
+            fetchNotificaciones(slug)
+              .then((lista) => {
+                lista
+                  .filter((n) => !n.leida)
+                  .slice(0, nuevas)
+                  .forEach((n) => {
+                    const notif = new Notification(n.titulo, { body: n.mensaje, tag: n.id });
+                    notif.onclick = () => {
+                      window.focus();
+                      if (n.enlace) router.push(`/${slug}${n.enlace}`);
+                      notif.close();
+                    };
+                  });
+              })
+              .catch(() => {});
+          }
+          contadorAnteriorRef.current = r.noLeidas;
         })
         .catch(() => {});
     }
@@ -58,7 +115,7 @@ export function CampanaNotificaciones({ slug }: { slug: string }) {
       cancelado = true;
       clearInterval(id);
     };
-  }, [slug]);
+  }, [slug, router]);
 
   useEffect(() => {
     if (!abierto) return;
