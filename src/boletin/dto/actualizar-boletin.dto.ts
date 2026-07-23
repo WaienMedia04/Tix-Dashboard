@@ -3,7 +3,9 @@ import {
   IsEnum,
   IsOptional,
   IsString,
+  IsUrl,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 import { TipoBoletin } from '@prisma/client';
 
@@ -25,4 +27,10 @@ export class ActualizarBoletinDto {
   @IsDateString()
   @IsOptional()
   fechaEvento?: string;
+
+  /** URL de Vercel Blob, o null explícito para quitar la imagen. */
+  @IsOptional()
+  @ValidateIf((o: ActualizarBoletinDto) => o.imagenUrl !== null)
+  @IsUrl()
+  imagenUrl?: string | null;
 }

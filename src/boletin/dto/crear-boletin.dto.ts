@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUrl,
   MaxLength,
 } from 'class-validator';
 import { TipoBoletin } from '@prisma/client';
@@ -26,4 +27,9 @@ export class CrearBoletinDto {
   @IsDateString()
   @IsOptional()
   fechaEvento?: string;
+
+  /** URL de Vercel Blob ya subida por el frontend antes de publicar. */
+  @IsUrl()
+  @IsOptional()
+  imagenUrl?: string;
 }

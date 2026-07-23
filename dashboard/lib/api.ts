@@ -2268,6 +2268,7 @@ export interface BoletinItem {
   tipo: TipoBoletin;
   titulo: string;
   contenido: string;
+  imagenUrl: string | null;
   fechaEvento: string | null;
   createdAt: string;
   updatedAt: string;
@@ -2338,7 +2339,7 @@ export async function fetchBoletinHoy(slug: string): Promise<BoletinHoyResponse>
 
 export async function crearBoletin(
   slug: string,
-  datos: { tipo: TipoBoletin; titulo: string; contenido: string; fechaEvento?: string },
+  datos: { tipo: TipoBoletin; titulo: string; contenido: string; fechaEvento?: string; imagenUrl?: string },
 ): Promise<BoletinItem> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/boletin`, {
     method: "POST",
@@ -2357,7 +2358,7 @@ export async function crearBoletin(
 export async function actualizarBoletin(
   slug: string,
   id: string,
-  datos: Partial<{ tipo: TipoBoletin; titulo: string; contenido: string; fechaEvento: string }>,
+  datos: Partial<{ tipo: TipoBoletin; titulo: string; contenido: string; fechaEvento: string; imagenUrl: string | null }>,
 ): Promise<BoletinItem> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/boletin/${encodeURIComponent(id)}`, {
     method: "PATCH",

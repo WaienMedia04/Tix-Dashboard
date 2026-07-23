@@ -701,6 +701,7 @@ model Boletin {
   tipo               TipoBoletin
   titulo             String
   contenido          String
+  imagenUrl          String?
   /// Solo aplica cuando `tipo` es EVENTO — fecha en que ocurre el evento (distinta de `createdAt`, que es cuándo se publicó).
   fechaEvento        DateTime?
   creadoPorUsuarioId String

@@ -83,6 +83,10 @@ function TarjetaBoletin({ item }: { item: BoletinItem }) {
         </span>
       </div>
       <p className="mt-2 text-sm font-semibold text-zinc-900">{item.titulo}</p>
+      {item.imagenUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={item.imagenUrl} alt="" className="mt-2 max-h-64 w-full rounded-lg object-cover" />
+      )}
       <p className={`mt-1 text-sm whitespace-pre-wrap text-zinc-700 ${expandido ? "" : "line-clamp-3"}`}>{item.contenido}</p>
       {esLargo && (
         <button

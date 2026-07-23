@@ -15,6 +15,7 @@ const SELECT_BOLETIN = {
   tipo: true,
   titulo: true,
   contenido: true,
+  imagenUrl: true,
   fechaEvento: true,
   createdAt: true,
   updatedAt: true,
@@ -61,6 +62,7 @@ export class BoletinService {
     tipo: string;
     titulo: string;
     contenido: string;
+    imagenUrl: string | null;
     fechaEvento: Date | null;
     createdAt: Date;
     updatedAt: Date;
@@ -71,6 +73,7 @@ export class BoletinService {
       tipo: b.tipo,
       titulo: b.titulo,
       contenido: b.contenido,
+      imagenUrl: b.imagenUrl,
       fechaEvento: b.fechaEvento,
       createdAt: b.createdAt,
       updatedAt: b.updatedAt,
@@ -200,6 +203,7 @@ export class BoletinService {
         tipo: dto.tipo,
         titulo: dto.titulo.trim(),
         contenido: dto.contenido.trim(),
+        imagenUrl: dto.imagenUrl ?? null,
         fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : null,
         creadoPorUsuarioId: usuario.id,
       },
@@ -236,6 +240,7 @@ export class BoletinService {
         ...(dto.tipo !== undefined && { tipo: dto.tipo }),
         ...(dto.titulo !== undefined && { titulo: dto.titulo.trim() }),
         ...(dto.contenido !== undefined && { contenido: dto.contenido.trim() }),
+        ...(dto.imagenUrl !== undefined && { imagenUrl: dto.imagenUrl }),
         ...(dto.fechaEvento !== undefined && {
           fechaEvento: new Date(dto.fechaEvento),
         }),

@@ -1,18 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Calendar, Newspaper, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { upload } from "@vercel/blob/client";
+import { Calendar, Image as ImageIcon, Loader2, Newspaper, Pencil, Plus, Sparkles, Trash2, Upload, X } from "lucide-react";
 import {
   type BoletinItem,
   type TipoBoletin,
   actualizarBoletin,
+  authHeaders,
   borrarBoletin,
   crearBoletin,
   fetchBoletin,
 } from "@/lib/api";
+import { mensajeError } from "@/lib/errores";
 import { usePanel } from "../PanelContext";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { SkeletonTableRows } from "@/components/motion/Skeleton";
+
+const TIPOS_IMAGEN_PERMITIDOS = ["image/png", "image/jpeg", "image/webp"];
 
 const TIPOS: { valor: TipoBoletin; label: string; icon: typeof Newspaper; texto: string; fondo: string }[] = [
   { valor: "NOTICIA", label: "Noticia", icon: Newspaper, texto: "text-info", fondo: "bg-info/10" },
@@ -36,9 +41,10 @@ interface FormValores {
   titulo: string;
   contenido: string;
   fechaEvento: string;
+  imagenUrl: string | null;
 }
 
-const VALORES_VACIOS: FormValores = { tipo: "NOTICIA", titulo: "", contenido: "", fechaEvento: "" };
+const VALORES_VACIOS: FormValores = { tipo: "NOTICIA", titulo: "", contenido: "", fechaEvento: "", imagenUrl: null };
 
 function TarjetaBoletin({
   item,
@@ -52,9 +58,14 @@ function TarjetaBoletin({
   const meta = metaTipo(item.tipo);
   return (
     <div className="flex items-start gap-3 rounded-lg border border-border bg-card p-3.5 shadow-card">
-      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${meta.fondo}`}>
-        <meta.icon className={`h-4 w-4 ${meta.texto}`} />
-      </span>
+      {item.imagenUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={item.imagenUrl} alt="" className="h-8 w-8 shrink-0 rounded-md object-cover" />
+      ) : (
+        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${meta.fondo}`}>
+          <meta.icon className={`h-4 w-4 ${meta.texto}`} />
+        </span>
+      )}
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -102,7 +113,9 @@ function FormularioBoletin({
   const [abierto, setAbierto] = useState(false);
   const [valores, setValores] = useState<FormValores>(VALORES_VACIOS);
   const [enviando, setEnviando] = useState(false);
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputImagenRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editando) {
@@ -112,10 +125,32 @@ function FormularioBoletin({
         titulo: editando.titulo,
         contenido: editando.contenido,
         fechaEvento: editando.fechaEvento ? editando.fechaEvento.slice(0, 10) : "",
+        imagenUrl: editando.imagenUrl,
       });
       setAbierto(true);
     }
   }, [editando]);
+
+  async function handleImagenSeleccionada(file: File) {
+    if (!TIPOS_IMAGEN_PERMITIDOS.includes(file.type)) {
+      setError("Solo se aceptan imágenes PNG, JPEG o WebP.");
+      return;
+    }
+    setError(null);
+    setSubiendoImagen(true);
+    try {
+      const blob = await upload(`empresas/${slug}/boletin-${Date.now()}-${file.name}`, file, {
+        access: "public",
+        handleUploadUrl: `/api/empresas/${slug}/boletin/imagen`,
+        headers: await authHeaders(),
+      });
+      setValores((v) => ({ ...v, imagenUrl: blob.url }));
+    } catch (err) {
+      setError(mensajeError(err, "No se pudo subir la imagen. Intenta de nuevo."));
+    } finally {
+      setSubiendoImagen(false);
+    }
+  }
 
   function cerrar() {
     setAbierto(false);
@@ -138,11 +173,12 @@ function FormularioBoletin({
         tipo: valores.tipo,
         titulo: valores.titulo.trim(),
         contenido: valores.contenido.trim(),
+        imagenUrl: valores.imagenUrl,
         ...(valores.tipo === "EVENTO" && valores.fechaEvento ? { fechaEvento: valores.fechaEvento } : {}),
       };
       const item = editando
         ? await actualizarBoletin(slug, editando.id, datos)
-        : await crearBoletin(slug, datos as { tipo: TipoBoletin; titulo: string; contenido: string; fechaEvento?: string });
+        : await crearBoletin(slug, { ...datos, imagenUrl: valores.imagenUrl ?? undefined });
       onGuardado(item, !!editando);
       cerrar();
     } catch {
@@ -218,6 +254,53 @@ function FormularioBoletin({
               maxLength={4000}
               className={CAMPO_CLASES}
               required
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Imagen (opcional)</label>
+            <div className="flex items-center gap-3">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+                {valores.imagenUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={valores.imagenUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => inputImagenRef.current?.click()}
+                    disabled={subiendoImagen}
+                    className="inline-flex w-fit items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+                  >
+                    {subiendoImagen ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                    {subiendoImagen ? "Subiendo..." : valores.imagenUrl ? "Cambiar imagen" : "Subir imagen"}
+                  </button>
+                  {valores.imagenUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setValores((v) => ({ ...v, imagenUrl: null }))}
+                      className="text-xs font-medium text-muted-foreground hover:text-destructive"
+                    >
+                      Quitar
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground">PNG, JPEG o WebP — máx. 5 MB.</p>
+              </div>
+            </div>
+            <input
+              ref={inputImagenRef}
+              type="file"
+              accept={TIPOS_IMAGEN_PERMITIDOS.join(",")}
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleImagenSeleccionada(file);
+                e.target.value = "";
+              }}
             />
           </div>
           <div className="flex items-center gap-3">
