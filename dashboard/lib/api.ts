@@ -2301,6 +2301,41 @@ export async function fetchBoletin(
   return res.json();
 }
 
+export interface AusenciaHoyBoletinItem {
+  talentoId: string;
+  nombreCompleto: string;
+  fotoUrl: string | null;
+  departamento: string | null;
+  tipo: "PERMISO" | "LICENCIA_MEDICA" | "VACACIONES";
+  fechaFin: string;
+}
+
+export interface CumpleanosHoyBoletinItem {
+  talentoId: string;
+  nombreCompleto: string;
+  fotoUrl: string | null;
+  departamento: string | null;
+}
+
+export interface BoletinHoyResponse {
+  ausencias: AusenciaHoyBoletinItem[];
+  cumpleanos: CumpleanosHoyBoletinItem[];
+}
+
+export async function fetchBoletinHoy(slug: string): Promise<BoletinHoyResponse> {
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/boletin/hoy`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el resumen del día");
+  }
+  return res.json();
+}
+
 export async function crearBoletin(
   slug: string,
   datos: { tipo: TipoBoletin; titulo: string; contenido: string; fechaEvento?: string },

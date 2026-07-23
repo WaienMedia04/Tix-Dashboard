@@ -112,6 +112,83 @@ export class BoletinService {
     };
   }
 
+  /**
+   * Resumen del día para el mural informativo: quién está de vacaciones,
+   * con permiso o licencia médica hoy, y quién cumple años hoy. Se calcula
+   * al vuelo (no se persiste) y se combina en el frontend con las
+   * publicaciones reales de CEO/RRHH.
+   */
+  async hoy(slug: string, actor: Actor) {
+    this.exigirUsuario(actor);
+    const empresaId = await this.resolverEmpresaId(slug, actor);
+
+    const hoyISO = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Santo_Domingo',
+    }).format(new Date());
+    const hoy = new Date(`${hoyISO}T00:00:00.000Z`);
+    const [, mesHoyStr, diaHoyStr] = hoyISO.split('-');
+    const mesHoy = Number(mesHoyStr);
+    const diaHoy = Number(diaHoyStr);
+
+    const [ausencias, talentos] = await Promise.all([
+      this.prisma.ausencia.findMany({
+        where: {
+          empresaId,
+          fechaInicio: { lte: hoy },
+          fechaFin: { gte: hoy },
+        },
+        select: {
+          tipo: true,
+          fechaFin: true,
+          talento: {
+            select: {
+              id: true,
+              nombreCompleto: true,
+              fotoUrl: true,
+              departamento: true,
+            },
+          },
+        },
+        orderBy: { fechaFin: 'asc' },
+      }),
+      this.prisma.talento.findMany({
+        where: { empresaId, estado: 'activo', fechaNacimiento: { not: null } },
+        select: {
+          id: true,
+          nombreCompleto: true,
+          fotoUrl: true,
+          departamento: true,
+          fechaNacimiento: true,
+        },
+      }),
+    ]);
+
+    const cumpleanos = talentos
+      .filter(
+        (t) =>
+          t.fechaNacimiento!.getUTCMonth() + 1 === mesHoy &&
+          t.fechaNacimiento!.getUTCDate() === diaHoy,
+      )
+      .map((t) => ({
+        talentoId: t.id,
+        nombreCompleto: t.nombreCompleto,
+        fotoUrl: t.fotoUrl,
+        departamento: t.departamento,
+      }));
+
+    return {
+      ausencias: ausencias.map((a) => ({
+        talentoId: a.talento.id,
+        nombreCompleto: a.talento.nombreCompleto,
+        fotoUrl: a.talento.fotoUrl,
+        departamento: a.talento.departamento,
+        tipo: a.tipo,
+        fechaFin: a.fechaFin,
+      })),
+      cumpleanos,
+    };
+  }
+
   async crear(slug: string, actor: Actor, dto: CrearBoletinDto) {
     const usuario = this.exigirUsuario(actor);
     this.exigirModerador(usuario);

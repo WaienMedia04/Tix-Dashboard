@@ -38,6 +38,11 @@ export class BoletinController {
     });
   }
 
+  @Get('hoy')
+  hoy(@Param('slug') slug: string, @Req() req: RequestConActor) {
+    return this.boletinService.hoy(slug, req.actor!);
+  }
+
   @Post()
   crear(
     @Param('slug') slug: string,
