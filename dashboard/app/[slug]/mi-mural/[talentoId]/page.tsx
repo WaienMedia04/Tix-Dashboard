@@ -1,39 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
-import { ChevronLeft, Moon, Sun } from "lucide-react";
 import { EmpresaNoEncontradaError, SesionInvalidaError, me } from "@/lib/api";
-import { BrandMark } from "@/components/BrandMark";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { ErrorScreen } from "@/components/ErrorScreen";
 import { MiMuralView } from "@/components/mural/MiMuralView";
-import { CampanaNotificaciones } from "@/components/notificaciones/CampanaNotificaciones";
+import { BarraSuperiorMural } from "@/components/mural/BarraSuperiorMural";
+import { ChatFlotante } from "@/components/chat/ChatFlotante";
 
 type Estado =
   | { tipo: "cargando" }
   | { tipo: "error"; mensaje: string }
-  | { tipo: "listo"; miTalentoId: string; rol: string };
-
-function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
-  const [montado, setMontado] = useState(false);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setMontado(true), []);
-  const esOscuro = montado && resolvedTheme === "dark";
-
-  return (
-    <button
-      onClick={() => setTheme(esOscuro ? "light" : "dark")}
-      aria-label={esOscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground"
-    >
-      {esOscuro ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-    </button>
-  );
-}
+  | { tipo: "listo"; miTalentoId: string; rol: string; nombre: string; fotoUrl: string | null };
 
 export default function MuralDeCompaneroPage() {
   const { slug, talentoId } = useParams<{ slug: string; talentoId: string }>();
@@ -61,7 +40,13 @@ export default function MuralDeCompaneroPage() {
           router.replace(`/${slug}/mi-mural`);
           return;
         }
-        setEstado({ tipo: "listo", miTalentoId: sesion.usuario.talentoId ?? "", rol: sesion.usuario.rol });
+        setEstado({
+          tipo: "listo",
+          miTalentoId: sesion.usuario.talentoId ?? "",
+          rol: sesion.usuario.rol,
+          nombre: sesion.usuario.nombre,
+          fotoUrl: sesion.usuario.fotoUrl,
+        });
       } catch (err) {
         if (cancelado) return;
         if (err instanceof SesionInvalidaError) {
@@ -84,27 +69,20 @@ export default function MuralDeCompaneroPage() {
   if (estado.tipo === "error") return <ErrorScreen message={estado.mensaje} />;
 
   const volver = estado.rol !== "TALENTO" ? `/${slug}/dashboard` : `/${slug}/mi-espacio`;
+  const volverLabel = estado.rol !== "TALENTO" ? "Volver al panel" : "Volver a mi espacio";
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="pt-safe flex min-h-16 items-center justify-between border-b border-border px-4 py-4 sm:px-8">
-        <div className="flex items-center gap-3">
-          <Link
-            href={volver}
-            aria-label="Volver"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Link>
-          <BrandMark />
-        </div>
-        <div className="flex items-center gap-2">
-          <CampanaNotificaciones slug={slug} />
-          <ThemeToggle />
-        </div>
-      </header>
+      <BarraSuperiorMural
+        slug={slug}
+        volver={volver}
+        volverLabel={volverLabel}
+        nombre={estado.nombre}
+        fotoUrl={estado.fotoUrl}
+      />
 
       <MiMuralView slug={slug} talentoId={talentoId} miTalentoId={estado.miTalentoId} rol={estado.rol} />
+      <ChatFlotante slug={slug} />
     </div>
   );
 }

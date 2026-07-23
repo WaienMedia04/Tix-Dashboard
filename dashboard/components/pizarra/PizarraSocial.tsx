@@ -30,11 +30,14 @@ export function PizarraSocial({
   slug,
   miRol,
   temaWidgets,
+  dentroDeVentana = false,
 }: {
   slug: string;
   miRol: string;
   /** Preferencia de quien es dueño del mural que se está viendo — no del usuario logueado. */
   temaWidgets: string;
+  /** true cuando VentanaEscritorio ya provee el marco/encabezado — evita duplicarlo. */
+  dentroDeVentana?: boolean;
 }) {
   const esModerador = miRol === "CEO" || miRol === "RRHH";
   const tema: TemaWidgets = temaWidgets === "solido" ? "solido" : "vibrante";
@@ -94,16 +97,24 @@ export function PizarraSocial({
   }
 
   return (
-    <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5">
-      <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 sm:px-5">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-          <ClipboardList className="h-4 w-4" />
-        </span>
-        <div>
-          <h2 className="font-display text-base font-semibold text-zinc-900">Pizarra del equipo</h2>
-          <p className="text-xs text-zinc-500">Agradecimientos, avisos y menciones — la ve toda la empresa</p>
+    <div
+      className={
+        dentroDeVentana
+          ? "w-full min-w-0 bg-white"
+          : "w-full min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5"
+      }
+    >
+      {!dentroDeVentana && (
+        <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 sm:px-5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+            <ClipboardList className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="font-display text-base font-semibold text-zinc-900">Pizarra del equipo</h2>
+            <p className="text-xs text-zinc-500">Agradecimientos, avisos y menciones — la ve toda la empresa</p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="space-y-4 p-4 sm:p-5">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

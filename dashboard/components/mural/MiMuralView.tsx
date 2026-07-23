@@ -2,11 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Gift, NotebookPen, Palette, Radio, Sparkles, StickyNote, Users } from "lucide-react";
-import { type MuralPropio, fetchMuralDeTalento, fetchMuralPropio } from "@/lib/api";
+import {
+  Building2,
+  ClipboardList,
+  Gift,
+  MessageCircle,
+  Newspaper,
+  NotebookPen,
+  Palette,
+  Radio,
+  Sparkles,
+  StickyNote,
+  Users,
+} from "lucide-react";
+import { type MuralPropio, fetchChatResumen, fetchMuralDeTalento, fetchMuralPropio, fetchNotificaciones } from "@/lib/api";
 import { fondoMuralCss, fondoMuralTexto } from "@/lib/mural-fondos";
 import { coloresNombreMural } from "@/lib/mural-colores-nombre";
 import { colorParaEstado } from "@/lib/estados-mural";
+import { reproducirSonidoEntrada } from "@/lib/sonidos";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Modal } from "@/components/Modal";
 import Dock from "@/components/vendor/Dock/Dock";
@@ -22,10 +35,14 @@ import { MuralCanvas } from "./MuralCanvas";
 import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
 import { EstadoModal } from "./EstadoModal";
+import { VentanaEscritorio } from "./VentanaEscritorio";
 import { BoletinInformativo } from "@/components/boletin/BoletinInformativo";
 import { VacantesInformativo } from "@/components/vacantes/VacantesInformativo";
 import { ClimaWidget } from "./ClimaWidget";
 import { PizarraSocial } from "@/components/pizarra/PizarraSocial";
+import { ChatPanel } from "@/components/chat/ChatPanel";
+
+type EstadoVentana = "abierta" | "minimizada";
 
 export function MiMuralView({
   slug,
@@ -51,6 +68,12 @@ export function MiMuralView({
   const [mostrarEstampas, setMostrarEstampas] = useState(false);
   const [mostrarNuevaNota, setMostrarNuevaNota] = useState(false);
   const [mostrarEstado, setMostrarEstado] = useState(false);
+  const [ventanaPizarra, setVentanaPizarra] = useState<EstadoVentana>("minimizada");
+  const [ventanaMural, setVentanaMural] = useState<EstadoVentana>("minimizada");
+  const [ventanaChat, setVentanaChat] = useState<EstadoVentana>("minimizada");
+  const [pizarraNoLeidas, setPizarraNoLeidas] = useState(0);
+  const [chatNoLeidos, setChatNoLeidos] = useState(0);
+  const [chatHayChisme, setChatHayChisme] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,7 +87,9 @@ export function MiMuralView({
     const promesa = editable ? fetchMuralPropio() : fetchMuralDeTalento(slug, talentoId);
     promesa
       .then((data) => {
-        if (!cancelado) setMural(data);
+        if (cancelado) return;
+        setMural(data);
+        if (editable) reproducirSonidoEntrada();
       })
       .catch(() => {
         if (!cancelado) setError(true);
@@ -73,6 +98,35 @@ export function MiMuralView({
       cancelado = true;
     };
   }, [slug, talentoId, editable]);
+
+  // Insignias del Dock (Pizarra/Chat) — solo en el mural propio, donde vive el Dock.
+  useEffect(() => {
+    if (!editable) return;
+    let cancelado = false;
+    function cargar() {
+      fetchNotificaciones(slug)
+        .then((lista) => {
+          if (!cancelado) {
+            setPizarraNoLeidas(lista.filter((n) => n.tipo.startsWith("PIZARRA_") && !n.leida).length);
+          }
+        })
+        .catch(() => {});
+      fetchChatResumen(slug)
+        .then((r) => {
+          if (!cancelado) {
+            setChatNoLeidos(r.noLeidosTotal);
+            setChatHayChisme(r.hayChismeSinLeer);
+          }
+        })
+        .catch(() => {});
+    }
+    cargar();
+    const id = setInterval(cargar, 30_000);
+    return () => {
+      cancelado = true;
+      clearInterval(id);
+    };
+  }, [slug, editable]);
 
   if (error) {
     return (
@@ -90,7 +144,7 @@ export function MiMuralView({
 
   return (
     <div
-      className="relative min-h-[calc(100vh-73px)] transition-[background] duration-500"
+      className="relative min-h-[calc(100vh-40px)] transition-[background] duration-500"
       style={{ background: fondoMuralCss(mural.perfil.fondoId) }}
     >
       {/* Muro libre: un solo contenedor cubre encabezado + lienzo, para que
@@ -265,6 +319,43 @@ export function MiMuralView({
                 label: "Agregar nota",
                 onClick: () => setMostrarNuevaNota(true),
               },
+              {
+                icon: (
+                  <div className="relative">
+                    <ClipboardList className="h-5 w-5 text-orange-400" />
+                    {pizarraNoLeidas > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-white ring-2 ring-background">
+                        {pizarraNoLeidas > 9 ? "9+" : pizarraNoLeidas}
+                      </span>
+                    )}
+                  </div>
+                ),
+                label: "Pizarra",
+                onClick: () => setVentanaPizarra("abierta"),
+              },
+              {
+                icon: <Newspaper className="h-5 w-5 text-sky-400" />,
+                label: "Mural informativo",
+                onClick: () => setVentanaMural("abierta"),
+              },
+              {
+                icon: (
+                  <div className="relative">
+                    <MessageCircle className="h-5 w-5 text-violet-400" />
+                    {(chatNoLeidos > 0 || chatHayChisme) && (
+                      <span
+                        className={`absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white ring-2 ring-background ${
+                          chatHayChisme ? "animate-chisme-blink" : "bg-destructive"
+                        }`}
+                      >
+                        {chatNoLeidos > 9 ? "9+" : chatNoLeidos}
+                      </span>
+                    )}
+                  </div>
+                ),
+                label: "Chat del equipo",
+                onClick: () => setVentanaChat("abierta"),
+              },
             ]}
             className="pointer-events-auto"
             panelHeight={64}
@@ -371,19 +462,85 @@ export function MiMuralView({
         />
       )}
 
-      <div className="relative z-10 px-4 pb-10 sm:px-8">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-          <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} temaWidgets={mural.perfil.colorWidgetsId} />
-          <div className="flex w-full min-w-0 flex-col gap-6">
-            <BoletinInformativo slug={slug} />
-            <VacantesInformativo slug={slug} />
+      {!editable && (
+        <div className="relative z-10 px-4 pb-10 sm:px-8">
+          <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+            <PizarraSocial slug={slug} miRol={rol ?? "TALENTO"} temaWidgets={mural.perfil.colorWidgetsId} />
+            <div className="flex w-full min-w-0 flex-col gap-6">
+              <BoletinInformativo slug={slug} />
+              <VacantesInformativo slug={slug} />
+            </div>
+          </div>
+
+          <div className="mx-auto mt-6 w-full max-w-5xl">
+            <ClimaWidget />
           </div>
         </div>
+      )}
 
-        <div className="mx-auto mt-6 w-full max-w-5xl">
-          <ClimaWidget />
+      {editable && (
+        <div className="relative z-10 px-4 pb-10 sm:px-8">
+          <div className="mx-auto w-full max-w-5xl">
+            <ClimaWidget />
+          </div>
         </div>
-      </div>
+      )}
+
+      {editable && (
+        <>
+          <VentanaEscritorio
+            abierta={ventanaPizarra === "abierta"}
+            titulo="Pizarra del equipo"
+            icono={<ClipboardList className="h-4 w-4 text-orange-500" />}
+            onMinimizar={() => setVentanaPizarra("minimizada")}
+            onCerrar={() => setVentanaPizarra("minimizada")}
+            ancho="max-w-2xl"
+          >
+            <PizarraSocial
+              slug={slug}
+              miRol={rol ?? "TALENTO"}
+              temaWidgets={mural.perfil.colorWidgetsId}
+              dentroDeVentana
+            />
+          </VentanaEscritorio>
+
+          <VentanaEscritorio
+            abierta={ventanaMural === "abierta"}
+            titulo="Mural informativo"
+            icono={<Newspaper className="h-4 w-4 text-sky-500" />}
+            onMinimizar={() => setVentanaMural("minimizada")}
+            onCerrar={() => setVentanaMural("minimizada")}
+            ancho="max-w-2xl"
+          >
+            <div className="flex flex-col gap-4 p-4 sm:p-5">
+              <BoletinInformativo slug={slug} dentroDeVentana />
+              <VacantesInformativo slug={slug} />
+            </div>
+          </VentanaEscritorio>
+
+          <VentanaEscritorio
+            abierta={ventanaChat === "abierta"}
+            titulo="Chat del equipo"
+            icono={<MessageCircle className="h-4 w-4 text-violet-500" />}
+            onMinimizar={() => setVentanaChat("minimizada")}
+            onCerrar={() => setVentanaChat("minimizada")}
+            ancho="max-w-md"
+          >
+            <ChatPanel
+              slug={slug}
+              onCerrar={() => setVentanaChat("minimizada")}
+              onActividad={() => {
+                fetchChatResumen(slug)
+                  .then((r) => {
+                    setChatNoLeidos(r.noLeidosTotal);
+                    setChatHayChisme(r.hayChismeSinLeer);
+                  })
+                  .catch(() => {});
+              }}
+            />
+          </VentanaEscritorio>
+        </>
+      )}
     </div>
   );
 }

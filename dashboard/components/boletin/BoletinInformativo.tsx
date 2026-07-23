@@ -48,7 +48,14 @@ function TarjetaBoletin({ item }: { item: BoletinItem }) {
 }
 
 /** Mural informativo de solo lectura — noticias/eventos/blog que publica CEO/RRHH, visible para toda la empresa. */
-export function BoletinInformativo({ slug }: { slug: string }) {
+export function BoletinInformativo({
+  slug,
+  dentroDeVentana = false,
+}: {
+  slug: string;
+  /** true cuando VentanaEscritorio ya provee el marco/encabezado — evita duplicarlo. */
+  dentroDeVentana?: boolean;
+}) {
   const [items, setItems] = useState<BoletinItem[] | null>(null);
 
   useEffect(() => {
@@ -71,16 +78,24 @@ export function BoletinInformativo({ slug }: { slug: string }) {
   }, [slug]);
 
   return (
-    <div className="w-full min-w-0 flex-1 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5 lg:max-w-2xl">
-      <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 sm:px-5">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-          <Newspaper className="h-4 w-4" />
-        </span>
-        <div>
-          <h2 className="font-display text-base font-semibold text-zinc-900">Mural informativo</h2>
-          <p className="text-xs text-zinc-500">Noticias, eventos y blog de la empresa</p>
+    <div
+      className={
+        dentroDeVentana
+          ? "w-full min-w-0 flex-1 bg-white"
+          : "w-full min-w-0 flex-1 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl shadow-zinc-900/5 lg:max-w-2xl"
+      }
+    >
+      {!dentroDeVentana && (
+        <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-3 sm:px-5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+            <Newspaper className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="font-display text-base font-semibold text-zinc-900">Mural informativo</h2>
+            <p className="text-xs text-zinc-500">Noticias, eventos y blog de la empresa</p>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="space-y-3 p-4 sm:p-5">
         {items === null && <div className="h-24 animate-pulse rounded-xl bg-zinc-100" />}
