@@ -495,6 +495,7 @@ export function MiMuralView({
             onMinimizar={() => setVentanaPizarra("minimizada")}
             onCerrar={() => setVentanaPizarra("minimizada")}
             ancho="max-w-2xl"
+            fondoId={mural.perfil.fondoId}
           >
             <PizarraSocial
               slug={slug}
@@ -511,6 +512,7 @@ export function MiMuralView({
             onMinimizar={() => setVentanaMural("minimizada")}
             onCerrar={() => setVentanaMural("minimizada")}
             ancho="max-w-2xl"
+            fondoId={mural.perfil.fondoId}
           >
             <div className="flex flex-col gap-4 p-4 sm:p-5">
               <BoletinInformativo slug={slug} dentroDeVentana />
@@ -525,6 +527,7 @@ export function MiMuralView({
             onMinimizar={() => setVentanaChat("minimizada")}
             onCerrar={() => setVentanaChat("minimizada")}
             ancho="max-w-md"
+            fondoId={mural.perfil.fondoId}
           >
             <ChatPanel
               slug={slug}
