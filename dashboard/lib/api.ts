@@ -1352,6 +1352,24 @@ export async function actualizarPerfilMural(datos: Partial<PerfilMural>): Promis
   return res.json();
 }
 
+export interface MensajeMascota {
+  rol: "usuario" | "mascota";
+  texto: string;
+}
+
+export async function chatMascota(
+  mensaje: string,
+  historial: MensajeMascota[],
+): Promise<{ respuesta: string }> {
+  const res = await fetch(`${API_URL}/talentos/me/mural/mascota/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify({ mensaje, historial }),
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
 export async function crearNotaMural(datos: {
   texto: string;
   color?: string;
