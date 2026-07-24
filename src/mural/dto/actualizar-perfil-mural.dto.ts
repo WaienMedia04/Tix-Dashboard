@@ -5,10 +5,12 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 import { FONDOS_MURAL_IDS } from '../mural-fondos.constant';
 import { COLORES_NOMBRE_MURAL_IDS } from '../mural-colores-nombre.constant';
 import { COLOR_WIDGETS_IDS } from '../mural-color-widgets.constant';
+import { MASCOTA_IDS } from '../mural-mascota.constant';
 
 export class ActualizarPerfilMuralDto {
   @IsString()
@@ -62,4 +64,10 @@ export class ActualizarPerfilMuralDto {
   @IsOptional()
   @IsIn(COLOR_WIDGETS_IDS)
   colorWidgetsId?: string;
+
+  /** Mascota tipo Clippy elegida — null explícito para quitarla. */
+  @IsOptional()
+  @ValidateIf((o: ActualizarPerfilMuralDto) => o.mascotaId !== null)
+  @IsIn(MASCOTA_IDS)
+  mascotaId?: string | null;
 }

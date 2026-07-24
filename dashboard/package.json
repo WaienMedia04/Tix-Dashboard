@@ -15,6 +15,7 @@
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
     "@vercel/blob": "^2.6.1",
+    "clippyjs": "^0.1.0",
     "framer-motion": "^12.42.0",
     "gsap": "^3.15.0",
     "lucide-react": "^1.21.0",

@@ -346,6 +346,9 @@ model TalentoPerfilMural {
   /// Tema de color de las tarjetas de la Pizarra: "vibrante" (cada widget
   /// con su propio color de acento) o "solido" (gris plano, como antes).
   colorWidgetsId  String   @default("vibrante")
+  /// Mascota animada tipo Clippy elegida por el talento para su mural — id
+  /// de dashboard/lib/mural-mascotas.ts, o null si no eligió ninguna.
+  mascotaId       String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

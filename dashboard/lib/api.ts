@@ -1190,6 +1190,8 @@ export interface PerfilMural {
   colorNombreId: string;
   /** Tema de color de las tarjetas de la Pizarra: "vibrante" | "solido" — ver dashboard/lib/pizarra-temas.ts. */
   colorWidgetsId: string;
+  /** Mascota animada tipo Clippy elegida — ver dashboard/lib/mural-mascotas.ts. null si no eligió ninguna. */
+  mascotaId: string | null;
 }
 
 export interface NotaMural {

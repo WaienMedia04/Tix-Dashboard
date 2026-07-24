@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
   Building2,
@@ -31,6 +32,7 @@ import { SobreMiSoloLectura } from "./SobreMiSoloLectura";
 import { SelectorFondo } from "./SelectorFondo";
 import { SelectorColorNombre } from "./SelectorColorNombre";
 import { SelectorColorWidgets } from "./SelectorColorWidgets";
+import { SelectorMascota } from "./SelectorMascota";
 import { MuralCanvas } from "./MuralCanvas";
 import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
@@ -41,6 +43,8 @@ import { VacantesInformativo } from "@/components/vacantes/VacantesInformativo";
 import { ClimaWidget } from "./ClimaWidget";
 import { PizarraSocial } from "@/components/pizarra/PizarraSocial";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+
+const MascotaClippy = dynamic(() => import("./MascotaClippy").then((m) => m.MascotaClippy), { ssr: false });
 
 type EstadoVentana = "abierta" | "minimizada";
 
@@ -280,6 +284,8 @@ export function MiMuralView({
         </div>
       )}
 
+      {editable && <MascotaClippy mascotaId={mural.perfil.mascotaId} />}
+
       <div className="fixed top-14 right-3 z-0 w-[190px] max-w-[50vw] origin-top-right scale-[0.72] print:hidden">
         <div className="-rotate-2 rounded-md border-4 border-white bg-white p-1 shadow-lg">
           <ClimaWidget />
@@ -419,6 +425,15 @@ export function MiMuralView({
                 colorWidgetsId={mural.perfil.colorWidgetsId}
                 onCambiado={(colorWidgetsId) =>
                   setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, colorWidgetsId } } : prev))
+                }
+              />
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Mascota</p>
+              <SelectorMascota
+                mascotaId={mural.perfil.mascotaId}
+                onCambiado={(mascotaId) =>
+                  setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, mascotaId } } : prev))
                 }
               />
             </div>
