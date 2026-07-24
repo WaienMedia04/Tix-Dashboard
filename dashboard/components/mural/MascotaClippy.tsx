@@ -52,6 +52,7 @@ const CARGADORES_MASCOTA: Record<string, CargadorMascota> = {
 
 const MENSAJE_SALUDO = "¿En qué te puedo ayudar?";
 const DURACION_SALUDO_MS = 3000;
+const DURACION_RESPUESTA_MS = 8000;
 const INTERVALO_ANIMACION_MS = 30000;
 const VENTANA_DOBLE_CLICK_MS = 250;
 const UMBRAL_ARRASTRE_PX = 5;
@@ -69,11 +70,26 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
   const [historial, setHistorial] = useState<MensajeMascota[]>([]);
   const [escuchando, setEscuchando] = useState(false);
   const reconocimientoRef = useRef<ReconocimientoVoz | null>(null);
-  // true mientras el globo todavía muestra el saludo inicial — si el
-  // talento ya escribió antes de los 3s, el temporizador del saludo NO debe
-  // ocultar el globo a la fuerza (le arrancaría la respuesta del chat que
-  // ya está mostrándose ahí, ver enviar()).
-  const saludoPendienteRef = useRef(true);
+  // Identifica cuál es el mensaje (saludo o respuesta) más reciente que se
+  // mandó a mostrar — así, cuando el temporizador de UN mensaje se cumple,
+  // solo oculta el globo si nadie mandó uno más nuevo mientras tanto (si no,
+  // le arrancaría de la pantalla la respuesta que recién estaba apareciendo).
+  const turnoMensajeRef = useRef(0);
+
+  /** speak() con hold:true + cierre automático propio a los `duracionMs` — así se controla cuánto dura visible, en vez de los 2s fijos que trae la librería. */
+  function mostrarConTiempo(agente: AgenteClippy, texto: string, duracionMs: number) {
+    const miTurno = ++turnoMensajeRef.current;
+    agente.speak(texto, true);
+    setTimeout(() => {
+      if (turnoMensajeRef.current !== miTurno) return;
+      // stopCurrent() desatasca la cola (necesario para que el próximo
+      // mensaje se pueda mostrar) — pero no oculta el globo, hay que
+      // hacerlo aparte y de inmediato (closeBalloon() del API público
+      // demora 2s más).
+      agenteRef.current?.stopCurrent();
+      agenteRef.current?._balloon?.hide(true);
+    }, duracionMs);
+  }
 
   // Carga el agente elegido y lo muestra con un saludo que se cierra solo a los 3s.
   useEffect(() => {
@@ -81,11 +97,8 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reinicia todo al cambiar/quitar de personaje
     setListo(false);
     setChatAbierto(false);
-    saludoPendienteRef.current = true;
     const cargador = mascotaId ? CARGADORES_MASCOTA[mascotaId] : undefined;
     if (!cargador) return;
-
-    let temporizadorSaludo: ReturnType<typeof setTimeout> | undefined;
 
     async function cargar() {
       const [{ initAgent }, mod] = await Promise.all([import("clippyjs"), cargador!()]);
@@ -97,30 +110,18 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
       }
       agenteRef.current = agente;
       agente.show();
-      agente.speak(MENSAJE_SALUDO, true);
-      temporizadorSaludo = setTimeout(() => {
-        // stopCurrent() siempre hay que llamarlo: desatasca la cola de
-        // acciones (si no, ningún speak() posterior — ni el saludo ni una
-        // respuesta ya encolada — llegaría a mostrarse). Pero el ocultado
-        // forzado del globo solo aplica si el saludo sigue siendo lo que
-        // se muestra — si el talento ya escribió, ahí ya está la
-        // respuesta del chat y no hay que arrancarla de la pantalla.
-        agenteRef.current?.stopCurrent();
-        if (saludoPendienteRef.current) {
-          agenteRef.current?._balloon?.hide(true);
-        }
-      }, DURACION_SALUDO_MS);
+      mostrarConTiempo(agente, MENSAJE_SALUDO, DURACION_SALUDO_MS);
       setListo(true);
     }
     void cargar();
 
     return () => {
       cancelado = true;
-      if (temporizadorSaludo) clearTimeout(temporizadorSaludo);
       agenteRef.current?.dispose();
       agenteRef.current = null;
       setListo(false);
     };
+     
   }, [mascotaId]);
 
   // Cada 10s hace una animación aleatoria para no quedarse fija.
@@ -244,14 +245,12 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
   async function enviar(textoVoz?: string) {
     const texto = (textoVoz ?? mensaje).trim();
     if (!texto || enviando || !agenteRef.current) return;
-    saludoPendienteRef.current = false;
     setMensaje("");
     setEnviando(true);
     const historialActual = historial;
     try {
       const { respuesta } = await chatMascota(texto, historialActual);
-      // hold:false — se cierra sola y libera la cola para el próximo mensaje.
-      agenteRef.current.speak(respuesta, false);
+      mostrarConTiempo(agenteRef.current, respuesta, DURACION_RESPUESTA_MS);
       const nuevos: MensajeMascota[] = [
         ...historialActual,
         { rol: "usuario", texto },
@@ -259,7 +258,7 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
       ];
       setHistorial(nuevos.slice(-MAX_HISTORIAL));
     } catch {
-      agenteRef.current.speak("Se me trabó algo por dentro — intenta de nuevo en un momento.", false);
+      mostrarConTiempo(agenteRef.current, "Se me trabó algo por dentro — intenta de nuevo en un momento.", DURACION_RESPUESTA_MS);
     } finally {
       setEnviando(false);
     }
