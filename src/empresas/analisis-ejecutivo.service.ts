@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import Anthropic from '@anthropic-ai/sdk';
-import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
+import type { Mistral } from '@mistralai/mistralai';
 import { z } from 'zod';
 
 const AnalisisEjecutivoSchema = z.object({
@@ -11,6 +10,8 @@ const AnalisisEjecutivoSchema = z.object({
 });
 
 export type AnalisisEjecutivo = z.infer<typeof AnalisisEjecutivoSchema>;
+
+const MODELO = 'mistral-large-latest';
 
 const PROMPT_BASE = `Eres un analista de RRHH senior. A partir de los datos agregados de desempeño de un equipo (ya calculados — no los inventes ni los cambies), escribe un análisis ejecutivo breve en español dominicano, para que lo lea un CEO o la gerencia de RRHH.
 
@@ -28,28 +29,48 @@ Datos del período (JSON):
 @Injectable()
 export class AnalisisEjecutivoService {
   private readonly logger = new Logger(AnalisisEjecutivoService.name);
-  private readonly client = new Anthropic();
+  private clientPromise: Promise<Mistral> | null = null;
+
+  // @mistralai/mistralai v2 es ESM-only — ver la misma nota en
+  // src/talentos/cv-extraction.service.ts.
+  private async getClient(): Promise<Mistral> {
+    if (!this.clientPromise) {
+      this.clientPromise = import('@mistralai/mistralai').then(
+        ({ Mistral: MistralClient }) =>
+          new MistralClient({ apiKey: process.env.MISTRAL_API_KEY }),
+      );
+    }
+    return this.clientPromise;
+  }
 
   /** Devuelve null si la IA no está disponible o falla — nunca lanza. */
   async generar(datos: unknown): Promise<AnalisisEjecutivo | null> {
     try {
-      const response = await this.client.messages.parse({
-        model: 'claude-opus-4-8',
-        max_tokens: 2048,
+      const client = await this.getClient();
+      const response = await client.chat.parse({
+        model: MODELO,
+        maxTokens: 2048,
         messages: [
           {
             role: 'user',
             content: PROMPT_BASE + JSON.stringify(datos, null, 2),
           },
         ],
-        output_config: { format: zodOutputFormat(AnalisisEjecutivoSchema) },
+        responseFormat: AnalisisEjecutivoSchema,
       });
-      return response.parsed_output;
+      const parsed = response.choices?.[0]?.message?.parsed;
+      if (!parsed) return null;
+
+      // Revalidado en runtime — el SDK no amarra .parsed al schema exacto.
+      const validado = AnalisisEjecutivoSchema.safeParse(parsed);
+      if (!validado.success) {
+        this.logger.warn(
+          `Análisis ejecutivo con forma inesperada: ${validado.error.message}`,
+        );
+        return null;
+      }
+      return validado.data;
     } catch (err) {
-      // A nivel `error` (no `warn`) porque esto nunca debería fallar en
-      // producción — si ANTHROPIC_API_KEY falta o es inválida, o el modelo
-      // no existe, el SDK lanza acá y antes quedaba enmascarado como un
-      // simple "no hay análisis" sin rastro en los logs.
       this.logger.error(
         `No se pudo generar el análisis ejecutivo: ${err instanceof Error ? err.stack : err}`,
       );

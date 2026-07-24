@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import Anthropic from '@anthropic-ai/sdk';
-import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
+import type { Mistral } from '@mistralai/mistralai';
 import { z } from 'zod';
 import type { CvExtraido } from './cv-extraction.service';
 
@@ -13,6 +12,8 @@ const ComparacionCvSchema = z.object({
 });
 
 export type ComparacionCv = z.infer<typeof ComparacionCvSchema>;
+
+const MODELO = 'mistral-large-latest';
 
 const PROMPT_BASE = `Eres un reclutador senior de RRHH. Compara el CV ya extraído de un talento contra la descripción de un puesto (puede ser el puesto actual de la persona u otro dentro de la empresa) y evalúa qué tan bien encaja.
 
@@ -31,7 +32,19 @@ Descripción del puesto:
 @Injectable()
 export class CvComparacionService {
   private readonly logger = new Logger(CvComparacionService.name);
-  private readonly client = new Anthropic();
+  private clientPromise: Promise<Mistral> | null = null;
+
+  // @mistralai/mistralai v2 es ESM-only — ver la misma nota en
+  // src/talentos/cv-extraction.service.ts.
+  private async getClient(): Promise<Mistral> {
+    if (!this.clientPromise) {
+      this.clientPromise = import('@mistralai/mistralai').then(
+        ({ Mistral: MistralClient }) =>
+          new MistralClient({ apiKey: process.env.MISTRAL_API_KEY }),
+      );
+    }
+    return this.clientPromise;
+  }
 
   /** Devuelve null si la IA no está disponible o falla — nunca lanza. */
   async comparar(
@@ -39,9 +52,10 @@ export class CvComparacionService {
     cv: CvExtraido,
   ): Promise<ComparacionCv | null> {
     try {
-      const response = await this.client.messages.parse({
-        model: 'claude-opus-4-8',
-        max_tokens: 2048,
+      const client = await this.getClient();
+      const response = await client.chat.parse({
+        model: MODELO,
+        maxTokens: 2048,
         messages: [
           {
             role: 'user',
@@ -52,11 +66,23 @@ export class CvComparacionService {
               JSON.stringify(cv, null, 2),
           },
         ],
-        output_config: { format: zodOutputFormat(ComparacionCvSchema) },
+        responseFormat: ComparacionCvSchema,
       });
-      return response.parsed_output;
+      const parsed = response.choices?.[0]?.message?.parsed;
+      if (!parsed) return null;
+
+      const validado = ComparacionCvSchema.safeParse(parsed);
+      if (!validado.success) {
+        this.logger.warn(
+          `Comparación de CV con forma inesperada: ${validado.error.message}`,
+        );
+        return null;
+      }
+      return validado.data;
     } catch (err) {
-      this.logger.warn(`No se pudo comparar el CV contra el puesto: ${err}`);
+      this.logger.error(
+        `No se pudo comparar el CV contra el puesto: ${err instanceof Error ? err.stack : err}`,
+      );
       return null;
     }
   }
