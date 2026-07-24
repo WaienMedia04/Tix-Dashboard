@@ -33,7 +33,7 @@ const CARGADORES_MASCOTA: Record<string, CargadorMascota> = {
 
 const MENSAJE_SALUDO = "¿En qué te puedo ayudar?";
 const DURACION_SALUDO_MS = 5000;
-const INTERVALO_ANIMACION_MS = 10000;
+const INTERVALO_ANIMACION_MS = 60000;
 const VENTANA_DOBLE_CLICK_MS = 250;
 const UMBRAL_ARRASTRE_PX = 5;
 const ANCHO_CHAT_PX = 224;
