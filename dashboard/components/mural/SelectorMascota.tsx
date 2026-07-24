@@ -37,7 +37,7 @@ export function SelectorMascota({
         }`}
         style={{ transform: guardando === "ninguna" ? "scale(0.96)" : undefined }}
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
           <Ban className="h-4 w-4" />
         </span>
         <span className="flex items-center gap-1 text-xs font-semibold text-foreground">
@@ -58,8 +58,9 @@ export function SelectorMascota({
             }`}
             style={{ transform: guardando === m.id ? "scale(0.96)" : undefined }}
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground text-sm font-bold">
-              {m.label.charAt(0)}
+            <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-accent">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/mascotas/${m.id}.png`} alt="" className="h-full w-full object-contain" />
             </span>
             <span className="flex items-center gap-1 text-xs font-semibold text-foreground">
               {m.label}
