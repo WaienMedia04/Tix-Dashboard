@@ -325,10 +325,12 @@ export class EmpresasService {
         : Math.round((checkinsHoy / talentos.length) * 1000) / 10;
 
     // Referencia para la semana de productividad: la fecha de la bitacora
-    // mas reciente (si existe), no la fecha calendario de hoy. Asi el
-    // dashboard siempre muestra la ultima semana con actividad real en
-    // lugar de una semana en blanco cuando no hay registros recientes.
-    const fechaReferencia = worklogs[0]?.fecha ?? new Date();
+    // real mas reciente (si existe), no la fecha calendario de hoy ni la
+    // de un registro de ausencia. Una vacacion/permiso registrado a
+    // futuro también crea su propio Worklog, y si se tomara tal cual
+    // (worklogs[0]) esa fecha futura secuestraria la semana mostrada,
+    // dejando en blanco la semana real donde sí hay bitácoras enviadas.
+    const fechaReferencia = worklogsSinAusencias[0]?.fecha ?? new Date();
     const referenciaUtc = new Date(
       Date.UTC(
         fechaReferencia.getUTCFullYear(),
