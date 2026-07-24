@@ -49,13 +49,19 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
   const [mensaje, setMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [historial, setHistorial] = useState<MensajeMascota[]>([]);
+  // true mientras el globo todavía muestra el saludo inicial — si el
+  // talento ya escribió antes de los 3s, el temporizador del saludo NO debe
+  // ocultar el globo a la fuerza (le arrancaría la respuesta del chat que
+  // ya está mostrándose ahí, ver enviar()).
+  const saludoPendienteRef = useRef(true);
 
-  // Carga el agente elegido y lo muestra con un saludo que se cierra solo a los 5s.
+  // Carga el agente elegido y lo muestra con un saludo que se cierra solo a los 3s.
   useEffect(() => {
     let cancelado = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reinicia todo al cambiar/quitar de personaje
     setListo(false);
     setChatAbierto(false);
+    saludoPendienteRef.current = true;
     const cargador = mascotaId ? CARGADORES_MASCOTA[mascotaId] : undefined;
     if (!cargador) return;
 
@@ -73,11 +79,16 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
       agente.show();
       agente.speak(MENSAJE_SALUDO, true);
       temporizadorSaludo = setTimeout(() => {
-        // stopCurrent() desatasca la cola pero no oculta el globo — hay que
-        // ocultarlo aparte (y de inmediato, closeBalloon() del API público
-        // demora 2s más de lo que se pidió).
+        // stopCurrent() siempre hay que llamarlo: desatasca la cola de
+        // acciones (si no, ningún speak() posterior — ni el saludo ni una
+        // respuesta ya encolada — llegaría a mostrarse). Pero el ocultado
+        // forzado del globo solo aplica si el saludo sigue siendo lo que
+        // se muestra — si el talento ya escribió, ahí ya está la
+        // respuesta del chat y no hay que arrancarla de la pantalla.
         agenteRef.current?.stopCurrent();
-        agenteRef.current?._balloon?.hide(true);
+        if (saludoPendienteRef.current) {
+          agenteRef.current?._balloon?.hide(true);
+        }
       }, DURACION_SALUDO_MS);
       setListo(true);
     }
@@ -177,6 +188,7 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
   async function enviar() {
     const texto = mensaje.trim();
     if (!texto || enviando || !agenteRef.current) return;
+    saludoPendienteRef.current = false;
     setMensaje("");
     setEnviando(true);
     const historialActual = historial;
