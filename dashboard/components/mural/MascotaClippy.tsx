@@ -1,8 +1,26 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send } from "lucide-react";
+import { Mic, Send } from "lucide-react";
 import { type MensajeMascota, chatMascota } from "@/lib/api";
+
+/** Web Speech API — no todos los navegadores la exponen igual (Chrome/Edge sí, Firefox no la soporta, Safari es inconsistente). */
+interface ReconocimientoVoz extends EventTarget {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start(): void;
+  stop(): void;
+}
+interface ResultadoReconocimientoVoz extends Event {
+  results: { [index: number]: { [index: number]: { transcript: string } } } & { length: number };
+}
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => ReconocimientoVoz;
+    webkitSpeechRecognition?: new () => ReconocimientoVoz;
+  }
+}
 
 /** Forma mínima que necesitamos de la instancia — el resto de la API de clippyjs no se usa aquí. */
 interface AgenteClippy {
@@ -49,6 +67,8 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
   const [mensaje, setMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [historial, setHistorial] = useState<MensajeMascota[]>([]);
+  const [escuchando, setEscuchando] = useState(false);
+  const reconocimientoRef = useRef<ReconocimientoVoz | null>(null);
   // true mientras el globo todavía muestra el saludo inicial — si el
   // talento ya escribió antes de los 3s, el temporizador del saludo NO debe
   // ocultar el globo a la fuerza (le arrancaría la respuesta del chat que
@@ -185,8 +205,44 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
     };
   }, [listo]);
 
-  async function enviar() {
-    const texto = mensaje.trim();
+  // Si se cierra el chat, no dejar el micrófono escuchando de fondo.
+  useEffect(() => {
+    if (!chatAbierto) {
+      reconocimientoRef.current?.stop();
+    }
+  }, [chatAbierto]);
+
+  function alternarEscucha() {
+    if (escuchando) {
+      reconocimientoRef.current?.stop();
+      return;
+    }
+    const Ctor = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    if (!Ctor) return;
+    const reconocimiento = new Ctor();
+    reconocimiento.lang = "es-DO";
+    reconocimiento.continuous = false;
+    reconocimiento.interimResults = false;
+    reconocimiento.addEventListener("result", (e) => {
+      const evento = e as ResultadoReconocimientoVoz;
+      const texto = evento.results[evento.results.length - 1]?.[0]?.transcript?.trim();
+      if (texto) void enviar(texto);
+    });
+    reconocimiento.addEventListener("end", () => {
+      setEscuchando(false);
+      reconocimientoRef.current = null;
+    });
+    reconocimiento.addEventListener("error", () => {
+      setEscuchando(false);
+      reconocimientoRef.current = null;
+    });
+    reconocimientoRef.current = reconocimiento;
+    reconocimiento.start();
+    setEscuchando(true);
+  }
+
+  async function enviar(textoVoz?: string) {
+    const texto = (textoVoz ?? mensaje).trim();
     if (!texto || enviando || !agenteRef.current) return;
     saludoPendienteRef.current = false;
     setMensaje("");
@@ -211,11 +267,26 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
 
   if (!listo || !chatAbierto || !posicionChat) return null;
 
+  const soportaVoz = typeof window !== "undefined" && !!(window.SpeechRecognition ?? window.webkitSpeechRecognition);
+
   return (
     <div
       style={{ position: "fixed", top: posicionChat.top, left: posicionChat.left, zIndex: 10002 }}
       className="flex w-56 items-center gap-1.5 rounded-full border border-white/10 bg-zinc-900/95 p-1.5 shadow-elegant backdrop-blur-sm print:hidden"
     >
+      {soportaVoz && (
+        <button
+          onClick={alternarEscucha}
+          disabled={enviando}
+          aria-label={escuchando ? "Detener dictado por voz" : "Hablarle por voz"}
+          title={escuchando ? "Detener dictado por voz" : "Hablarle por voz"}
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+            escuchando ? "animate-pulse bg-destructive text-white" : "text-zinc-300 hover:bg-white/10"
+          }`}
+        >
+          <Mic className="h-3.5 w-3.5" />
+        </button>
+      )}
       <input
         autoFocus
         value={mensaje}
@@ -223,7 +294,7 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
         onKeyDown={(e) => {
           if (e.key === "Enter") void enviar();
         }}
-        placeholder="Pregúntale a tu mascota..."
+        placeholder={escuchando ? "Escuchando..." : "Pregúntale a tu mascota..."}
         maxLength={500}
         disabled={enviando}
         className="min-w-0 flex-1 bg-transparent px-2 text-xs text-white placeholder:text-zinc-400 focus:outline-none disabled:opacity-50"
