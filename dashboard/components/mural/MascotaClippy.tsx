@@ -52,7 +52,7 @@ const CARGADORES_MASCOTA: Record<string, CargadorMascota> = {
   rover: () => import("clippyjs/agents/rover"),
 };
 
-const DURACION_SALUDO_MS = 3000;
+const DURACION_SALUDO_MS = 10000;
 const DURACION_RESPUESTA_MS = 8000;
 const INTERVALO_ANIMACION_MS = 30000;
 const VENTANA_DOBLE_CLICK_MS = 250;
