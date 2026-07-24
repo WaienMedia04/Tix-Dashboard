@@ -98,7 +98,7 @@ export function LanyardBadge({
     // que el carnet tiene que encogerse en pantallas bajas para dejarle
     // espacio al nombre/estado y al Dock — antes con rem fijo se salía del
     // viewport y empujaba todo lo demás fuera de vista.
-    <div className="h-[58vh] max-h-[42rem] min-h-[18rem] w-[58vh] max-w-[min(42rem,92vw)] min-w-[18rem] shrink-0">
+    <div className="h-[66vh] max-h-[48rem] min-h-[18rem] w-[66vh] max-w-[min(48rem,92vw)] min-w-[18rem] shrink-0">
       <LanyardScene
         position={[0, 0, 20]}
         frontImage={frontImage ?? undefined}
