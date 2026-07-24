@@ -96,17 +96,27 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
 
   // Ancla la mascota pegada al lado derecho del Dock (mismo elemento .dock-panel
   // que ya usa la barra de iconos abajo), alineando su base con la del Dock.
-  function posicionarJuntoAlDock(el: HTMLElement) {
+  // Justo después de show() el Dock o la propia mascota a veces todavía no
+  // tienen layout real (rect en 0,0,0,0) — medir eso daba una posición
+  // fuera de pantalla (mascota "invisible"). Reintenta por unos frames
+  // hasta tener medidas reales, y de todos modos deja todo dentro del
+  // viewport por si acaso.
+  function posicionarJuntoAlDock(el: HTMLElement, intentosRestantes = 15) {
     const dock = document.querySelector<HTMLElement>(".dock-panel");
-    if (!dock) return;
-    const dockRect = dock.getBoundingClientRect();
+    const dockRect = dock?.getBoundingClientRect();
     const elRect = el.getBoundingClientRect();
-    let left = dockRect.right + MARGEN_DOCK_PX;
-    if (left + elRect.width > window.innerWidth - 8) {
-      left = window.innerWidth - elRect.width - 8;
+    if (!dockRect || dockRect.width === 0 || elRect.width === 0) {
+      if (intentosRestantes > 0) {
+        requestAnimationFrame(() => posicionarJuntoAlDock(el, intentosRestantes - 1));
+      }
+      return;
     }
+    let left = dockRect.right + MARGEN_DOCK_PX;
+    if (left + elRect.width > window.innerWidth - 8) left = window.innerWidth - elRect.width - 8;
+    left = Math.max(8, left);
+    const top = Math.min(Math.max(8, dockRect.bottom - elRect.height), window.innerHeight - elRect.height - 8);
     el.style.left = `${left}px`;
-    el.style.top = `${dockRect.bottom - elRect.height}px`;
+    el.style.top = `${top}px`;
   }
 
   // Carga el agente elegido y lo muestra con un saludo que se cierra solo a los 3s.
@@ -144,7 +154,7 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
       agenteRef.current = null;
       setListo(false);
     };
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mostrarConTiempo/posicionarJuntoAlDock se recrean cada render pero no dependen de nada que deba reiniciar este efecto
   }, [mascotaId]);
 
   // Si cambia el tamaño de ventana, la vuelve a pegar al Dock (que también se recentra).
@@ -155,7 +165,7 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
     }
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- posicionarJuntoAlDock se recrea cada render
   }, [listo]);
 
   // Cada 10s hace una animación aleatoria para no quedarse fija.
