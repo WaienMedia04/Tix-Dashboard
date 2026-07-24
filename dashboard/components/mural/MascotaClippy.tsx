@@ -58,7 +58,7 @@ const INTERVALO_ANIMACION_MS = 30000;
 const VENTANA_DOBLE_CLICK_MS = 250;
 const ANCHO_CHAT_PX = 224;
 const ALTO_CHAT_PX = 44;
-const MARGEN_DOCK_PX = 16;
+const MARGEN_DOCK_PX = 48;
 const MAX_HISTORIAL = 6;
 
 function mensajeSaludo(nombreTalento: string, mascotaNombre: string | null): string {

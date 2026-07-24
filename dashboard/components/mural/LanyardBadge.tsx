@@ -94,7 +94,11 @@ export function LanyardBadge({
     // El alto es menor que el ancho a propósito: con la cámara más cerca la
     // tarjeta ocupa solo la parte de arriba del marco, así que se recorta el
     // aire que sobraba abajo para que el nombre no quede tan separado.
-    <div className="h-[42rem] w-[44rem] shrink-0 sm:h-[46rem] sm:w-[50rem]">
+    // Medido en vh (no rem fijo): el mural es de altura fija sin scroll, así
+    // que el carnet tiene que encogerse en pantallas bajas para dejarle
+    // espacio al nombre/estado y al Dock — antes con rem fijo se salía del
+    // viewport y empujaba todo lo demás fuera de vista.
+    <div className="h-[45vh] max-h-[34rem] min-h-[16rem] w-[45vh] max-w-[min(34rem,90vw)] min-w-[16rem] shrink-0">
       <LanyardScene
         position={[0, 0, 20]}
         frontImage={frontImage ?? undefined}

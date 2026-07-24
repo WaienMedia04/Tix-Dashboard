@@ -21,6 +21,7 @@ import { fondoMuralCss, fondoMuralTexto } from "@/lib/mural-fondos";
 import { coloresNombreMural } from "@/lib/mural-colores-nombre";
 import { colorParaEstado } from "@/lib/estados-mural";
 import { reproducirSonidoEntrada } from "@/lib/sonidos";
+import { useEsMobile } from "@/lib/use-es-mobile";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Modal } from "@/components/Modal";
 import Dock from "@/components/vendor/Dock/Dock";
@@ -63,6 +64,12 @@ export function MiMuralView({
   rol?: string;
 }) {
   const editable = talentoId === undefined;
+  const esMobile = useEsMobile();
+  // En el mural propio de escritorio queremos la sensación de "sistema
+  // operativo": todo cabe en una sola pantalla, sin scroll de página. En
+  // móvil y en el mural de un compañero (que además muestra la Pizarra/el
+  // Mural informativo debajo) el contenido sigue fluyendo normalmente.
+  const escritorioFijo = editable && !esMobile;
   const router = useRouter();
   const [mural, setMural] = useState<MuralPropio | null>(null);
   const [error, setError] = useState(false);
@@ -148,15 +155,22 @@ export function MiMuralView({
 
   return (
     <div
-      className="relative min-h-[calc(100vh-40px)] transition-[background] duration-500"
+      className={`relative transition-[background] duration-500 ${
+        escritorioFijo ? "h-[calc(100vh-40px)] overflow-hidden" : "min-h-[calc(100vh-40px)]"
+      }`}
       style={{ background: fondoMuralCss(mural.perfil.fondoId) }}
     >
       {/* Muro libre: un solo contenedor cubre encabezado + lienzo, para que
           notas y estampas se puedan arrastrar a cualquier parte de la página
-          (incluso sobre el carnet), no solo debajo del encabezado. */}
-      <div ref={contenedorRef} className="relative z-0">
+          (incluso sobre el carnet), no solo debajo del encabezado. En
+          escritorio con mural propio es de altura fija (sin scroll); el
+          lienzo (MuralCanvas) se estira para llenar lo que sobre. */}
+      <div
+        ref={contenedorRef}
+        className={`relative z-0 ${escritorioFijo ? "flex h-full flex-col overflow-hidden" : ""}`}
+      >
         {/* Encabezado: carnet grande y centrado, nombre y rol debajo */}
-        <div className="flex flex-col items-center px-4 pb-4 text-center">
+        <div className="flex shrink-0 flex-col items-center px-4 pb-4 text-center">
           <LanyardBadge
             nombreCompleto={nombreCompleto}
             frontImage={mural.talento.carnetFotoUrl ?? mural.talento.fotoUrl}

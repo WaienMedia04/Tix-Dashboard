@@ -63,10 +63,11 @@ export function MuralCanvas({
   if (arrastrable) {
     return (
       <>
-        {/* Espacio mínimo debajo del encabezado para que siempre haya dónde soltar algo,
-            aunque el mural esté vacío — las notas/estampas pueden ir sobre cualquier
+        {/* Ocupa el resto del alto disponible (el contenedor es de altura fija,
+            sin scroll) para que siempre haya dónde soltar algo, aunque el
+            mural esté vacío — las notas/estampas pueden ir sobre cualquier
             parte del contenedor compartido, incluido el encabezado. */}
-        <div className="min-h-[55vh] w-full" />
+        <div className="min-h-0 w-full flex-1" />
 
         {notas.length === 0 && estampas.length === 0 && (
           <p
