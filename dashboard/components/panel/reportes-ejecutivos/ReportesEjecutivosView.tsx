@@ -5,6 +5,8 @@ import { BrainCircuit, CircleCheck, Download, FileText, Lightbulb, TriangleAlert
 import { type PeriodoReporte, type ReporteEjecutivoResponse, fetchReporteEjecutivo } from "@/lib/api";
 import { usePanel } from "../PanelContext";
 import { FiltroPeriodoReporte, type FiltroReporteState } from "../reportes/FiltroPeriodoReporte";
+import { ResumenEjecutivoReporte } from "../reportes/ResumenEjecutivoReporte";
+import { TablaReporte } from "../reportes/TablaReporte";
 import { Skeleton } from "@/components/motion/Skeleton";
 import { descargarCsv } from "@/lib/csv";
 
@@ -23,7 +25,14 @@ function hoyIso(): string {
 }
 
 function filtroInicial(): FiltroReporteState {
-  return { periodo: "mensual", valor: mesActual(), fechaInicio: primerDiaMes(), fechaFin: hoyIso(), departamento: "" };
+  return {
+    periodo: "mensual",
+    valor: mesActual(),
+    fechaInicio: primerDiaMes(),
+    fechaFin: hoyIso(),
+    departamento: "",
+    talentoId: "",
+  };
 }
 
 function semanaActualIso(): string {
@@ -48,11 +57,24 @@ function formatearRango(inicio: string, fin: string): string {
 }
 
 function generarCsvEjecutivo(datos: ReporteEjecutivoResponse): string {
-  const filas = [["Sección", "Contenido"]];
-  filas.push(["Resumen ejecutivo", datos.analisis?.resumenEjecutivo ?? "—"]);
+  const filas: string[][] = [["Sección", "Contenido"]];
+  filas.push(["Resumen ejecutivo", datos.analisis?.resumenEjecutivo ?? "No disponible para este período"]);
   for (const item of datos.analisis?.fortalezas ?? []) filas.push(["Fortaleza", item]);
   for (const item of datos.analisis?.riesgos ?? []) filas.push(["Riesgo", item]);
   for (const item of datos.analisis?.recomendaciones ?? []) filas.push(["Recomendación", item]);
+
+  filas.push([], ["Empleado", "Rol", "Puntaje promedio", "% Cumplimiento", "Cumplimiento de tareas", "Enviadas", "Total bitácoras"]);
+  for (const d of datos.detalle) {
+    filas.push([
+      d.nombre,
+      d.rol,
+      d.puntajeProm === null ? "—" : String(d.puntajeProm),
+      d.cumplimiento === null ? "—" : String(d.cumplimiento),
+      d.cumplimientoTareasProm === null ? "—" : String(d.cumplimientoTareasProm),
+      String(d.enviadas),
+      String(d.totalBitacoras),
+    ]);
+  }
   return filas.map((fila) => fila.map((celda) => `"${celda.replace(/"/g, '""')}"`).join(",")).join("\r\n");
 }
 
@@ -109,6 +131,7 @@ function ReporteEjecutivoResultado({ slug, filtro }: { slug: string; filtro: Fil
       fechaInicio: filtro.periodo === "personalizado" ? filtro.fechaInicio : undefined,
       fechaFin: filtro.periodo === "personalizado" ? filtro.fechaFin : undefined,
       departamento: filtro.departamento || undefined,
+      talentoId: filtro.talentoId || undefined,
     })
       .then((datos) => {
         if (!cancelado) setEstado({ tipo: "listo", datos });
@@ -119,7 +142,7 @@ function ReporteEjecutivoResultado({ slug, filtro }: { slug: string; filtro: Fil
     return () => {
       cancelado = true;
     };
-  }, [slug, filtro.periodo, filtro.valor, filtro.fechaInicio, filtro.fechaFin, filtro.departamento]);
+  }, [slug, filtro.periodo, filtro.valor, filtro.fechaInicio, filtro.fechaFin, filtro.departamento, filtro.talentoId]);
 
   if (estado.tipo === "cargando") {
     return (
@@ -153,29 +176,27 @@ function ReporteEjecutivoResultado({ slug, filtro }: { slug: string; filtro: Fil
         <div className="my-3 border-t border-border" />
       </div>
 
-      {datos.analisis && (
-        <div className="print:hidden flex justify-end gap-2">
-          <button
-            onClick={() =>
-              descargarCsv(
-                `reporte-ejecutivo-${datos.empresa.slug}-${datos.periodo}-${datos.valor}.csv`,
-                generarCsvEjecutivo(datos),
-              )
-            }
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
-          >
-            <Download className="h-4 w-4" />
-            Exportar Excel
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
-          >
-            <FileText className="h-4 w-4" />
-            Exportar PDF
-          </button>
-        </div>
-      )}
+      <div className="print:hidden flex justify-end gap-2">
+        <button
+          onClick={() =>
+            descargarCsv(
+              `reporte-ejecutivo-${datos.empresa.slug}-${datos.periodo}-${datos.valor}.csv`,
+              generarCsvEjecutivo(datos),
+            )
+          }
+          className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+        >
+          <Download className="h-4 w-4" />
+          Exportar Excel
+        </button>
+        <button
+          onClick={() => window.print()}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+        >
+          <FileText className="h-4 w-4" />
+          Exportar PDF
+        </button>
+      </div>
 
       {datos.analisis ? (
         <>
@@ -194,17 +215,25 @@ function ReporteEjecutivoResultado({ slug, filtro }: { slug: string; filtro: Fil
           </div>
         </>
       ) : (
-        <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground shadow-card">
-          No se pudo generar el análisis narrativo para este período.
-        </div>
+        <>
+          <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground shadow-card">
+            No se pudo generar el análisis narrativo para este período — abajo están los datos numéricos igual.
+          </div>
+          <ResumenEjecutivoReporte resumen={datos.resumen} />
+          <TablaReporte datos={datos.detalle} />
+        </>
       )}
     </div>
   );
 }
 
 export function ReportesEjecutivosView() {
-  const { slug } = usePanel();
+  const { slug, dashboardInicial } = usePanel();
   const [filtro, setFiltro] = useState<FiltroReporteState>(filtroInicial);
+  const talentos = dashboardInicial.rankingTalentos.map((t) => ({
+    talentoId: t.talentoId,
+    nombreCompleto: t.nombreCompleto,
+  }));
 
   function cambiarPeriodo(periodo: PeriodoReporte) {
     setFiltro((prev) => ({
@@ -223,15 +252,17 @@ export function ReportesEjecutivosView() {
 
       <FiltroPeriodoReporte
         filtro={filtro}
+        talentos={talentos}
         onCambiarPeriodo={cambiarPeriodo}
         onCambiarValor={(valor) => setFiltro((prev) => ({ ...prev, valor }))}
         onCambiarFechaInicio={(fechaInicio) => setFiltro((prev) => ({ ...prev, fechaInicio }))}
         onCambiarFechaFin={(fechaFin) => setFiltro((prev) => ({ ...prev, fechaFin }))}
         onCambiarDepartamento={(departamento) => setFiltro((prev) => ({ ...prev, departamento }))}
+        onCambiarTalento={(talentoId) => setFiltro((prev) => ({ ...prev, talentoId }))}
       />
 
       <ReporteEjecutivoResultado
-        key={`${filtro.periodo}-${filtro.valor}-${filtro.fechaInicio}-${filtro.fechaFin}-${filtro.departamento}`}
+        key={`${filtro.periodo}-${filtro.valor}-${filtro.fechaInicio}-${filtro.fechaFin}-${filtro.departamento}-${filtro.talentoId}`}
         slug={slug}
         filtro={filtro}
       />

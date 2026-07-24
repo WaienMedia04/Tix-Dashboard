@@ -1080,7 +1080,19 @@ export class EmpresasService {
       this.prisma,
       query.departamento,
     );
-    const talentoIdFiltro = alcance !== null ? { in: alcance } : undefined;
+    // Si pide un talentoId puntual fuera de su alcance, no se le revela que
+    // existe — mismo criterio que bitacoras().
+    const talentoFueraDeAlcance =
+      alcance !== null &&
+      !!query.talentoId &&
+      !alcance.includes(query.talentoId);
+    const talentoIdFiltro = talentoFueraDeAlcance
+      ? { in: [] as string[] }
+      : query.talentoId
+        ? query.talentoId
+        : alcance !== null
+          ? { in: alcance }
+          : undefined;
 
     let inicio: Date;
     let fin: Date;
@@ -1124,7 +1136,12 @@ export class EmpresasService {
         },
       }),
       this.prisma.talento.findMany({
-        where: talentoActivoScopeWhere(actor, query.departamento),
+        where: talentoFueraDeAlcance
+          ? { id: '__ninguno__', empresaId: empresa.id }
+          : {
+              ...talentoActivoScopeWhere(actor, query.departamento),
+              ...(query.talentoId && { id: query.talentoId }),
+            },
       }),
     ]);
 

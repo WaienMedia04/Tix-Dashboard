@@ -23,4 +23,8 @@ export class ReportesQueryDto {
   @IsOptional()
   @IsString()
   departamento?: string;
+
+  @IsOptional()
+  @IsString()
+  talentoId?: string;
 }

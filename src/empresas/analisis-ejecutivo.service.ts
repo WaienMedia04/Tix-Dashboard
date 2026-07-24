@@ -46,7 +46,13 @@ export class AnalisisEjecutivoService {
       });
       return response.parsed_output;
     } catch (err) {
-      this.logger.warn(`No se pudo generar el análisis ejecutivo: ${err}`);
+      // A nivel `error` (no `warn`) porque esto nunca debería fallar en
+      // producción — si ANTHROPIC_API_KEY falta o es inválida, o el modelo
+      // no existe, el SDK lanza acá y antes quedaba enmascarado como un
+      // simple "no hay análisis" sin rastro en los logs.
+      this.logger.error(
+        `No se pudo generar el análisis ejecutivo: ${err instanceof Error ? err.stack : err}`,
+      );
       return null;
     }
   }

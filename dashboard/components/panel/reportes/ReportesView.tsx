@@ -46,7 +46,14 @@ function hoyIso(): string {
 }
 
 function filtroInicial(): FiltroReporteState {
-  return { periodo: "mensual", valor: mesActual(), fechaInicio: primerDiaMes(), fechaFin: hoyIso(), departamento: "" };
+  return {
+    periodo: "mensual",
+    valor: mesActual(),
+    fechaInicio: primerDiaMes(),
+    fechaFin: hoyIso(),
+    departamento: "",
+    talentoId: "",
+  };
 }
 
 function formatearRango(inicio: string, fin: string): string {
@@ -92,6 +99,7 @@ function ReporteResultado({ slug, filtro }: { slug: string; filtro: FiltroReport
       fechaInicio: filtro.periodo === "personalizado" ? filtro.fechaInicio : undefined,
       fechaFin: filtro.periodo === "personalizado" ? filtro.fechaFin : undefined,
       departamento: filtro.departamento || undefined,
+      talentoId: filtro.talentoId || undefined,
     })
       .then((datos) => {
         if (!cancelado) setEstado({ tipo: "listo", datos });
@@ -102,7 +110,7 @@ function ReporteResultado({ slug, filtro }: { slug: string; filtro: FiltroReport
     return () => {
       cancelado = true;
     };
-  }, [slug, filtro.periodo, filtro.valor, filtro.fechaInicio, filtro.fechaFin, filtro.departamento]);
+  }, [slug, filtro.periodo, filtro.valor, filtro.fechaInicio, filtro.fechaFin, filtro.departamento, filtro.talentoId]);
 
   if (estado.tipo === "cargando") {
     return (
@@ -160,8 +168,12 @@ function ReporteResultado({ slug, filtro }: { slug: string; filtro: FiltroReport
 }
 
 export function ReportesView() {
-  const { slug } = usePanel();
+  const { slug, dashboardInicial } = usePanel();
   const [filtro, setFiltro] = useState<FiltroReporteState>(filtroInicial);
+  const talentos = dashboardInicial.rankingTalentos.map((t) => ({
+    talentoId: t.talentoId,
+    nombreCompleto: t.nombreCompleto,
+  }));
 
   function cambiarPeriodo(periodo: PeriodoReporte) {
     setFiltro((prev) => ({
@@ -175,15 +187,17 @@ export function ReportesView() {
     <div className="space-y-4">
       <FiltroPeriodoReporte
         filtro={filtro}
+        talentos={talentos}
         onCambiarPeriodo={cambiarPeriodo}
         onCambiarValor={(valor) => setFiltro((prev) => ({ ...prev, valor }))}
         onCambiarFechaInicio={(fechaInicio) => setFiltro((prev) => ({ ...prev, fechaInicio }))}
         onCambiarFechaFin={(fechaFin) => setFiltro((prev) => ({ ...prev, fechaFin }))}
         onCambiarDepartamento={(departamento) => setFiltro((prev) => ({ ...prev, departamento }))}
+        onCambiarTalento={(talentoId) => setFiltro((prev) => ({ ...prev, talentoId }))}
       />
 
       <ReporteResultado
-        key={`${filtro.periodo}-${filtro.valor}-${filtro.fechaInicio}-${filtro.fechaFin}-${filtro.departamento}`}
+        key={`${filtro.periodo}-${filtro.valor}-${filtro.fechaInicio}-${filtro.fechaFin}-${filtro.departamento}-${filtro.talentoId}`}
         slug={slug}
         filtro={filtro}
       />

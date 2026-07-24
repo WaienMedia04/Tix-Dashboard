@@ -302,7 +302,7 @@ export interface ReporteEjecutivoResponse extends ReporteResponse {
 export async function fetchReporteEjecutivo(
   slug: string,
   periodo: PeriodoReporte,
-  opciones: { valor?: string; fechaInicio?: string; fechaFin?: string; departamento?: string },
+  opciones: { valor?: string; fechaInicio?: string; fechaFin?: string; departamento?: string; talentoId?: string },
 ): Promise<ReporteEjecutivoResponse> {
   const params = new URLSearchParams();
   params.set("periodo", periodo);
@@ -310,6 +310,7 @@ export async function fetchReporteEjecutivo(
   if (opciones.fechaInicio) params.set("fechaInicio", opciones.fechaInicio);
   if (opciones.fechaFin) params.set("fechaFin", opciones.fechaFin);
   if (opciones.departamento) params.set("departamento", opciones.departamento);
+  if (opciones.talentoId) params.set("talentoId", opciones.talentoId);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/reportes-ejecutivos?${params.toString()}`, {
     headers: await authHeaders(),
@@ -796,7 +797,7 @@ export async function fetchRankings(
 export async function fetchReporte(
   slug: string,
   periodo: PeriodoReporte,
-  opciones: { valor?: string; fechaInicio?: string; fechaFin?: string; departamento?: string },
+  opciones: { valor?: string; fechaInicio?: string; fechaFin?: string; departamento?: string; talentoId?: string },
 ): Promise<ReporteResponse> {
   const params = new URLSearchParams();
   params.set("periodo", periodo);
@@ -804,6 +805,7 @@ export async function fetchReporte(
   if (opciones.fechaInicio) params.set("fechaInicio", opciones.fechaInicio);
   if (opciones.fechaFin) params.set("fechaFin", opciones.fechaFin);
   if (opciones.departamento) params.set("departamento", opciones.departamento);
+  if (opciones.talentoId) params.set("talentoId", opciones.talentoId);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/reportes?${params.toString()}`, {
     headers: await authHeaders(),
