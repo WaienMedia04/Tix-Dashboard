@@ -9,8 +9,14 @@ function cargarImagen(src: string): Promise<HTMLImageElement> {
   });
 }
 
-/** Recorta `areaPixels` de la imagen en `imageSrc` y la reescala a un cuadrado de `outputSize`. */
-export async function recortarImagen(imageSrc: string, areaPixels: Area, outputSize = 512): Promise<Blob> {
+/**
+ * Recorta `areaPixels` de la imagen en `imageSrc` y la reescala a un cuadrado de `outputSize`.
+ * 1280 (no 512) a propósito: el carnet 3D del mural (Lanyard.tsx) dibuja esta
+ * foto dentro de una celda de ~839×1266px con "cover" — con un recorte más
+ * chico, ese paso amplía la imagen y se ve borrosa. A 1280 esa ampliación es
+ * ~1x, prácticamente sin pérdida visible.
+ */
+export async function recortarImagen(imageSrc: string, areaPixels: Area, outputSize = 1280): Promise<Blob> {
   const imagen = await cargarImagen(imageSrc);
   const canvas = document.createElement("canvas");
   canvas.width = outputSize;
