@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { BrainCircuit, CircleCheck, Download, FileText, Lightbulb, TriangleAlert } from "lucide-react";
+import { useState } from "react";
+import { BrainCircuit, CircleCheck, Download, FileText, Lightbulb, Sparkles, TriangleAlert } from "lucide-react";
 import { type PeriodoReporte, type ReporteEjecutivoResponse, fetchReporteEjecutivo } from "@/lib/api";
 import { usePanel } from "../PanelContext";
 import { FiltroPeriodoReporte, type FiltroReporteState } from "../reportes/FiltroPeriodoReporte";
@@ -119,53 +119,13 @@ function ListaAnalisis({
   );
 }
 
-type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; datos: ReporteEjecutivoResponse };
+type Estado =
+  | { tipo: "inicial" }
+  | { tipo: "cargando" }
+  | { tipo: "error" }
+  | { tipo: "listo"; datos: ReporteEjecutivoResponse };
 
-function ReporteEjecutivoResultado({ slug, filtro }: { slug: string; filtro: FiltroReporteState }) {
-  const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
-
-  useEffect(() => {
-    let cancelado = false;
-    fetchReporteEjecutivo(slug, filtro.periodo, {
-      valor: filtro.periodo === "personalizado" ? undefined : filtro.valor,
-      fechaInicio: filtro.periodo === "personalizado" ? filtro.fechaInicio : undefined,
-      fechaFin: filtro.periodo === "personalizado" ? filtro.fechaFin : undefined,
-      departamento: filtro.departamento || undefined,
-      talentoId: filtro.talentoId || undefined,
-    })
-      .then((datos) => {
-        if (!cancelado) setEstado({ tipo: "listo", datos });
-      })
-      .catch(() => {
-        if (!cancelado) setEstado({ tipo: "error" });
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [slug, filtro.periodo, filtro.valor, filtro.fechaInicio, filtro.fechaFin, filtro.departamento, filtro.talentoId]);
-
-  if (estado.tipo === "cargando") {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground shadow-card">
-          <BrainCircuit className="h-4 w-4 animate-pulse text-primary" />
-          Generando análisis ejecutivo con IA...
-        </div>
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <Skeleton className="h-40 w-full rounded-lg" />
-          <Skeleton className="h-40 w-full rounded-lg" />
-          <Skeleton className="h-40 w-full rounded-lg" />
-        </div>
-      </div>
-    );
-  }
-  if (estado.tipo === "error") {
-    return <p className="text-sm text-destructive">No se pudo cargar el reporte ejecutivo para este período.</p>;
-  }
-
-  const { datos } = estado;
-
+function ReporteEjecutivoContenido({ datos }: { datos: ReporteEjecutivoResponse }) {
   return (
     <div className="space-y-4">
       <div className="hidden print:block">
@@ -230,6 +190,7 @@ function ReporteEjecutivoResultado({ slug, filtro }: { slug: string; filtro: Fil
 export function ReportesEjecutivosView() {
   const { slug, dashboardInicial } = usePanel();
   const [filtro, setFiltro] = useState<FiltroReporteState>(filtroInicial);
+  const [estado, setEstado] = useState<Estado>({ tipo: "inicial" });
   const talentos = dashboardInicial.rankingTalentos.map((t) => ({
     talentoId: t.talentoId,
     nombreCompleto: t.nombreCompleto,
@@ -241,6 +202,22 @@ export function ReportesEjecutivosView() {
       periodo,
       valor: periodo === "mensual" ? mesActual() : periodo === "semanal" ? semanaActualIso() : anioActual(),
     }));
+  }
+
+  async function generar() {
+    setEstado({ tipo: "cargando" });
+    try {
+      const datos = await fetchReporteEjecutivo(slug, filtro.periodo, {
+        valor: filtro.periodo === "personalizado" ? undefined : filtro.valor,
+        fechaInicio: filtro.periodo === "personalizado" ? filtro.fechaInicio : undefined,
+        fechaFin: filtro.periodo === "personalizado" ? filtro.fechaFin : undefined,
+        departamento: filtro.departamento || undefined,
+        talentoId: filtro.talentoId || undefined,
+      });
+      setEstado({ tipo: "listo", datos });
+    } catch {
+      setEstado({ tipo: "error" });
+    }
   }
 
   return (
@@ -261,11 +238,43 @@ export function ReportesEjecutivosView() {
         onCambiarTalento={(talentoId) => setFiltro((prev) => ({ ...prev, talentoId }))}
       />
 
-      <ReporteEjecutivoResultado
-        key={`${filtro.periodo}-${filtro.valor}-${filtro.fechaInicio}-${filtro.fechaFin}-${filtro.departamento}-${filtro.talentoId}`}
-        slug={slug}
-        filtro={filtro}
-      />
+      <div className="print:hidden flex justify-end">
+        <button
+          onClick={() => void generar()}
+          disabled={estado.tipo === "cargando"}
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Sparkles className="h-4 w-4" />
+          {estado.tipo === "cargando" ? "Generando..." : "Generar reporte"}
+        </button>
+      </div>
+
+      {estado.tipo === "inicial" && (
+        <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Elige el período y los filtros, luego presiona “Generar reporte” — el análisis con IA tarda unos segundos.
+        </div>
+      )}
+
+      {estado.tipo === "cargando" && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground shadow-card">
+            <BrainCircuit className="h-4 w-4 animate-pulse text-primary" />
+            Generando análisis ejecutivo con IA...
+          </div>
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <Skeleton className="h-40 w-full rounded-lg" />
+            <Skeleton className="h-40 w-full rounded-lg" />
+            <Skeleton className="h-40 w-full rounded-lg" />
+          </div>
+        </div>
+      )}
+
+      {estado.tipo === "error" && (
+        <p className="text-sm text-destructive">No se pudo cargar el reporte ejecutivo para este período.</p>
+      )}
+
+      {estado.tipo === "listo" && <ReporteEjecutivoContenido datos={estado.datos} />}
     </div>
   );
 }
