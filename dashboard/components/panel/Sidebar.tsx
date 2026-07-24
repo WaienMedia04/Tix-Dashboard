@@ -23,6 +23,7 @@ import {
   Newspaper,
   NotebookPen,
   Settings,
+  Sparkles,
   Sun,
   Trophy,
   Users,
@@ -50,6 +51,13 @@ const GRUPOS: { titulo: string; items: ItemGrupo[] }[] = [
       { href: "dashboard", label: "Dashboard", icon: LayoutDashboard, color: "text-violet-400" },
       { href: "bitacoras", label: "Bitácoras", icon: NotebookPen, color: "text-cyan-400" },
       { href: "empleados", label: "Empleados", icon: Users, color: "text-emerald-400" },
+      {
+        href: "estampas",
+        label: "Estampas",
+        icon: Sparkles,
+        color: "text-pink-400",
+        rolesPermitidos: ["CEO", "RRHH"],
+      },
       {
         href: "murales",
         label: "Murales",

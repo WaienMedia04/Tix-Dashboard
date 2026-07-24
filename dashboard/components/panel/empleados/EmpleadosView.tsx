@@ -5,7 +5,6 @@ import { type EmpleadoResumen, fetchEmpleados } from "@/lib/api";
 import { usePanel } from "../PanelContext";
 import { FiltroDepartamento } from "../FiltroDepartamento";
 import { EmpleadoCard } from "./EmpleadoCard";
-import { EstampasCatalogo } from "./EstampasCatalogo";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { SkeletonCardGrid } from "@/components/motion/Skeleton";
 
@@ -15,10 +14,9 @@ type Estado =
   | { tipo: "listo"; empleados: EmpleadoResumen[] };
 
 export function EmpleadosView() {
-  const { slug, rol } = usePanel();
+  const { slug } = usePanel();
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [departamento, setDepartamento] = useState("");
-  const puedeGestionarEstampas = rol === "CEO" || rol === "RRHH";
 
   useEffect(() => {
     let cancelado = false;
@@ -64,7 +62,6 @@ export function EmpleadosView() {
   return (
     <div className="space-y-4">
       {filtro}
-      {puedeGestionarEstampas && <EstampasCatalogo slug={slug} empleados={estado.empleados} />}
 
       {estado.empleados.length === 0 ? (
         <p className="text-sm text-muted-foreground">No hay empleados registrados.</p>
