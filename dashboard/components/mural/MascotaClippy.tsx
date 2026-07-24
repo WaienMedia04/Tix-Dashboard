@@ -8,12 +8,13 @@ import { type MensajeMascota, chatMascota } from "@/lib/api";
 interface AgenteClippy {
   show(fast?: boolean): boolean;
   speak(texto: string, hold?: boolean): void;
-  /** Libera un balón abierto con hold:true y desatasca la cola de acciones — closeBalloon() NO lo hace, solo lo oculta visualmente. */
+  /** Desatasca la cola de acciones tras un speak con hold:true — pero NO oculta el globo (closeBalloon() tampoco solo, y encima demora 2s más). Hay que combinarlo con ocultar _balloon directamente para que desaparezca ya. */
   stopCurrent(): void;
   animate(): void;
   dispose(): void;
-  /** No está en los tipos públicos del paquete, pero es un campo de clase normal (no privado de verdad) — lo necesitamos para posicionar el chat. */
+  /** Estos dos campos no están en los tipos públicos del paquete, pero son campos de clase normales (no privados de verdad). */
   _el?: HTMLElement;
+  _balloon?: { hide(fast?: boolean): void };
 }
 
 type CargadorMascota = () => Promise<{ default: unknown }>;
@@ -32,7 +33,7 @@ const CARGADORES_MASCOTA: Record<string, CargadorMascota> = {
 };
 
 const MENSAJE_SALUDO = "¿En qué te puedo ayudar?";
-const DURACION_SALUDO_MS = 5000;
+const DURACION_SALUDO_MS = 3000;
 const INTERVALO_ANIMACION_MS = 60000;
 const VENTANA_DOBLE_CLICK_MS = 250;
 const UMBRAL_ARRASTRE_PX = 5;
@@ -72,7 +73,11 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
       agente.show();
       agente.speak(MENSAJE_SALUDO, true);
       temporizadorSaludo = setTimeout(() => {
+        // stopCurrent() desatasca la cola pero no oculta el globo — hay que
+        // ocultarlo aparte (y de inmediato, closeBalloon() del API público
+        // demora 2s más de lo que se pidió).
         agenteRef.current?.stopCurrent();
+        agenteRef.current?._balloon?.hide(true);
       }, DURACION_SALUDO_MS);
       setListo(true);
     }
