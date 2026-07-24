@@ -52,7 +52,6 @@ const CARGADORES_MASCOTA: Record<string, CargadorMascota> = {
   rover: () => import("clippyjs/agents/rover"),
 };
 
-const MENSAJE_SALUDO = "¿En qué te puedo ayudar?";
 const DURACION_SALUDO_MS = 3000;
 const DURACION_RESPUESTA_MS = 8000;
 const INTERVALO_ANIMACION_MS = 30000;
@@ -62,8 +61,22 @@ const ALTO_CHAT_PX = 44;
 const MARGEN_DOCK_PX = 16;
 const MAX_HISTORIAL = 6;
 
+function mensajeSaludo(nombreTalento: string, mascotaNombre: string | null): string {
+  if (!mascotaNombre) return "¿En qué te puedo ayudar?";
+  const primerNombre = nombreTalento.trim().split(/\s+/)[0] || "";
+  return `¡Hola ${primerNombre}! Soy ${mascotaNombre}, tu mascota. ¿En qué te puedo ayudar hoy?`;
+}
+
 /** Mascota animada tipo Clippy — solo vive en el mural propio (editable). */
-export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
+export function MascotaClippy({
+  mascotaId,
+  mascotaNombre,
+  nombreTalento,
+}: {
+  mascotaId: string | null;
+  mascotaNombre: string | null;
+  nombreTalento: string;
+}) {
   const agenteRef = useRef<AgenteClippy | null>(null);
   const [listo, setListo] = useState(false);
   const [chatAbierto, setChatAbierto] = useState(false);
@@ -143,7 +156,7 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
       }
       agente.show();
       if (agente._el) posicionarJuntoAlDock(agente._el);
-      mostrarConTiempo(agente, MENSAJE_SALUDO, DURACION_SALUDO_MS);
+      mostrarConTiempo(agente, mensajeSaludo(nombreTalento, mascotaNombre), DURACION_SALUDO_MS);
       setListo(true);
     }
     void cargar();

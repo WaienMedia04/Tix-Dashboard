@@ -25,6 +25,7 @@ const SELECT_PERFIL = {
   colorNombreId: true,
   colorWidgetsId: true,
   mascotaId: true,
+  mascotaNombre: true,
 } as const;
 
 const PERFIL_POR_DEFECTO = {
@@ -39,6 +40,7 @@ const PERFIL_POR_DEFECTO = {
   colorNombreId: 'cian_magenta',
   colorWidgetsId: 'vibrante',
   mascotaId: null,
+  mascotaNombre: null,
 };
 
 /** Recorta a 5, recorta espacios y descarta vacíos — misma limpieza al crear y al actualizar. */
@@ -243,6 +245,12 @@ export class MuralService {
           colorWidgetsId: dto.colorWidgetsId,
         }),
         ...(dto.mascotaId !== undefined && { mascotaId: dto.mascotaId }),
+        ...(dto.mascotaNombre !== undefined && {
+          mascotaNombre:
+            dto.mascotaNombre === null
+              ? null
+              : dto.mascotaNombre.trim() || null,
+        }),
       },
       update: {
         ...(dto.apodo !== undefined && { apodo: dto.apodo.trim() || null }),
@@ -270,6 +278,12 @@ export class MuralService {
           colorWidgetsId: dto.colorWidgetsId,
         }),
         ...(dto.mascotaId !== undefined && { mascotaId: dto.mascotaId }),
+        ...(dto.mascotaNombre !== undefined && {
+          mascotaNombre:
+            dto.mascotaNombre === null
+              ? null
+              : dto.mascotaNombre.trim() || null,
+        }),
       },
       select: SELECT_PERFIL,
     });

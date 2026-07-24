@@ -70,4 +70,11 @@ export class ActualizarPerfilMuralDto {
   @ValidateIf((o: ActualizarPerfilMuralDto) => o.mascotaId !== null)
   @IsIn(MASCOTA_IDS)
   mascotaId?: string | null;
+
+  /** Nombre propio que el talento le puso a su mascota — null explícito para quitarlo. */
+  @IsOptional()
+  @ValidateIf((o: ActualizarPerfilMuralDto) => o.mascotaNombre !== null)
+  @IsString()
+  @MaxLength(30)
+  mascotaNombre?: string | null;
 }

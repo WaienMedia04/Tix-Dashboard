@@ -1192,6 +1192,8 @@ export interface PerfilMural {
   colorWidgetsId: string;
   /** Mascota animada tipo Clippy elegida — ver dashboard/lib/mural-mascotas.ts. null si no eligió ninguna. */
   mascotaId: string | null;
+  /** Nombre propio que el talento le puso a su mascota — null si no le puso ninguno. */
+  mascotaNombre: string | null;
 }
 
 export interface NotaMural {

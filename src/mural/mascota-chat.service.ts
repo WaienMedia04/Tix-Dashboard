@@ -93,8 +93,11 @@ function campoTexto(valor: unknown): string {
   return typeof valor === 'string' ? valor : '';
 }
 
-function promptSistema(nombre: string): string {
-  return `Eres la mascota animada del mural de ${nombre} en TalentiX, un panel de gestión de talento. Tu personalidad es amigable, breve y motivadora — como Clippy de Microsoft Office pero simpático, no molesto. Respondes SIEMPRE en español, en 1-3 frases cortas: esto se muestra en un globo de diálogo pequeño, no en un chat largo. Puedes usar las herramientas disponibles para consultar datos reales del talento o realizar acciones que te pida (cambiar su estado, dejar una nota en un mural). Nunca inventes datos — si necesitas información real, usa la herramienta correspondiente en vez de suponer. Si te piden algo fuera de tu alcance (editar bitácoras, ver datos privados de otros, etc.), dilo con amabilidad y explica que no puedes hacerlo.`;
+function promptSistema(nombre: string, mascotaNombre: string | null): string {
+  const presentacion = mascotaNombre
+    ? `Te llamas "${mascotaNombre}" — así te debes referir a ti misma cuando haga falta.`
+    : `Todavía no tienes un nombre propio — el talento puede ponerte uno desde el menú de la mascota.`;
+  return `Eres la mascota animada del mural de ${nombre} en TalentiX, un panel de gestión de talento. ${presentacion} Tu personalidad es amigable, breve y motivadora — como Clippy de Microsoft Office pero simpático, no molesto. Respondes SIEMPRE en español, en 1-3 frases cortas: esto se muestra en un globo de diálogo pequeño, no en un chat largo. Puedes usar las herramientas disponibles para consultar datos reales del talento o realizar acciones que te pida (cambiar su estado, dejar una nota en un mural). Nunca inventes datos — si necesitas información real, usa la herramienta correspondiente en vez de suponer. Si te piden algo fuera de tu alcance (editar bitácoras, ver datos privados de otros, etc.), dilo con amabilidad y explica que no puedes hacerlo.`;
 }
 
 /**
@@ -143,15 +146,24 @@ export class MascotaChatService {
     }
     const talentoId = actor.usuario.talentoId;
 
-    const talento = await this.prisma.talento.findUniqueOrThrow({
-      where: { id: talentoId },
-      select: { nombreCompleto: true, empresaId: true },
-    });
+    const [talento, perfil] = await Promise.all([
+      this.prisma.talento.findUniqueOrThrow({
+        where: { id: talentoId },
+        select: { nombreCompleto: true, empresaId: true },
+      }),
+      this.prisma.talentoPerfilMural.findUnique({
+        where: { talentoId },
+        select: { mascotaNombre: true },
+      }),
+    ]);
 
     const mensajes: MensajeModelo[] = [
       {
         role: 'system',
-        content: promptSistema(talento.nombreCompleto.split(' ')[0]),
+        content: promptSistema(
+          talento.nombreCompleto.split(' ')[0],
+          perfil?.mascotaNombre ?? null,
+        ),
       },
       ...historial.slice(-MAX_TURNOS_HISTORIAL).map(
         (m): MensajeModelo => ({

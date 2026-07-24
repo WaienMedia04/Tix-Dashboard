@@ -349,6 +349,9 @@ model TalentoPerfilMural {
   /// Mascota animada tipo Clippy elegida por el talento para su mural — id
   /// de dashboard/lib/mural-mascotas.ts, o null si no eligió ninguna.
   mascotaId       String?
+  /// Nombre propio que el talento le puso a su mascota (ej. "Mishi") — si
+  /// es null, el saludo usa el nombre genérico del personaje.
+  mascotaNombre   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

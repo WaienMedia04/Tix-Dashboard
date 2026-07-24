@@ -284,7 +284,13 @@ export function MiMuralView({
         </div>
       )}
 
-      {editable && <MascotaClippy mascotaId={mural.perfil.mascotaId} />}
+      {editable && (
+        <MascotaClippy
+          mascotaId={mural.perfil.mascotaId}
+          mascotaNombre={mural.perfil.mascotaNombre}
+          nombreTalento={nombreCompleto}
+        />
+      )}
 
       <div className="fixed top-14 right-3 z-0 w-[190px] max-w-[50vw] origin-top-right scale-[0.72] print:hidden">
         <div className="-rotate-2 rounded-md border-4 border-white bg-white p-1 shadow-lg">
@@ -432,8 +438,12 @@ export function MiMuralView({
               <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Mascota</p>
               <SelectorMascota
                 mascotaId={mural.perfil.mascotaId}
+                mascotaNombre={mural.perfil.mascotaNombre}
                 onCambiado={(mascotaId) =>
                   setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, mascotaId } } : prev))
+                }
+                onCambiadoNombre={(mascotaNombre) =>
+                  setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, mascotaNombre } } : prev))
                 }
               />
             </div>
