@@ -30,9 +30,11 @@ interface AgenteClippy {
   stopCurrent(): void;
   animate(): void;
   dispose(): void;
-  /** Estos dos campos no están en los tipos públicos del paquete, pero son campos de clase normales (no privados de verdad). */
+  /** Estos campos no están en los tipos públicos del paquete, pero son campos de clase normales (no privados de verdad). */
   _el?: HTMLElement;
   _balloon?: { hide(fast?: boolean): void };
+  /** El listener que arma el arrastre — se le puede quitar para que la mascota se quede fija en su sitio. */
+  _mouseDownHandle?: (e: MouseEvent) => void;
 }
 
 type CargadorMascota = () => Promise<{ default: unknown }>;
@@ -55,8 +57,9 @@ const DURACION_SALUDO_MS = 3000;
 const DURACION_RESPUESTA_MS = 8000;
 const INTERVALO_ANIMACION_MS = 30000;
 const VENTANA_DOBLE_CLICK_MS = 250;
-const UMBRAL_ARRASTRE_PX = 5;
 const ANCHO_CHAT_PX = 224;
+const ALTO_CHAT_PX = 44;
+const MARGEN_DOCK_PX = 16;
 const MAX_HISTORIAL = 6;
 
 /** Mascota animada tipo Clippy — solo vive en el mural propio (editable). */
@@ -91,6 +94,21 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
     }, duracionMs);
   }
 
+  // Ancla la mascota pegada al lado derecho del Dock (mismo elemento .dock-panel
+  // que ya usa la barra de iconos abajo), alineando su base con la del Dock.
+  function posicionarJuntoAlDock(el: HTMLElement) {
+    const dock = document.querySelector<HTMLElement>(".dock-panel");
+    if (!dock) return;
+    const dockRect = dock.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    let left = dockRect.right + MARGEN_DOCK_PX;
+    if (left + elRect.width > window.innerWidth - 8) {
+      left = window.innerWidth - elRect.width - 8;
+    }
+    el.style.left = `${left}px`;
+    el.style.top = `${dockRect.bottom - elRect.height}px`;
+  }
+
   // Carga el agente elegido y lo muestra con un saludo que se cierra solo a los 3s.
   useEffect(() => {
     let cancelado = false;
@@ -109,7 +127,12 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
         return;
       }
       agenteRef.current = agente;
+      // Se quiere fija junto al Dock, no arrastrable por el talento.
+      if (agente._el && agente._mouseDownHandle) {
+        agente._el.removeEventListener("mousedown", agente._mouseDownHandle);
+      }
       agente.show();
+      if (agente._el) posicionarJuntoAlDock(agente._el);
       mostrarConTiempo(agente, MENSAJE_SALUDO, DURACION_SALUDO_MS);
       setListo(true);
     }
@@ -124,6 +147,17 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
      
   }, [mascotaId]);
 
+  // Si cambia el tamaño de ventana, la vuelve a pegar al Dock (que también se recentra).
+  useEffect(() => {
+    if (!listo) return;
+    function onResize() {
+      if (agenteRef.current?._el) posicionarJuntoAlDock(agenteRef.current._el);
+    }
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+     
+  }, [listo]);
+
   // Cada 10s hace una animación aleatoria para no quedarse fija.
   useEffect(() => {
     if (!listo) return;
@@ -135,46 +169,30 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
 
   function calcularPosicionChat(el: HTMLElement): { top: number; left: number } {
     const rect = el.getBoundingClientRect();
-    let left = rect.left;
-    if (left + ANCHO_CHAT_PX > window.innerWidth - 8) left = window.innerWidth - ANCHO_CHAT_PX - 8;
+    // A la derecha de la mascota — si no cabe (pantalla angosta), a la izquierda.
+    let left = rect.right + 8;
+    if (left + ANCHO_CHAT_PX > window.innerWidth - 8) left = rect.left - ANCHO_CHAT_PX - 8;
     if (left < 8) left = 8;
-    let top = rect.bottom + 8;
-    if (top + 56 > window.innerHeight - 8) top = Math.max(8, rect.top - 56 - 8);
+    // Centrado verticalmente con la mascota.
+    let top = rect.top + rect.height / 2 - ALTO_CHAT_PX / 2;
+    if (top < 8) top = 8;
+    if (top + ALTO_CHAT_PX > window.innerHeight - 8) top = window.innerHeight - ALTO_CHAT_PX - 8;
     return { top, left };
   }
 
-  // Un solo click abre/cierra el chat justo debajo de la mascota. El doble
+  // Un solo click abre/cierra el chat a la derecha de la mascota. El doble
   // click ya lo maneja la librería sola (juega una animación) — aquí solo
-  // hay que evitar que un click de más dispare el chat, y que un arrastre
-  // (mousedown + mover + soltar) se confunda con un click real.
+  // hay que esperar un poco antes de reaccionar al primer click, para no
+  // dispararlo también cuando en realidad era el inicio de un doble click.
+  // (No hace falta distinguir de un arrastre: la mascota ya no es arrastrable.)
   useEffect(() => {
     if (!listo) return;
     const el = agenteRef.current?._el;
     if (!el) return;
 
-    let bajando = false;
-    let seMovio = false;
-    let bajadaX = 0;
-    let bajadaY = 0;
     let temporizadorClick: ReturnType<typeof setTimeout> | null = null;
 
-    function onMouseDown(e: MouseEvent) {
-      bajando = true;
-      seMovio = false;
-      bajadaX = e.clientX;
-      bajadaY = e.clientY;
-    }
-    function onMouseMove(e: MouseEvent) {
-      if (!bajando) return;
-      if (Math.abs(e.clientX - bajadaX) > UMBRAL_ARRASTRE_PX || Math.abs(e.clientY - bajadaY) > UMBRAL_ARRASTRE_PX) {
-        seMovio = true;
-      }
-    }
-    function onMouseUp() {
-      bajando = false;
-    }
     function onClick() {
-      if (seMovio) return;
       if (temporizadorClick) {
         // Es el segundo click de un doble click — lo maneja la librería sola.
         clearTimeout(temporizadorClick);
@@ -193,15 +211,9 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
       }, VENTANA_DOBLE_CLICK_MS);
     }
 
-    el.addEventListener("mousedown", onMouseDown);
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
     el.addEventListener("click", onClick);
     return () => {
       if (temporizadorClick) clearTimeout(temporizadorClick);
-      el.removeEventListener("mousedown", onMouseDown);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
       el.removeEventListener("click", onClick);
     };
   }, [listo]);
