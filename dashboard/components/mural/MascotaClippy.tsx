@@ -197,7 +197,7 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
   return (
     <div
       style={{ position: "fixed", top: posicionChat.top, left: posicionChat.left, zIndex: 10002 }}
-      className="flex w-56 items-center gap-1.5 rounded-full border border-border bg-card/95 p-1.5 shadow-elegant backdrop-blur-sm print:hidden"
+      className="flex w-56 items-center gap-1.5 rounded-full border border-white/10 bg-zinc-900/95 p-1.5 shadow-elegant backdrop-blur-sm print:hidden"
     >
       <input
         autoFocus
@@ -209,7 +209,7 @@ export function MascotaClippy({ mascotaId }: { mascotaId: string | null }) {
         placeholder="Pregúntale a tu mascota..."
         maxLength={500}
         disabled={enviando}
-        className="min-w-0 flex-1 bg-transparent px-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
+        className="min-w-0 flex-1 bg-transparent px-2 text-xs text-white placeholder:text-zinc-400 focus:outline-none disabled:opacity-50"
       />
       <button
         onClick={() => void enviar()}
