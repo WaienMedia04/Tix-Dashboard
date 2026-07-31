@@ -13,10 +13,17 @@ import { NovedadesQueryDto } from './dto/novedades-query.dto';
 
 const ETIQUETA_NOVEDAD: Record<TipoNovedad, string> = {
   LOGRO: '🏆 Logro',
+  EXITO: '🎉 Éxito',
   BUENA_ACCION: '💛 Buena acción',
+  COSA_BUENA: '👍 Cosa buena',
+  TARDANZA: '🕐 Tardanza',
   AUSENCIA: 'Ausencia',
+  PERMISO: '📄 Permiso',
+  NO_CUMPLIMIENTO: '⚠️ No cumplimiento',
   ERROR: '⚠️ Error',
-  SITUACION: 'Situación',
+  SITUACION: '💬 Situación',
+  EVENTO: '🎉 Evento',
+  NOTA: '📝 Nota',
 };
 
 const SELECT_NOVEDAD = {

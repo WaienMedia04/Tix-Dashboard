@@ -1,26 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertOctagon, CalendarX, FileText, HeartHandshake, Plus, Trophy } from "lucide-react";
+import { Plus } from "lucide-react";
 import { type NovedadItem, type TipoNovedad, crearNovedad, fetchNovedades } from "@/lib/api";
+import { TIPOS_NOVEDAD as TIPOS, metaTipoNovedad as metaTipo } from "@/lib/novedades-tipos";
 import { usePanel } from "../PanelContext";
 import { FiltroDepartamento } from "../FiltroDepartamento";
 import { Avatar } from "@/components/Avatar";
 import { EnlaceTalento } from "@/components/EnlaceTalento";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { SkeletonTableRows } from "@/components/motion/Skeleton";
-
-const TIPOS: { valor: TipoNovedad; label: string; icon: typeof Trophy; texto: string; fondo: string }[] = [
-  { valor: "LOGRO", label: "Logro", icon: Trophy, texto: "text-success", fondo: "bg-success/10" },
-  { valor: "BUENA_ACCION", label: "Buena acción", icon: HeartHandshake, texto: "text-success", fondo: "bg-success/10" },
-  { valor: "AUSENCIA", label: "Ausencia", icon: CalendarX, texto: "text-warning", fondo: "bg-warning/10" },
-  { valor: "ERROR", label: "Error", icon: AlertOctagon, texto: "text-destructive", fondo: "bg-destructive/10" },
-  { valor: "SITUACION", label: "Situación", icon: FileText, texto: "text-info", fondo: "bg-info/10" },
-];
-
-function metaTipo(tipo: TipoNovedad) {
-  return TIPOS.find((t) => t.valor === tipo) ?? TIPOS[4];
-}
 
 const CAMPO_CLASES =
   "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring";

@@ -647,7 +647,19 @@ export async function fetchAlertas(slug: string, departamento?: string): Promise
   return res.json();
 }
 
-export type TipoNovedad = "LOGRO" | "BUENA_ACCION" | "AUSENCIA" | "ERROR" | "SITUACION";
+export type TipoNovedad =
+  | "LOGRO"
+  | "EXITO"
+  | "BUENA_ACCION"
+  | "COSA_BUENA"
+  | "TARDANZA"
+  | "AUSENCIA"
+  | "PERMISO"
+  | "NO_CUMPLIMIENTO"
+  | "ERROR"
+  | "SITUACION"
+  | "EVENTO"
+  | "NOTA";
 
 export interface NovedadItem {
   id: string;

@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, PenSquare } from "lucide-react";
+import { useState } from "react";
+import { Megaphone, Menu, PenSquare } from "lucide-react";
 import { usePanel } from "./PanelContext";
 import { CampanaNotificaciones } from "@/components/notificaciones/CampanaNotificaciones";
 import { MenuUsuario } from "./MenuUsuario";
+import { NuevaNovedadModal } from "./NuevaNovedadModal";
 import { SelectorSucursal } from "./SelectorSucursal";
 
 export function Header({
@@ -17,9 +19,10 @@ export function Header({
   plan: string;
   onAbrirMenu?: () => void;
 }) {
-  const { slug } = usePanel();
+  const { slug, rol } = usePanel();
   const pathname = usePathname();
   const segmento = pathname.split("/").filter(Boolean)[1] ?? "dashboard";
+  const [mostrarNuevaNovedad, setMostrarNuevaNovedad] = useState(false);
 
   const SECCIONES: Record<string, { titulo: string; subtitulo: string }> = {
     dashboard: {
@@ -56,6 +59,16 @@ export function Header({
       </div>
       <div className="flex shrink-0 items-center gap-3">
         <SelectorSucursal />
+        {(rol === "CEO" || rol === "RRHH") && (
+          <button
+            onClick={() => setMostrarNuevaNovedad(true)}
+            aria-label="Registrar novedad"
+            title="Registrar novedad"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <Megaphone className="h-4.5 w-4.5" />
+          </button>
+        )}
         <Link
           href={`/${slug}/mi-mural`}
           aria-label="Mi Mural"
@@ -72,6 +85,7 @@ export function Header({
         <div className="h-6 w-px shrink-0 bg-border" />
         <MenuUsuario />
       </div>
+      <NuevaNovedadModal open={mostrarNuevaNovedad} onClose={() => setMostrarNuevaNovedad(false)} />
     </header>
   );
 }

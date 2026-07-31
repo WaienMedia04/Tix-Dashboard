@@ -16,10 +16,17 @@ enum Rol {
 
 enum TipoNovedad {
   LOGRO
+  EXITO
   BUENA_ACCION
+  COSA_BUENA
+  TARDANZA
   AUSENCIA
+  PERMISO
+  NO_CUMPLIMIENTO
   ERROR
   SITUACION
+  EVENTO
+  NOTA
 }
 
 enum TipoAusencia {
