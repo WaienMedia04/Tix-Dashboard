@@ -10,4 +10,8 @@ export class KpisQueryDto {
   @IsOptional()
   @IsString()
   departamento?: string;
+
+  @IsOptional()
+  @IsString()
+  talentoId?: string;
 }

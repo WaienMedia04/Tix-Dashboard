@@ -330,10 +330,11 @@ export function BoletinView() {
   const { slug } = usePanel();
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [editando, setEditando] = useState<BoletinItem | null>(null);
+  const [filtroTipo, setFiltroTipo] = useState<TipoBoletin | "">("");
 
   useEffect(() => {
     let cancelado = false;
-    fetchBoletin(slug)
+    fetchBoletin(slug, { tipo: filtroTipo || undefined })
       .then((r) => {
         if (!cancelado) setEstado({ tipo: "listo", items: r.data });
       })
@@ -343,7 +344,7 @@ export function BoletinView() {
     return () => {
       cancelado = true;
     };
-  }, [slug]);
+  }, [slug, filtroTipo]);
 
   function handleGuardado(item: BoletinItem, esEdicion: boolean) {
     setEstado((prev) => {
@@ -368,11 +369,34 @@ export function BoletinView() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="font-display text-lg font-semibold text-foreground">Mural informativo</h1>
-        <p className="text-sm text-muted-foreground">
-          Noticias, eventos y blog visibles para todo el equipo, junto a la Pizarra en el mural de cada talento.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-lg font-semibold text-foreground">Mural informativo</h1>
+          <p className="text-sm text-muted-foreground">
+            Noticias, eventos y blog visibles para todo el equipo, junto a la Pizarra en el mural de cada talento.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setFiltroTipo("")}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition-colors ${
+              filtroTipo === "" ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Todos
+          </button>
+          {TIPOS.map((t) => (
+            <button
+              key={t.valor}
+              onClick={() => setFiltroTipo(t.valor)}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition-colors ${
+                filtroTipo === t.valor ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <FormularioBoletin slug={slug} editando={editando} onGuardado={handleGuardado} onCancelarEdicion={() => setEditando(null)} />
@@ -389,7 +413,7 @@ export function BoletinView() {
       {estado.tipo === "error" && <p className="text-sm text-destructive">No se pudo cargar el mural informativo.</p>}
       {estado.tipo === "listo" && estado.items.length === 0 && (
         <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-card">
-          Todavía no hay nada publicado.
+          {filtroTipo ? "No hay publicaciones de este tipo." : "Todavía no hay nada publicado."}
         </div>
       )}
       {estado.tipo === "listo" && estado.items.length > 0 && (

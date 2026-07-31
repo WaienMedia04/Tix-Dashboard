@@ -5,6 +5,7 @@ import { AlertTriangle, Award, CheckCircle2, Sparkles } from "lucide-react";
 import { type KpisResponse, fetchKpis } from "@/lib/api";
 import { usePanel } from "../PanelContext";
 import { FiltroDepartamento } from "../FiltroDepartamento";
+import { BuscadorEmpleado } from "../BuscadorEmpleado";
 import { MetricCard } from "@/components/MetricCard";
 import { EvolucionPuntajeChart } from "./EvolucionPuntajeChart";
 import { BitacorasSemanalChart } from "./BitacorasSemanalChart";
@@ -22,13 +23,23 @@ function periodoActual(): string {
 
 type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; datos: KpisResponse };
 
-function KpisResultado({ slug, periodo, departamento }: { slug: string; periodo: string; departamento: string }) {
+function KpisResultado({
+  slug,
+  periodo,
+  departamento,
+  talentoId,
+}: {
+  slug: string;
+  periodo: string;
+  departamento: string;
+  talentoId: string;
+}) {
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [detalleKey, setDetalleKey] = useState<KpisDetalleKey | null>(null);
 
   useEffect(() => {
     let cancelado = false;
-    fetchKpis(slug, periodo, departamento || undefined)
+    fetchKpis(slug, periodo, departamento || undefined, talentoId || undefined)
       .then((datos) => {
         if (!cancelado) setEstado({ tipo: "listo", datos });
       })
@@ -38,7 +49,7 @@ function KpisResultado({ slug, periodo, departamento }: { slug: string; periodo:
     return () => {
       cancelado = true;
     };
-  }, [slug, periodo, departamento]);
+  }, [slug, periodo, departamento, talentoId]);
 
   if (estado.tipo === "cargando") {
     return (
@@ -134,9 +145,11 @@ function KpisResultado({ slug, periodo, departamento }: { slug: string; periodo:
 }
 
 export function KpisView() {
-  const { slug } = usePanel();
+  const { slug, dashboardInicial } = usePanel();
+  const talentos = dashboardInicial.rankingTalentos;
   const [periodo, setPeriodo] = useState(periodoActual);
   const [departamento, setDepartamento] = useState("");
+  const [talentoId, setTalentoId] = useState("");
 
   return (
     <div className="space-y-4">
@@ -150,10 +163,17 @@ export function KpisView() {
             className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
           />
         </div>
+        <BuscadorEmpleado talentos={talentos} valor={talentoId} onChange={setTalentoId} />
         <FiltroDepartamento value={departamento} onChange={setDepartamento} />
       </div>
 
-      <KpisResultado key={`${periodo}-${departamento}`} slug={slug} periodo={periodo} departamento={departamento} />
+      <KpisResultado
+        key={`${periodo}-${departamento}-${talentoId}`}
+        slug={slug}
+        periodo={periodo}
+        departamento={departamento}
+        talentoId={talentoId}
+      />
     </div>
   );
 }

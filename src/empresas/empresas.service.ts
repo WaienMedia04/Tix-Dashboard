@@ -112,11 +112,15 @@ export class EmpresasService {
    * este listado es intencionalmente abierto a toda la empresa — el mural
    * es un espacio social, no un dato sensible de desempeño.
    */
-  async muralDirectorio(slug: string, actor: Actor) {
+  async muralDirectorio(slug: string, actor: Actor, departamento?: string) {
     const empresa = await this.resolverEmpresa(slug, actor);
 
     return this.prisma.talento.findMany({
-      where: { empresaId: empresa.id, estado: 'activo' },
+      where: {
+        empresaId: empresa.id,
+        estado: 'activo',
+        ...(departamento && { departamento }),
+      },
       select: { id: true, nombreCompleto: true, rol: true, fotoUrl: true },
       orderBy: { nombreCompleto: 'asc' },
     });
@@ -739,7 +743,19 @@ export class EmpresasService {
       this.prisma,
       query.departamento,
     );
-    const talentoIdFiltro = alcance !== null ? { in: alcance } : undefined;
+    // Si pide un talentoId puntual fuera de su alcance, no se le revela que
+    // existe — mismo criterio que reportes().
+    const talentoFueraDeAlcance =
+      alcance !== null &&
+      !!query.talentoId &&
+      !alcance.includes(query.talentoId);
+    const talentoIdFiltro = talentoFueraDeAlcance
+      ? { in: [] as string[] }
+      : query.talentoId
+        ? query.talentoId
+        : alcance !== null
+          ? { in: alcance }
+          : undefined;
 
     const ahora = new Date();
     const periodo =
@@ -843,7 +859,12 @@ export class EmpresasService {
         select: { talentoId: true, puntajeIA: true },
       }),
       this.prisma.talento.findMany({
-        where: talentoActivoScopeWhere(actor, query.departamento),
+        where: talentoFueraDeAlcance
+          ? { id: '__ninguno__', empresaId: empresa.id }
+          : {
+              ...talentoActivoScopeWhere(actor, query.departamento),
+              ...(query.talentoId && { id: query.talentoId }),
+            },
       }),
       this.prisma.worklog.findMany({
         where: {
@@ -1587,12 +1608,33 @@ export class EmpresasService {
    * de mes, para detectar inactividad). Siempre refleja el estado real,
    * nunca queda desactualizada.
    */
-  async alertas(slug: string, actor: Actor, departamento?: string) {
+  async alertas(
+    slug: string,
+    actor: Actor,
+    departamento?: string,
+    talentoId?: string,
+  ) {
     const empresa = await this.resolverEmpresa(slug, actor);
+
+    // Igual criterio que reportes()/kpis(): un talentoId fuera del alcance
+    // del actor no debe filtrarse "encima" del scope — nunca se revela que
+    // ese talento existe.
+    const alcance = await resolverAlcanceTalentoIds(
+      actor,
+      this.prisma,
+      departamento,
+    );
+    const talentoFueraDeAlcance =
+      alcance !== null && !!talentoId && !alcance.includes(talentoId);
 
     const [talentos, worklogsDesc] = await Promise.all([
       this.prisma.talento.findMany({
-        where: talentoActivoScopeWhere(actor, departamento),
+        where: talentoFueraDeAlcance
+          ? { id: '__ninguno__', empresaId: empresa.id }
+          : {
+              ...talentoActivoScopeWhere(actor, departamento),
+              ...(talentoId && { id: talentoId }),
+            },
       }),
       this.prisma.worklog.findMany({
         where: { empresaId: empresa.id },
@@ -1762,7 +1804,14 @@ export class EmpresasService {
   ) {
     const datosReporte = await this.reportes(slug, actor, query);
 
+    const alcance = query.talentoId
+      ? `una persona específica: ${datosReporte.detalle[0]?.nombre ?? 'talento fuera de alcance'}`
+      : query.departamento
+        ? `el departamento "${query.departamento}"`
+        : 'toda la empresa';
+
     const analisis = await this.analisisEjecutivo.generar({
+      alcance,
       periodo: datosReporte.periodo,
       rango: { desde: datosReporte.rangoInicio, hasta: datosReporte.rangoFin },
       resumen: datosReporte.resumen,

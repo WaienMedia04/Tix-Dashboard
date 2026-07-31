@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, ClipboardList, Sparkles, Users } from "lucide-react";
-import type { DashboardData } from "@/lib/api";
+import { type DashboardData, fetchDashboard } from "@/lib/api";
 import { usePanel } from "./PanelContext";
+import { FiltroDepartamento } from "./FiltroDepartamento";
 import { MetricCard } from "../MetricCard";
 import { RankingTalentos } from "../RankingTalentos";
 import { StaggerGroup, StaggerItem } from "../motion/Stagger";
@@ -15,6 +16,7 @@ import { ResumenHoyCard } from "./dashboard/ResumenHoyCard";
 import { ActividadEquipo } from "./dashboard/ActividadEquipo";
 import { DashboardDetalleModal, type DashboardDetalleKey } from "./DashboardDetalleModal";
 import { WorklogDetalleModal, worklogRecienteADetalle } from "./bitacoras/WorklogDetalleModal";
+import { SkeletonStatCards } from "@/components/motion/Skeleton";
 
 function puntajeIAPromedioGlobal(data: DashboardData): string {
   const conPuntaje = data.rankingTalentos.filter((t) => t.puntajeIAPromedio !== null);
@@ -29,8 +31,7 @@ function mesEnCurso(): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
-export function DashboardResumen() {
-  const { dashboardInicial: data } = usePanel();
+function DashboardContenido({ data }: { data: DashboardData }) {
   const [detalleKey, setDetalleKey] = useState<DashboardDetalleKey | null>(null);
   const bitacoraReciente = data.worklogsRecientes[0];
   const [verBitacoraReciente, setVerBitacoraReciente] = useState(false);
@@ -127,5 +128,60 @@ export function DashboardResumen() {
         onClose={() => setVerBitacoraReciente(false)}
       />
     </StaggerGroup>
+  );
+}
+
+/**
+ * Cuando hay un departamento seleccionado empieza sin data (fetch propio);
+ * sin filtro, arranca directo con el snapshot inicial del servidor — así
+ * "Todos" nunca dispara un fetch de más. Se monta con key={departamento}
+ * desde el padre para que cambiar el filtro reinicie este estado sin
+ * necesidad de un setState síncrono dentro de un efecto.
+ */
+function DashboardResultado({
+  slug,
+  departamento,
+  dashboardInicial,
+}: {
+  slug: string;
+  departamento: string;
+  dashboardInicial: DashboardData;
+}) {
+  const [data, setData] = useState<DashboardData | null>(departamento ? null : dashboardInicial);
+
+  useEffect(() => {
+    if (!departamento) return;
+    let cancelado = false;
+    fetchDashboard(slug, departamento)
+      .then((datos) => {
+        if (!cancelado) setData(datos);
+      })
+      .catch(() => {});
+    return () => {
+      cancelado = true;
+    };
+  }, [slug, departamento]);
+
+  if (!data) {
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <SkeletonStatCards count={6} />
+      </div>
+    );
+  }
+  return <DashboardContenido data={data} />;
+}
+
+export function DashboardResumen() {
+  const { slug, dashboardInicial } = usePanel();
+  const [departamento, setDepartamento] = useState("");
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <FiltroDepartamento value={departamento} onChange={setDepartamento} />
+      </div>
+      <DashboardResultado key={departamento} slug={slug} departamento={departamento} dashboardInicial={dashboardInicial} />
+    </div>
   );
 }

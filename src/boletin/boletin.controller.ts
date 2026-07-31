@@ -30,11 +30,13 @@ export class BoletinController {
     @Param('slug') slug: string,
     @Query('cursorId') cursorId: string | undefined,
     @Query('limit') limit: string | undefined,
+    @Query('tipo') tipo: string | undefined,
     @Req() req: RequestConActor,
   ) {
     return this.boletinService.listar(slug, req.actor!, {
       cursorId,
       limit: limit ? Number(limit) : undefined,
+      tipo,
     });
   }
 

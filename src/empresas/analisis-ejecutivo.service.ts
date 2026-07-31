@@ -13,12 +13,17 @@ export type AnalisisEjecutivo = z.infer<typeof AnalisisEjecutivoSchema>;
 
 const MODELO = 'mistral-large-latest';
 
-const PROMPT_BASE = `Eres un analista de RRHH senior. A partir de los datos agregados de desempeño de un equipo (ya calculados — no los inventes ni los cambies), escribe un análisis ejecutivo breve en español dominicano, para que lo lea un CEO o la gerencia de RRHH.
+const PROMPT_BASE = `Eres un analista de RRHH senior. A partir de los datos agregados de desempeño (ya calculados — no los inventes ni los cambies), escribe un análisis ejecutivo breve en español dominicano, para que lo lea un CEO o la gerencia de RRHH.
+
+El campo "alcance" de los datos indica sobre quién es este análisis específico. Ajusta el lenguaje estrictamente a ese alcance:
+- Si el alcance es una persona puntual, el análisis es exclusivamente sobre ESA persona: usa su nombre, habla en singular ("mostró", "su cumplimiento"), y NO menciones "el equipo" ni generalices al resto de la empresa aunque el JSON incluya campos agregados.
+- Si el alcance es un departamento, enfócate solo en ese departamento — no hables de otros departamentos ni de la empresa completa.
+- Si el alcance es toda la empresa, sí puedes hablar del equipo/la empresa en general.
 
 Instrucciones:
-- resumenEjecutivo: 2-3 frases con el estado general del equipo en el período.
-- fortalezas: 2-4 puntos concretos basados en los datos (ej. empleados con alto puntaje, buen cumplimiento).
-- riesgos: 2-4 puntos concretos sobre riesgos reales presentes en los datos (ej. empleados con bajo cumplimiento, puntajes bajos, sin bitácoras).
+- resumenEjecutivo: 2-3 frases con el estado general (de la persona, del departamento o de la empresa, según el alcance) en el período.
+- fortalezas: 2-4 puntos concretos basados en los datos (ej. alto puntaje, buen cumplimiento).
+- riesgos: 2-4 puntos concretos sobre riesgos reales presentes en los datos (ej. bajo cumplimiento, puntajes bajos, sin bitácoras).
 - recomendaciones: 2-4 acciones concretas y accionables para el CEO/RRHH, ligadas a los riesgos detectados.
 
 No inventes cifras que no estén en los datos. Si los datos son escasos, dilo explícitamente en vez de fabricar detalle.

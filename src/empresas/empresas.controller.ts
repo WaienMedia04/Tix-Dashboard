@@ -115,8 +115,12 @@ export class EmpresasController {
 
   @Get(':slug/mural-directorio')
   @UseGuards(CompanyAccessGuard)
-  muralDirectorio(@Param('slug') slug: string, @Req() req: RequestConActor) {
-    return this.empresasService.muralDirectorio(slug, req.actor!);
+  muralDirectorio(
+    @Param('slug') slug: string,
+    @Query('departamento') departamento: string | undefined,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.muralDirectorio(slug, req.actor!, departamento);
   }
 
   @Get(':slug/empleados/:talentoId/mural')
@@ -199,9 +203,15 @@ export class EmpresasController {
   alertas(
     @Param('slug') slug: string,
     @Query('departamento') departamento: string | undefined,
+    @Query('talentoId') talentoId: string | undefined,
     @Req() req: RequestConActor,
   ) {
-    return this.empresasService.alertas(slug, req.actor!, departamento);
+    return this.empresasService.alertas(
+      slug,
+      req.actor!,
+      departamento,
+      talentoId,
+    );
   }
 
   /** Catálogo de departamentos configurado por Talentix (panel admin) — solo lectura. */

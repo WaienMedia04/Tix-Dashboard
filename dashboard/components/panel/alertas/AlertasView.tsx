@@ -6,6 +6,7 @@ import { AlertTriangle, CircleAlert, PartyPopper } from "lucide-react";
 import { type AlertaItem, type AlertasResponse, type SeveridadAlerta, fetchAlertas } from "@/lib/api";
 import { usePanel } from "../PanelContext";
 import { FiltroDepartamento } from "../FiltroDepartamento";
+import { BuscadorEmpleado } from "../BuscadorEmpleado";
 import { Avatar } from "@/components/Avatar";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { SkeletonStatCards, SkeletonTableRows } from "@/components/motion/Skeleton";
@@ -47,13 +48,16 @@ function TarjetaAlerta({ alerta, slug }: { alerta: AlertaItem; slug: string }) {
 type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; datos: AlertasResponse };
 
 export function AlertasView() {
-  const { slug } = usePanel();
+  const { slug, dashboardInicial } = usePanel();
+  const talentos = dashboardInicial.rankingTalentos;
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [departamento, setDepartamento] = useState("");
+  const [talentoId, setTalentoId] = useState("");
+  const [severidad, setSeveridad] = useState<SeveridadAlerta | "">("");
 
   useEffect(() => {
     let cancelado = false;
-    fetchAlertas(slug, departamento || undefined)
+    fetchAlertas(slug, departamento || undefined, talentoId || undefined)
       .then((datos) => {
         if (!cancelado) setEstado({ tipo: "listo", datos });
       })
@@ -63,7 +67,7 @@ export function AlertasView() {
     return () => {
       cancelado = true;
     };
-  }, [slug, departamento]);
+  }, [slug, departamento, talentoId]);
 
   return (
     <div className="space-y-4">
@@ -72,7 +76,10 @@ export function AlertasView() {
           <h1 className="font-display text-lg font-semibold text-foreground">Alertas</h1>
           <p className="text-sm text-muted-foreground">Detección automática de riesgos y reconocimientos — calculada en vivo sobre el mes en curso</p>
         </div>
-        <FiltroDepartamento value={departamento} onChange={setDepartamento} />
+        <div className="flex flex-wrap gap-3">
+          <BuscadorEmpleado talentos={talentos} valor={talentoId} onChange={setTalentoId} />
+          <FiltroDepartamento value={departamento} onChange={setDepartamento} />
+        </div>
       </div>
 
       {estado.tipo === "cargando" && (
@@ -94,7 +101,12 @@ export function AlertasView() {
         <>
           <StaggerGroup className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <StaggerItem>
-              <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+              <button
+                onClick={() => setSeveridad((s) => (s === "critica" ? "" : "critica"))}
+                className={`w-full rounded-xl border p-4 text-left shadow-card transition-colors ${
+                  severidad === "critica" ? "border-destructive bg-destructive/5" : "border-border bg-card hover:border-destructive/50"
+                }`}
+              >
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-destructive" />
                   <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Críticas</p>
@@ -102,10 +114,15 @@ export function AlertasView() {
                 <p className="font-display mt-2 text-2xl font-semibold text-foreground tabular-nums">
                   {estado.datos.resumen.criticas}
                 </p>
-              </div>
+              </button>
             </StaggerItem>
             <StaggerItem>
-              <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+              <button
+                onClick={() => setSeveridad((s) => (s === "advertencia" ? "" : "advertencia"))}
+                className={`w-full rounded-xl border p-4 text-left shadow-card transition-colors ${
+                  severidad === "advertencia" ? "border-warning bg-warning/5" : "border-border bg-card hover:border-warning/50"
+                }`}
+              >
                 <div className="flex items-center gap-2">
                   <CircleAlert className="h-4 w-4 text-warning" />
                   <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Advertencias</p>
@@ -113,10 +130,15 @@ export function AlertasView() {
                 <p className="font-display mt-2 text-2xl font-semibold text-foreground tabular-nums">
                   {estado.datos.resumen.advertencias}
                 </p>
-              </div>
+              </button>
             </StaggerItem>
             <StaggerItem>
-              <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+              <button
+                onClick={() => setSeveridad((s) => (s === "positiva" ? "" : "positiva"))}
+                className={`w-full rounded-xl border p-4 text-left shadow-card transition-colors ${
+                  severidad === "positiva" ? "border-success bg-success/5" : "border-border bg-card hover:border-success/50"
+                }`}
+              >
                 <div className="flex items-center gap-2">
                   <PartyPopper className="h-4 w-4 text-success" />
                   <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Positivas</p>
@@ -124,23 +146,28 @@ export function AlertasView() {
                 <p className="font-display mt-2 text-2xl font-semibold text-foreground tabular-nums">
                   {estado.datos.resumen.positivas}
                 </p>
-              </div>
+              </button>
             </StaggerItem>
           </StaggerGroup>
 
-          {estado.datos.alertas.length === 0 ? (
-            <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-card">
-              Todo en orden — no hay alertas activas.
-            </div>
-          ) : (
-            <StaggerGroup className="space-y-2">
-              {estado.datos.alertas.map((alerta) => (
-                <StaggerItem key={alerta.id}>
-                  <TarjetaAlerta alerta={alerta} slug={slug} />
-                </StaggerItem>
-              ))}
-            </StaggerGroup>
-          )}
+          {(() => {
+            const alertasFiltradas = severidad
+              ? estado.datos.alertas.filter((a) => a.severidad === severidad)
+              : estado.datos.alertas;
+            return alertasFiltradas.length === 0 ? (
+              <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-card">
+                {severidad ? "No hay alertas de este tipo." : "Todo en orden — no hay alertas activas."}
+              </div>
+            ) : (
+              <StaggerGroup className="space-y-2">
+                {alertasFiltradas.map((alerta) => (
+                  <StaggerItem key={alerta.id}>
+                    <TarjetaAlerta alerta={alerta} slug={slug} />
+                  </StaggerItem>
+                ))}
+              </StaggerGroup>
+            );
+          })()}
         </>
       )}
     </div>

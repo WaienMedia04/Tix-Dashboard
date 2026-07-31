@@ -588,10 +588,16 @@ export async function actualizarTalento(
   return res.json();
 }
 
-export async function fetchKpis(slug: string, periodo: string, departamento?: string): Promise<KpisResponse> {
+export async function fetchKpis(
+  slug: string,
+  periodo: string,
+  departamento?: string,
+  talentoId?: string,
+): Promise<KpisResponse> {
   const params = new URLSearchParams();
   params.set("periodo", periodo);
   if (departamento) params.set("departamento", departamento);
+  if (talentoId) params.set("talentoId", talentoId);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/kpis?${params.toString()}`, {
     headers: await authHeaders(),
@@ -627,9 +633,10 @@ export interface AlertasResponse {
   alertas: AlertaItem[];
 }
 
-export async function fetchAlertas(slug: string, departamento?: string): Promise<AlertasResponse> {
+export async function fetchAlertas(slug: string, departamento?: string, talentoId?: string): Promise<AlertasResponse> {
   const params = new URLSearchParams();
   if (departamento) params.set("departamento", departamento);
+  if (talentoId) params.set("talentoId", talentoId);
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/alertas?${params.toString()}`, {
     headers: await authHeaders(),
@@ -1300,8 +1307,11 @@ export interface MuralDirectorioItem {
 }
 
 /** Directorio de compañeros para navegar entre murales — abierto a toda la empresa. */
-export async function fetchMuralDirectorio(slug: string): Promise<MuralDirectorioItem[]> {
-  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/mural-directorio`, {
+export async function fetchMuralDirectorio(slug: string, departamento?: string): Promise<MuralDirectorioItem[]> {
+  const params = new URLSearchParams();
+  if (departamento) params.set("departamento", departamento);
+
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/mural-directorio?${params.toString()}`, {
     headers: await authHeaders(),
     cache: "no-store",
   });
@@ -2352,11 +2362,12 @@ export interface BoletinResponse {
 
 export async function fetchBoletin(
   slug: string,
-  opts?: { cursorId?: string; limit?: number },
+  opts?: { cursorId?: string; limit?: number; tipo?: TipoBoletin },
 ): Promise<BoletinResponse> {
   const params = new URLSearchParams();
   if (opts?.cursorId) params.set("cursorId", opts.cursorId);
   if (opts?.limit) params.set("limit", String(opts.limit));
+  if (opts?.tipo) params.set("tipo", opts.tipo);
   const query = params.toString();
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/boletin${query ? `?${query}` : ""}`, {

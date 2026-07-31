@@ -6,6 +6,7 @@ import { type NovedadItem, type TipoNovedad, crearNovedad, fetchNovedades } from
 import { TIPOS_NOVEDAD as TIPOS, metaTipoNovedad as metaTipo } from "@/lib/novedades-tipos";
 import { usePanel } from "../PanelContext";
 import { FiltroDepartamento } from "../FiltroDepartamento";
+import { BuscadorEmpleado } from "../BuscadorEmpleado";
 import { Avatar } from "@/components/Avatar";
 import { EnlaceTalento } from "@/components/EnlaceTalento";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
@@ -152,16 +153,19 @@ function FormularioNovedad({
 type Estado = { tipo: "cargando" } | { tipo: "error" } | { tipo: "listo"; novedades: NovedadItem[] };
 
 export function NovedadesView() {
-  const { slug } = usePanel();
+  const { slug, dashboardInicial } = usePanel();
+  const talentos = dashboardInicial.rankingTalentos;
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [filtroTipo, setFiltroTipo] = useState<TipoNovedad | "">("");
   const [departamento, setDepartamento] = useState("");
+  const [talentoId, setTalentoId] = useState("");
 
   useEffect(() => {
     let cancelado = false;
     fetchNovedades(slug, {
       tipo: filtroTipo || undefined,
       departamento: departamento || undefined,
+      talentoId: talentoId || undefined,
     })
       .then((novedades) => {
         if (!cancelado) setEstado({ tipo: "listo", novedades });
@@ -172,7 +176,7 @@ export function NovedadesView() {
     return () => {
       cancelado = true;
     };
-  }, [slug, filtroTipo, departamento]);
+  }, [slug, filtroTipo, departamento, talentoId]);
 
   function handleCreada(novedad: NovedadItem) {
     setEstado((prev) => (prev.tipo === "listo" ? { tipo: "listo", novedades: [novedad, ...prev.novedades] } : prev));
@@ -209,7 +213,10 @@ export function NovedadesView() {
             </button>
           ))}
         </div>
-        <FiltroDepartamento value={departamento} onChange={setDepartamento} />
+        <div className="flex flex-wrap gap-3">
+          <BuscadorEmpleado talentos={talentos} valor={talentoId} onChange={setTalentoId} />
+          <FiltroDepartamento value={departamento} onChange={setDepartamento} />
+        </div>
       </div>
 
       {estado.tipo === "cargando" && (

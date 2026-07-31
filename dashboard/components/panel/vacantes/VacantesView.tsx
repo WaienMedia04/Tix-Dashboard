@@ -15,6 +15,7 @@ import {
   fetchVacantes,
 } from "@/lib/api";
 import { usePanel } from "../PanelContext";
+import { FiltroDepartamento } from "../FiltroDepartamento";
 import { CampoDepartamento } from "@/components/CampoDepartamento";
 import { EnlaceTalento } from "@/components/EnlaceTalento";
 import { Avatar } from "@/components/Avatar";
@@ -288,6 +289,8 @@ export function VacantesView() {
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [departamentos, setDepartamentos] = useState<DepartamentoDefinicion[]>([]);
   const [editando, setEditando] = useState<VacanteItem | null>(null);
+  const [filtroDepartamento, setFiltroDepartamento] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState<EstadoVacante | "">("");
 
   const [vacanteCandidatos, setVacanteCandidatos] = useState<VacanteItem | null>(null);
   const [buscandoCandidatos, setBuscandoCandidatos] = useState(false);
@@ -347,13 +350,40 @@ export function VacantesView() {
     }
   }
 
+  const itemsFiltrados =
+    estado.tipo === "listo"
+      ? estado.items.filter(
+          (i) =>
+            (!filtroDepartamento || i.departamento === filtroDepartamento) &&
+            (!filtroEstado || i.estado === filtroEstado),
+        )
+      : [];
+
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="font-display text-lg font-semibold text-foreground">Vacantes</h1>
-        <p className="text-sm text-muted-foreground">
-          Publica vacantes disponibles — los talentos las ven en el mural informativo — y busca candidatos internos con IA.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-lg font-semibold text-foreground">Vacantes</h1>
+          <p className="text-sm text-muted-foreground">
+            Publica vacantes disponibles — los talentos las ven en el mural informativo — y busca candidatos internos con IA.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-wrap gap-2">
+            {(["", "ABIERTA", "CERRADA"] as const).map((v) => (
+              <button
+                key={v || "todas"}
+                onClick={() => setFiltroEstado(v)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition-colors ${
+                  filtroEstado === v ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {v === "ABIERTA" ? "Abiertas" : v === "CERRADA" ? "Cerradas" : "Todas"}
+              </button>
+            ))}
+          </div>
+          <FiltroDepartamento value={filtroDepartamento} onChange={setFiltroDepartamento} />
+        </div>
       </div>
 
       <FormularioVacante
@@ -374,14 +404,14 @@ export function VacantesView() {
         </div>
       )}
       {estado.tipo === "error" && <p className="text-sm text-destructive">No se pudieron cargar las vacantes.</p>}
-      {estado.tipo === "listo" && estado.items.length === 0 && (
+      {estado.tipo === "listo" && itemsFiltrados.length === 0 && (
         <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-card">
-          Todavía no hay vacantes publicadas.
+          {estado.items.length === 0 ? "Todavía no hay vacantes publicadas." : "No hay vacantes que coincidan con el filtro."}
         </div>
       )}
-      {estado.tipo === "listo" && estado.items.length > 0 && (
+      {estado.tipo === "listo" && itemsFiltrados.length > 0 && (
         <StaggerGroup className="space-y-2">
-          {estado.items.map((item) => (
+          {itemsFiltrados.map((item) => (
             <StaggerItem key={item.id}>
               <TarjetaVacante
                 item={item}

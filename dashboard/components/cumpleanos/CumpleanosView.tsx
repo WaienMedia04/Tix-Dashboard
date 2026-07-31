@@ -42,6 +42,7 @@ function mesActualLabel(): string {
 export function CumpleanosView({ slug }: { slug: string }) {
   const [datos, setDatos] = useState<CumpleanosResponse | null>(null);
   const [error, setError] = useState(false);
+  const [departamento, setDepartamento] = useState("");
   const esMobile = useEsMobile();
 
   useEffect(() => {
@@ -65,11 +66,41 @@ export function CumpleanosView({ slug }: { slug: string }) {
     return <LoadingScreen />;
   }
 
-  const { hoy, esteMes, porMes } = datos;
+  const departamentosDisponibles = Array.from(
+    new Set(
+      [...datos.hoy, ...datos.esteMes, ...datos.porMes.flatMap((m) => m.talentos)]
+        .map((t) => t.departamento)
+        .filter((d): d is string => !!d),
+    ),
+  ).sort();
+
+  const filtrarPorDepto = <T extends { departamento: string | null }>(lista: T[]): T[] =>
+    departamento ? lista.filter((t) => t.departamento === departamento) : lista;
+
+  const hoy = filtrarPorDepto(datos.hoy);
+  const esteMes = filtrarPorDepto(datos.esteMes);
+  const porMes = datos.porMes.map((m) => ({ ...m, talentos: filtrarPorDepto(m.talentos) }));
   const mesHoy = mesActual();
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-8">
+      {departamentosDisponibles.length > 1 && (
+        <div className="flex justify-end">
+          <select
+            value={departamento}
+            onChange={(e) => setDepartamento(e.target.value)}
+            className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">Todos los departamentos</option>
+            {departamentosDisponibles.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Bloque: cumpleaños de hoy — fondo negro con Ballpit (three.js) detrás de toda la sección */}
       <section className="dark relative overflow-hidden rounded-2xl border border-border bg-black shadow-elegant">
         <div className="relative min-h-[22rem] sm:min-h-[26rem]">

@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { TipoBoletin } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Actor } from '../auth/actor.types';
 import { CrearBoletinDto } from './dto/crear-boletin.dto';
@@ -84,11 +85,15 @@ export class BoletinService {
   async listar(
     slug: string,
     actor: Actor,
-    opts: { cursorId?: string; limit?: number },
+    opts: { cursorId?: string; limit?: number; tipo?: string },
   ) {
     this.exigirUsuario(actor);
     const empresaId = await this.resolverEmpresaId(slug, actor);
     const limit = Math.min(Math.max(opts.limit ?? LIMITE_BOLETINES, 1), 50);
+    const tipo =
+      opts.tipo && opts.tipo in TipoBoletin
+        ? (opts.tipo as TipoBoletin)
+        : undefined;
 
     let cursorFecha: Date | undefined;
     if (opts.cursorId) {
@@ -102,6 +107,7 @@ export class BoletinService {
     const boletines = await this.prisma.boletin.findMany({
       where: {
         empresaId,
+        ...(tipo && { tipo }),
         ...(cursorFecha ? { createdAt: { lt: cursorFecha } } : {}),
       },
       orderBy: { createdAt: 'desc' },
