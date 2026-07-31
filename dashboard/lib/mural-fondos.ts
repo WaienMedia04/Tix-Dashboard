@@ -5,6 +5,8 @@ export interface FondoMural {
   css: string;
   /** true si el fondo es claro y necesita letra oscura; false = letra blanca. */
   claro: boolean;
+  /** true = va en la sección "Colores especiales" (fondos con animación encima) en vez del selector de colores normal. */
+  especial?: boolean;
 }
 
 export const FONDOS_MURAL: FondoMural[] = [
@@ -35,18 +37,21 @@ export const FONDOS_MURAL: FondoMural[] = [
     label: "Llovizna",
     css: "linear-gradient(160deg, #64748B 0%, #475569 55%, #334155 100%)",
     claro: false,
+    especial: true,
   },
   {
     id: "lluvia_normal",
     label: "Lluvia",
     css: "linear-gradient(160deg, #475569 0%, #334155 55%, #1E293B 100%)",
     claro: false,
+    especial: true,
   },
   {
     id: "lluvia_tormenta",
     label: "Tormenta",
     css: "linear-gradient(160deg, #334155 0%, #1E293B 55%, #0F172A 100%)",
     claro: false,
+    especial: true,
   },
 ];
 

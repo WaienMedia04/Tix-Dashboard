@@ -31,6 +31,7 @@ import { LanyardBadge } from "./LanyardBadge";
 import { PerfilDivertidoForm } from "./PerfilDivertidoForm";
 import { SobreMiSoloLectura } from "./SobreMiSoloLectura";
 import { SelectorFondo } from "./SelectorFondo";
+import { SelectorFondoEspecial } from "./SelectorFondoEspecial";
 import { SelectorColorNombre } from "./SelectorColorNombre";
 import { SelectorColorWidgets } from "./SelectorColorWidgets";
 import { SelectorMascota } from "./SelectorMascota";
@@ -314,7 +315,7 @@ export function MiMuralView({
         />
       )}
 
-      <div className="fixed top-14 right-3 z-0 w-[190px] max-w-[50vw] origin-top-right scale-[0.72] print:hidden">
+      <div className="fixed top-14 right-3 z-0 hidden w-[190px] max-w-[50vw] origin-top-right scale-[0.72] sm:block print:hidden">
         <div className="-rotate-2 rounded-md border-4 border-white bg-white p-1 shadow-lg">
           <ClimaWidget />
         </div>
@@ -428,6 +429,17 @@ export function MiMuralView({
                 Fondo del mural
               </p>
               <SelectorFondo
+                fondoId={mural.perfil.fondoId}
+                onCambiado={(fondoId) =>
+                  setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, fondoId } } : prev))
+                }
+              />
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Colores especiales
+              </p>
+              <SelectorFondoEspecial
                 fondoId={mural.perfil.fondoId}
                 onCambiado={(fondoId) =>
                   setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, fondoId } } : prev))

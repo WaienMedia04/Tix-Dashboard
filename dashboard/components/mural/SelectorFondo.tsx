@@ -29,7 +29,7 @@ export function SelectorFondo({
 
   return (
     <div className="flex flex-wrap gap-2.5">
-      {FONDOS_MURAL.map((f) => (
+      {FONDOS_MURAL.filter((f) => !f.especial).map((f) => (
         <button
           key={f.id}
           onClick={() => void elegir(f.id)}
