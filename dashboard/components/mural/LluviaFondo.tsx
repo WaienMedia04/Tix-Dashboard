@@ -11,12 +11,41 @@ interface AjustesIntensidad {
   opacidad: [number, number];
   viento: number;
   destello: number;
+  /** Probabilidad (0-1) de que una gota deje una onda al "aterrizar" abajo. */
+  probOnda: number;
 }
 
 const AJUSTES: Record<IntensidadLluvia, AjustesIntensidad> = {
-  llovizna: { gotas: 70, velocidad: [4, 8], largo: [8, 16], grosor: [1, 1], opacidad: [0.15, 0.35], viento: 0.3, destello: 0 },
-  normal: { gotas: 150, velocidad: [8, 14], largo: [14, 26], grosor: [1, 2], opacidad: [0.25, 0.5], viento: 0.6, destello: 0.02 },
-  tormenta: { gotas: 260, velocidad: [14, 22], largo: [20, 38], grosor: [1, 2], opacidad: [0.35, 0.65], viento: 1.4, destello: 0.06 },
+  llovizna: {
+    gotas: 70,
+    velocidad: [4, 8],
+    largo: [10, 18],
+    grosor: [1, 1.6],
+    opacidad: [0.2, 0.4],
+    viento: 0.3,
+    destello: 0,
+    probOnda: 0.08,
+  },
+  normal: {
+    gotas: 150,
+    velocidad: [8, 14],
+    largo: [16, 30],
+    grosor: [1.4, 2.4],
+    opacidad: [0.3, 0.55],
+    viento: 0.6,
+    destello: 0.02,
+    probOnda: 0.16,
+  },
+  tormenta: {
+    gotas: 260,
+    velocidad: [14, 22],
+    largo: [24, 44],
+    grosor: [1.8, 3],
+    opacidad: [0.4, 0.7],
+    viento: 1.4,
+    destello: 0.06,
+    probOnda: 0.28,
+  },
 };
 
 interface Gota {
@@ -25,6 +54,13 @@ interface Gota {
   velocidad: number;
   largo: number;
   grosor: number;
+  opacidad: number;
+}
+
+interface Onda {
+  x: number;
+  y: number;
+  radio: number;
   opacidad: number;
 }
 
@@ -40,9 +76,12 @@ function crearGota(ancho: number, alto: number, ajustes: AjustesIntensidad): Got
 }
 
 /**
- * Fondo animado de lluvia — franjas cayendo en canvas 2D (sin WebGL) para no
- * competir con el carnet 3D del mural, que ya usa la GPU bastante. Tres
- * intensidades elegibles como si fueran un fondo más.
+ * Fondo animado de lluvia — canvas 2D (sin WebGL) para no competir con el
+ * carnet 3D del mural, que ya usa la GPU bastante. Cada gota es un trazo con
+ * degradado (se desvanece hacia la cola) más una "cabeza" con brillo radial
+ * — simula la luz reflejándose en la gota, como si escurriera por un
+ * cristal — y algunas dejan una onda al llegar abajo. Tres intensidades
+ * elegibles como si fueran un fondo más.
  */
 export function LluviaFondo({ intensidad }: { intensidad: IntensidadLluvia }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -56,6 +95,7 @@ export function LluviaFondo({ intensidad }: { intensidad: IntensidadLluvia }) {
 
     const ajustes = AJUSTES[intensidad];
     let gotas: Gota[] = [];
+    let ondas: Onda[] = [];
     let ancho = 0;
     let alto = 0;
     let animId = 0;
@@ -73,11 +113,55 @@ export function LluviaFondo({ intensidad }: { intensidad: IntensidadLluvia }) {
       canvas.style.height = `${alto}px`;
       ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
       gotas = Array.from({ length: ajustes.gotas }, () => crearGota(ancho, alto, ajustes));
+      ondas = [];
     }
 
     dimensionar();
     const observador = new ResizeObserver(dimensionar);
     observador.observe(contenedor);
+
+    function dibujarGota(gota: Gota) {
+      if (!ctx) return;
+      const colaX = gota.x - ajustes.viento * (gota.largo / 10);
+      const colaY = gota.y + gota.largo;
+
+      // Trazo con degradado: casi invisible en la cola, más definido cerca de la cabeza.
+      const trazo = ctx.createLinearGradient(colaX, colaY, gota.x, gota.y);
+      trazo.addColorStop(0, "rgba(226,240,255,0)");
+      trazo.addColorStop(1, `rgba(226,240,255,${gota.opacidad})`);
+      ctx.strokeStyle = trazo;
+      ctx.lineWidth = gota.grosor * 0.7;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(colaX, colaY);
+      ctx.lineTo(gota.x, gota.y);
+      ctx.stroke();
+
+      // Cabeza: brillo radial pequeño simulando el reflejo de luz en la gota.
+      const radio = gota.grosor * 1.6;
+      const brillo = ctx.createRadialGradient(gota.x, gota.y, 0, gota.x, gota.y, radio);
+      brillo.addColorStop(0, `rgba(255,255,255,${Math.min(gota.opacidad + 0.25, 1)})`);
+      brillo.addColorStop(0.6, `rgba(226,240,255,${gota.opacidad * 0.6})`);
+      brillo.addColorStop(1, "rgba(226,240,255,0)");
+      ctx.fillStyle = brillo;
+      ctx.beginPath();
+      ctx.arc(gota.x, gota.y, radio, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function dibujarOndas() {
+      if (!ctx) return;
+      ondas = ondas.filter((onda) => onda.opacidad > 0.02);
+      for (const onda of ondas) {
+        ctx.strokeStyle = `rgba(226,240,255,${onda.opacidad})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(onda.x, onda.y, onda.radio, onda.radio * 0.35, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        onda.radio += 0.6;
+        onda.opacidad -= 0.02;
+      }
+    }
 
     function cuadro(t: number) {
       if (!ctx) return;
@@ -95,24 +179,21 @@ export function LluviaFondo({ intensidad }: { intensidad: IntensidadLluvia }) {
         if (destelloActivo < 0) destelloActivo = 0;
       }
 
-      ctx.strokeStyle = "rgba(255,255,255,1)";
-      ctx.lineCap = "round";
+      dibujarOndas();
+
       for (const gota of gotas) {
-        ctx.globalAlpha = gota.opacidad;
-        ctx.lineWidth = gota.grosor;
-        ctx.beginPath();
-        ctx.moveTo(gota.x, gota.y);
-        ctx.lineTo(gota.x - ajustes.viento * (gota.largo / 10), gota.y + gota.largo);
-        ctx.stroke();
+        dibujarGota(gota);
 
         gota.y += gota.velocidad;
         gota.x -= ajustes.viento;
         if (gota.y > alto || gota.x < -20) {
+          if (Math.random() < ajustes.probOnda) {
+            ondas.push({ x: gota.x, y: alto - 2, radio: 2, opacidad: 0.35 });
+          }
           gota.y = -gota.largo;
           gota.x = Math.random() * (ancho + 40);
         }
       }
-      ctx.globalAlpha = 1;
 
       animId = requestAnimationFrame(cuadro);
     }
