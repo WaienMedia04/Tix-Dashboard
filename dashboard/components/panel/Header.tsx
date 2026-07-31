@@ -69,14 +69,16 @@ export function Header({
             <Megaphone className="h-4.5 w-4.5" />
           </button>
         )}
-        <Link
-          href={`/${slug}/mi-mural`}
-          aria-label="Mi Mural"
-          title="Mi Mural"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <PenSquare className="h-4.5 w-4.5" />
-        </Link>
+        {rol !== "CEO" && rol !== "RRHH" && (
+          <Link
+            href={`/${slug}/mi-mural`}
+            aria-label="Mi Mural"
+            title="Mi Mural"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <PenSquare className="h-4.5 w-4.5" />
+          </Link>
+        )}
         <CampanaNotificaciones slug={slug} />
         <div className="hidden text-right sm:block">
           <p className="max-w-[40vw] truncate text-sm font-medium text-foreground">{empresaNombre}</p>

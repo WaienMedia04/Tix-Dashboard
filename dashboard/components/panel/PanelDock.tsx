@@ -41,11 +41,15 @@ export function PanelDock() {
           },
         ]
       : []),
-    {
-      icon: <PenSquare className="h-5 w-5 text-fuchsia-400" />,
-      label: "Mi Mural",
-      onClick: () => router.push(`/${slug}/mi-mural`),
-    },
+    ...(rol === "CEO" || rol === "RRHH"
+      ? []
+      : [
+          {
+            icon: <PenSquare className="h-5 w-5 text-fuchsia-400" />,
+            label: "Mi Mural",
+            onClick: () => router.push(`/${slug}/mi-mural`),
+          },
+        ]),
     {
       icon: <LifeBuoy className="h-5 w-5 text-emerald-400" />,
       label: "Soporte",
