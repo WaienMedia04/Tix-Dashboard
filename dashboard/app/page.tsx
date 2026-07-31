@@ -153,6 +153,7 @@ function AccesoInterno() {
                   buttonText={loading ? "Verificando..." : "Ingresar"}
                   theme="dark"
                   showIcon={false}
+                  passwordToggle
                   buttonColor="#8B5CF6"
                   buttonGradient={["#22D3EE", "#8B5CF6", "#D946EF"]}
                   width="100%"

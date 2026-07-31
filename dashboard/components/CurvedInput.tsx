@@ -14,6 +14,7 @@ import {
   type ReactNode,
   type SyntheticEvent,
 } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import "./CurvedInput.css";
 
 const DEG = 180 / Math.PI;
@@ -179,6 +180,7 @@ interface Layout {
   textEndU: number;
   btnU0: number;
   btnU1: number;
+  toggleU: number;
   winLen: number;
 }
 
@@ -213,6 +215,8 @@ export interface CurvedInputProps {
   showButton?: boolean;
   showIcon?: boolean;
   icon?: ReactNode;
+  /** Solo tiene efecto cuando type="password" — agrega un botón de ojo para mostrar/ocultar el texto escrito. */
+  passwordToggle?: boolean;
   className?: string;
   style?: CSSProperties;
 }
@@ -247,6 +251,7 @@ export default function CurvedInput({
   showButton = true,
   showIcon = true,
   icon,
+  passwordToggle = false,
   className = "",
   style,
 }: CurvedInputProps) {
@@ -271,9 +276,13 @@ export default function CurvedInput({
   const [scrollLen, setScrollLen] = useState(0);
   const [btnTextW, setBtnTextW] = useState(0);
   const [, setFontTick] = useState(0);
+  const [revealed, setRevealed] = useState(false);
 
   const val = value !== undefined ? value : innerValue;
-  const display = type === "password" ? "•".repeat(val.length) : val;
+  const esPassword = type === "password";
+  const mostrarToggle = esPassword && passwordToggle;
+  const oculto = esPassword && !revealed;
+  const display = oculto ? "•".repeat(val.length) : val;
 
   const palette = THEMES[theme] || THEMES.dark;
   const bgColor = backgroundColor ?? palette.backgroundColor;
@@ -322,10 +331,15 @@ export default function CurvedInput({
     const btnW = showButton ? Math.max(btnTextW + fontSize * 2.7, T * 1.35) : 0;
     const btnU1 = geom.W - btnInset;
     const btnU0 = btnU1 - btnW;
-    const textEndU = Math.max(textStartU + 20, showButton ? btnU0 - 14 : geom.W - 24);
+    const toggleEdge = showButton ? btnU0 - 10 : geom.W - btnInset;
+    const toggleU = mostrarToggle ? toggleEdge - chipW / 2 : 0;
+    const textEndU = Math.max(
+      textStartU + 20,
+      mostrarToggle ? toggleEdge - chipW - 12 : showButton ? btnU0 - 14 : geom.W - 24,
+    );
     const winLen = (textEndU - textStartU) / geom.uPerLen;
-    return { btnInset, chipH, chipW, iconU, textStartU, textEndU, btnU0, btnU1, winLen };
-  }, [geom, height, borderWidth, btnTextW, fontSize, showIcon, showButton]);
+    return { btnInset, chipH, chipW, iconU, textStartU, textEndU, btnU0, btnU1, toggleU, winLen };
+  }, [geom, height, borderWidth, btnTextW, fontSize, showIcon, showButton, mostrarToggle]);
 
   // Measure rendered text to keep the caret on the curve and scroll long
   // values along the arc, exactly like a native input would.
@@ -417,7 +431,8 @@ export default function CurvedInput({
     setCaretIndex(idx);
   };
 
-  const safeType = SELECTABLE_TYPES.includes(type) ? type : "text";
+  const tipoActual = esPassword && revealed ? "text" : type;
+  const safeType = SELECTABLE_TYPES.includes(tipoActual) ? tipoActual : "text";
   const inputMode = type === "email" ? "email" : type === "number" ? "decimal" : undefined;
 
   const shadow = SHADOWS[shadowSize];
@@ -445,6 +460,10 @@ export default function CurvedInput({
     const [caretX, caretY] = geom.point(caretU, 0);
     const caretAngle = geom.angleAt(caretU);
     const caretH = Math.min(T * 0.58, fontSize * 1.45);
+
+    const [toggleX, toggleY] = mostrarToggle ? geom.point(layout.toggleU, 0) : [0, 0];
+    const toggleAngle = mostrarToggle ? geom.angleAt(layout.toggleU) : 0;
+    const toggleSize = Math.min(20, chipH * 0.72);
 
     const btnH = T - layout.btnInset * 2;
     const buttonPath = showButton
@@ -585,6 +604,34 @@ export default function CurvedInput({
                 {buttonText}
               </textPath>
             </text>
+          </g>
+        )}
+
+        {mostrarToggle && (
+          <g
+            transform={`translate(${round2(toggleX)} ${round2(toggleY)}) rotate(${round2(toggleAngle)})`}
+            role="button"
+            tabIndex={0}
+            aria-label={revealed ? "Ocultar contraseña" : "Mostrar contraseña"}
+            className="curved-input__toggle"
+            onClick={(e) => {
+              e.stopPropagation();
+              setRevealed((r) => !r);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onKeyDown={(e: ReactKeyboardEvent<SVGGElement>) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setRevealed((r) => !r);
+              }
+            }}
+          >
+            <circle r={chipH * 0.55} fill="transparent" />
+            {revealed ? (
+              <EyeOff x={-toggleSize / 2} y={-toggleSize / 2} width={toggleSize} height={toggleSize} color={fgColor} strokeWidth={2} />
+            ) : (
+              <Eye x={-toggleSize / 2} y={-toggleSize / 2} width={toggleSize} height={toggleSize} color={fgColor} strokeWidth={2} />
+            )}
           </g>
         )}
 

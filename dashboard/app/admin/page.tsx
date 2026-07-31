@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { AdminNoAutorizadoError, validarTokenAdmin } from "@/lib/admin-api";
 import Link from "next/link";
 import { guardarTokenAdmin } from "@/lib/admin-auth";
@@ -12,6 +13,7 @@ export default function AdminLoginPage() {
   const [token, setToken] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [mostrarClave, setMostrarClave] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,14 +47,24 @@ export default function AdminLoginPage() {
           <p className="mt-1 text-sm text-muted-foreground">Ingresa la clave maestra de administración.</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="password"
-            autoFocus
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="Clave de administrador"
-            className="w-full rounded-md border border-border bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
-          />
+          <div className="relative">
+            <input
+              type={mostrarClave ? "text" : "password"}
+              autoFocus
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="Clave de administrador"
+              className="w-full rounded-md border border-border bg-background px-4 py-2.5 pr-11 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <button
+              type="button"
+              onClick={() => setMostrarClave((v) => !v)}
+              aria-label={mostrarClave ? "Ocultar clave" : "Mostrar clave"}
+              className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {mostrarClave ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <button
             type="submit"
