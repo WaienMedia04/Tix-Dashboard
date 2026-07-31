@@ -30,7 +30,37 @@ export const FONDOS_MURAL: FondoMural[] = [
   { id: "cielo", label: "Cielo", css: "linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%)", claro: true },
   { id: "vino", label: "Vino", css: "linear-gradient(135deg, #7F1D1D 0%, #450A0A 100%)", claro: false },
   { id: "dorado", label: "Dorado", css: "linear-gradient(135deg, #FDE68A 0%, #FBBF24 55%, #B45309 100%)", claro: false },
+  {
+    id: "lluvia_llovizna",
+    label: "Llovizna",
+    css: "linear-gradient(160deg, #64748B 0%, #475569 55%, #334155 100%)",
+    claro: false,
+  },
+  {
+    id: "lluvia_normal",
+    label: "Lluvia",
+    css: "linear-gradient(160deg, #475569 0%, #334155 55%, #1E293B 100%)",
+    claro: false,
+  },
+  {
+    id: "lluvia_tormenta",
+    label: "Tormenta",
+    css: "linear-gradient(160deg, #334155 0%, #1E293B 55%, #0F172A 100%)",
+    claro: false,
+  },
 ];
+
+/** IDs de fondos "especiales" que además de un color de fondo pintan una animación (lluvia en canvas) encima. */
+export const FONDOS_LLUVIA_IDS = ["lluvia_llovizna", "lluvia_normal", "lluvia_tormenta"] as const;
+export type IntensidadLluvia = "llovizna" | "normal" | "tormenta";
+
+/** null si `fondoId` no es uno de los fondos de lluvia. */
+export function intensidadLluvia(fondoId: string): IntensidadLluvia | null {
+  if (fondoId === "lluvia_llovizna") return "llovizna";
+  if (fondoId === "lluvia_normal") return "normal";
+  if (fondoId === "lluvia_tormenta") return "tormenta";
+  return null;
+}
 
 export function fondoMuralCss(fondoId: string): string {
   return FONDOS_MURAL.find((f) => f.id === fondoId)?.css ?? FONDOS_MURAL[0].css;

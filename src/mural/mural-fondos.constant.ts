@@ -21,6 +21,9 @@ export const FONDOS_MURAL_IDS = [
   'cielo',
   'vino',
   'dorado',
+  'lluvia_llovizna',
+  'lluvia_normal',
+  'lluvia_tormenta',
 ] as const;
 
 export type FondoMuralId = (typeof FONDOS_MURAL_IDS)[number];

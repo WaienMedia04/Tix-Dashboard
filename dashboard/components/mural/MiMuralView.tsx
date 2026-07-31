@@ -17,7 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { type MuralPropio, fetchChatResumen, fetchMuralDeTalento, fetchMuralPropio, fetchNotificaciones } from "@/lib/api";
-import { fondoMuralCss, fondoMuralTexto } from "@/lib/mural-fondos";
+import { fondoMuralCss, fondoMuralTexto, intensidadLluvia } from "@/lib/mural-fondos";
 import { coloresNombreMural } from "@/lib/mural-colores-nombre";
 import { colorParaEstado } from "@/lib/estados-mural";
 import { reproducirSonidoEntrada } from "@/lib/sonidos";
@@ -34,6 +34,7 @@ import { SelectorFondo } from "./SelectorFondo";
 import { SelectorColorNombre } from "./SelectorColorNombre";
 import { SelectorColorWidgets } from "./SelectorColorWidgets";
 import { SelectorMascota } from "./SelectorMascota";
+import { LluviaFondo } from "./LluviaFondo";
 import { MuralCanvas } from "./MuralCanvas";
 import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
@@ -152,6 +153,7 @@ export function MiMuralView({
 
   const nombreCompleto = mural.talento.nombreCompleto;
   const texto = fondoMuralTexto(mural.perfil.fondoId);
+  const lluvia = intensidadLluvia(mural.perfil.fondoId);
 
   return (
     <div
@@ -160,6 +162,12 @@ export function MiMuralView({
       }`}
       style={{ background: fondoMuralCss(mural.perfil.fondoId) }}
     >
+      {lluvia && (
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <LluviaFondo intensidad={lluvia} />
+        </div>
+      )}
+
       {/* Muro libre: un solo contenedor cubre encabezado + lienzo, para que
           notas y estampas se puedan arrastrar a cualquier parte de la página
           (incluso sobre el carnet), no solo debajo del encabezado. En
