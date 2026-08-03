@@ -8,6 +8,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { TalentosService } from './talentos.service';
 import { ActualizarTalentoDto } from './dto/actualizar-talento.dto';
 import { ActualizarFotoDto } from './dto/actualizar-foto.dto';
@@ -76,6 +77,7 @@ export class TalentosController {
   @Patch(':talentoId/cv')
   @UseGuards(CompanyAccessGuard, RolesGuard)
   @Roles('CEO', 'RRHH')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   actualizarCv(
     @Param('talentoId') talentoId: string,
     @Body() dto: ActualizarCvDto,
@@ -100,6 +102,7 @@ export class TalentosController {
   @Post(':talentoId/comparar-cv')
   @UseGuards(CompanyAccessGuard, RolesGuard)
   @Roles('CEO', 'RRHH')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   compararCv(
     @Param('talentoId') talentoId: string,
     @Body() dto: CompararCvDto,

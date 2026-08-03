@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { MuralService } from './mural.service';
 import { MascotaChatService } from './mascota-chat.service';
 import { ActualizarPerfilMuralDto } from './dto/actualizar-perfil-mural.dto';
@@ -74,6 +75,7 @@ export class MuralController {
   }
 
   @Post('mascota/chat')
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   chatMascota(@Body() dto: MascotaChatDto, @Req() req: RequestConActor) {
     return this.mascotaChatService.chat(
       req.actor!,

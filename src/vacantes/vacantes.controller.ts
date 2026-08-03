@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { VacantesService } from './vacantes.service';
 import { CrearVacanteDto } from './dto/crear-vacante.dto';
 import { ActualizarVacanteDto } from './dto/actualizar-vacante.dto';
@@ -69,6 +70,7 @@ export class VacantesController {
   @Post(':id/candidatos-internos')
   @UseGuards(CompanyAccessGuard, RolesGuard)
   @Roles('CEO', 'RRHH')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   candidatosInternos(
     @Param('slug') slug: string,
     @Param('id') id: string,

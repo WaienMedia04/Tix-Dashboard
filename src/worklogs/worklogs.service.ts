@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCheckinDto } from './dto/create-checkin.dto';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
@@ -8,12 +12,24 @@ import { RegistrarWorklogPropioDto } from '../talentos/dto/registrar-worklog-pro
 export class WorklogsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async resolverTalento(empresaSlug: string, talentoNombre: string) {
+  /**
+   * Este endpoint no tiene :slug en la URL (lo manda el bot en el body), así
+   * que no puede usar CompanyAccessGuard — valida el mismo codigoAcceso a
+   * mano, con el mismo criterio de "servicio" que el resto de la app.
+   */
+  private async resolverTalento(
+    empresaSlug: string,
+    talentoNombre: string,
+    codigoAcceso: string,
+  ) {
     const empresa = await this.prisma.empresa.findUnique({
       where: { slug: empresaSlug },
     });
     if (!empresa) {
       throw new NotFoundException(`Empresa "${empresaSlug}" no encontrada`);
+    }
+    if (codigoAcceso !== empresa.codigoAcceso) {
+      throw new UnauthorizedException('Código de acceso inválido');
     }
 
     const talento = await this.prisma.talento.findFirst({
@@ -152,6 +168,7 @@ export class WorklogsService {
     const { empresa, talento } = await this.resolverTalento(
       dto.empresaSlug,
       dto.talentoNombre,
+      dto.codigoAcceso,
     );
     return this.upsertCheckin(empresa.id, talento.id, dto);
   }
@@ -160,6 +177,7 @@ export class WorklogsService {
     const { empresa, talento } = await this.resolverTalento(
       dto.empresaSlug,
       dto.talentoNombre,
+      dto.codigoAcceso,
     );
     return this.upsertCheckout(empresa.id, talento.id, dto);
   }

@@ -133,6 +133,7 @@ function AccesoInterno() {
                 onChange={setEmail}
                 onSubmit={modo === "recuperar" ? handleRecuperar : undefined}
                 type="email"
+                autoComplete="username"
                 placeholder="Correo electrónico"
                 theme="dark"
                 showButton={modo === "recuperar"}
@@ -149,6 +150,7 @@ function AccesoInterno() {
                   onChange={setPassword}
                   onSubmit={handleSubmit}
                   type="password"
+                  autoComplete="current-password"
                   placeholder="Contraseña"
                   buttonText={loading ? "Verificando..." : "Ingresar"}
                   theme="dark"

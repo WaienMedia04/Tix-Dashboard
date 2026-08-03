@@ -193,6 +193,8 @@ export interface CurvedInputProps {
   buttonText?: string;
   type?: string;
   name?: string;
+  /** Pasa un valor real ("email", "current-password", etc.) para que el navegador/gestor de contraseñas pueda ofrecer autocompletar. Por defecto "off". */
+  autoComplete?: string;
   ariaLabel?: string;
   theme?: "dark" | "light";
   width?: number | string;
@@ -230,6 +232,7 @@ export default function CurvedInput({
   buttonText = "Get Started",
   type = "email",
   name,
+  autoComplete = "off",
   ariaLabel,
   theme = "dark",
   width = 450,
@@ -671,7 +674,7 @@ export default function CurvedInput({
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         aria-label={ariaLabel || placeholder || "Curved input"}
-        autoComplete="off"
+        autoComplete={autoComplete}
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}

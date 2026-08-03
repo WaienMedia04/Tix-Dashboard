@@ -36,7 +36,9 @@ export class SessionGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
     if (!usuario.passwordEstablecida && !permitirSinActivar) {
-      throw new ForbiddenException('Debes activar tu cuenta antes de continuar');
+      throw new ForbiddenException(
+        'Debes activar tu cuenta antes de continuar',
+      );
     }
 
     const actor: Actor = {

@@ -2,15 +2,15 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
   Param,
   Patch,
   Post,
   Query,
   Req,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import { AdminGuard } from '../admin/admin.guard';
 import { EmpresasService } from './empresas.service';
 import { BitacorasQueryDto } from './dto/bitacoras-query.dto';
 import { EmpleadoDetalleQueryDto } from './dto/empleado-detalle-query.dto';
@@ -36,10 +36,8 @@ export class EmpresasController {
   constructor(private readonly empresasService: EmpresasService) {}
 
   @Get()
-  listar(@Headers('x-admin-token') tokenAdmin: string | undefined) {
-    if (!process.env.ADMIN_TOKEN || tokenAdmin !== process.env.ADMIN_TOKEN) {
-      throw new UnauthorizedException('No autorizado');
-    }
+  @UseGuards(AdminGuard)
+  listar() {
     return this.empresasService.listar();
   }
 
@@ -189,6 +187,7 @@ export class EmpresasController {
   @Get(':slug/reportes-ejecutivos')
   @UseGuards(CompanyAccessGuard, RolesGuard)
   @Roles('CEO', 'RRHH')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   reportesEjecutivos(
     @Param('slug') slug: string,
     @Query() query: ReportesQueryDto,

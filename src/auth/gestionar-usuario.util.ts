@@ -1,7 +1,17 @@
-import { ConflictException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Rol } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { obtenerClienteAnon, obtenerClienteServiceRole } from './supabase-auth.util';
+import {
+  obtenerClienteAnon,
+  obtenerClienteServiceRole,
+} from './supabase-auth.util';
+
+const logger = new Logger('GestionarUsuario');
 
 function resolverOrigenDashboard(): string {
   const origen = (process.env.CORS_ORIGIN ?? '').split(',')[0]?.trim();
@@ -31,7 +41,12 @@ export async function cambiarCorreoUsuario(
     throw new NotFoundException('Usuario no encontrado');
   }
   if (usuario.email === email) {
-    return { id: usuario.id, email: usuario.email, nombre: usuario.nombre, rol: usuario.rol };
+    return {
+      id: usuario.id,
+      email: usuario.email,
+      nombre: usuario.nombre,
+      rol: usuario.rol,
+    };
   }
 
   const existente = await prisma.usuario.findUnique({ where: { email } });
@@ -44,7 +59,10 @@ export async function cambiarCorreoUsuario(
     { email, email_confirm: true },
   );
   if (error) {
-    throw new ConflictException(`No se pudo actualizar el correo: ${error.message}`);
+    logger.warn(
+      `No se pudo actualizar el correo en Supabase: ${error.message}`,
+    );
+    throw new ConflictException('No se pudo actualizar el correo');
   }
 
   return prisma.usuario.update({
@@ -59,18 +77,27 @@ export async function cambiarCorreoUsuario(
  * mismo mecanismo que "¿Olvidaste tu contraseña?" en el login, pero
  * disparado por un admin/CEO/RRHH en nombre del usuario.
  */
-export async function enviarResetPassword(prisma: PrismaService, usuarioId: string) {
+export async function enviarResetPassword(
+  prisma: PrismaService,
+  usuarioId: string,
+) {
   const usuario = await prisma.usuario.findUnique({ where: { id: usuarioId } });
   if (!usuario) {
     throw new NotFoundException('Usuario no encontrado');
   }
 
   const origenDashboard = resolverOrigenDashboard();
-  const { error } = await obtenerClienteAnon().auth.resetPasswordForEmail(usuario.email, {
-    redirectTo: `${origenDashboard}/auth/confirm`,
-  });
+  const { error } = await obtenerClienteAnon().auth.resetPasswordForEmail(
+    usuario.email,
+    {
+      redirectTo: `${origenDashboard}/auth/confirm`,
+    },
+  );
   if (error) {
-    throw new ConflictException(`No se pudo enviar el restablecimiento: ${error.message}`);
+    logger.warn(
+      `No se pudo enviar el restablecimiento en Supabase: ${error.message}`,
+    );
+    throw new ConflictException('No se pudo enviar el restablecimiento');
   }
 
   return { ok: true };
@@ -98,7 +125,13 @@ export async function cambiarRolUsuario(
     return prisma.usuario.update({
       where: { id: usuarioId },
       data: { rol, talentoId: null },
-      select: { id: true, email: true, nombre: true, rol: true, talentoId: true },
+      select: {
+        id: true,
+        email: true,
+        nombre: true,
+        rol: true,
+        talentoId: true,
+      },
     });
   }
 
@@ -109,19 +142,29 @@ export async function cambiarRolUsuario(
   }
 
   if (talentoIdFinal) {
-    const talento = await prisma.talento.findUnique({ where: { id: talentoIdFinal } });
+    const talento = await prisma.talento.findUnique({
+      where: { id: talentoIdFinal },
+    });
     if (!talento || talento.empresaId !== usuario.empresaId) {
       throw new NotFoundException('Empleado no encontrado');
     }
-    const otroUsuario = await prisma.usuario.findUnique({ where: { talentoId: talentoIdFinal } });
+    const otroUsuario = await prisma.usuario.findUnique({
+      where: { talentoId: talentoIdFinal },
+    });
     if (otroUsuario && otroUsuario.id !== usuarioId) {
-      throw new ConflictException('Ese talento ya tiene un acceso de login vinculado');
+      throw new ConflictException(
+        'Ese talento ya tiene un acceso de login vinculado',
+      );
     }
   }
 
   return prisma.usuario.update({
     where: { id: usuarioId },
-    data: { rol, talentoId: rol === 'TALENTO' ? talentoIdFinal : (talentoId ?? usuario.talentoId) },
+    data: {
+      rol,
+      talentoId:
+        rol === 'TALENTO' ? talentoIdFinal : (talentoId ?? usuario.talentoId),
+    },
     select: { id: true, email: true, nombre: true, rol: true, talentoId: true },
   });
 }

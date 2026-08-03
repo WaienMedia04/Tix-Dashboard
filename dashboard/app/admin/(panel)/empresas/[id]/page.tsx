@@ -16,7 +16,6 @@ import {
   AdminConflictoError,
   fetchAdminDashboard,
   editarEmpresa,
-  cambiarEstadoEmpresa,
   borrarEmpresaAdmin,
   fetchEmpleadosAdmin,
   crearEmpleadoAdmin,
@@ -71,15 +70,16 @@ function ModalConectarBot({
   const toolsSnippet = `## Talentix API — Panel en Tiempo Real
 
 ### Configuración del endpoint
-URL: ${apiUrl}/worklogs
+URL: ${apiUrl}/worklogs/checkout
 Método: POST
 Content-Type: application/json
 empresaSlug (fijo para esta empresa): ${empresa.slug}
-botToken (reservado para auth futura): ${empresa.botToken ?? "⚠️ sin token — regenera desde el panel"}
+codigoAcceso (requerido — sin esto el request se rechaza): ${empresa.codigoAcceso ?? "⚠️ sin código — configúralo desde el panel"}
 
 ### Estructura del body (JSON)
 {
   "empresaSlug": "${empresa.slug}",
+  "codigoAcceso": "${empresa.codigoAcceso ?? "<codigoAcceso de la empresa>"}",
   "talentoNombre": "Nombre completo del talento (exacto)",
   "fecha": "YYYY-MM-DD",
   "actividadesRealizadas": "Descripción detallada de actividades",
@@ -98,7 +98,7 @@ botToken (reservado para auth futura): ${empresa.botToken ?? "⚠️ sin token �
 1. Recibir y procesar el mensaje completo del talento
 2. Extraer todos los campos del JSON de arriba
 3. Guardar registro en la hoja de Google Sheets
-4. Hacer POST al endpoint con el JSON completo
+4. Hacer POST al endpoint con el JSON completo (incluyendo codigoAcceso)
 5. Verificar respuesta exitosa (status 201)
 6. Confirmar al talento con su puntaje y retroalimentación`;
 
@@ -153,7 +153,7 @@ botToken (reservado para auth futura): ${empresa.botToken ?? "⚠️ sin token �
           <div>
             <div className="mb-2 flex items-center justify-between">
               <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Bot Token (para autenticación futura)
+                Bot Token (reservado, sin uso actualmente)
               </p>
               <button
                 onClick={() => copiar(botTokenTexto, "token")}
@@ -167,7 +167,7 @@ botToken (reservado para auth futura): ${empresa.botToken ?? "⚠️ sin token �
               <code className="font-mono text-xs text-emerald-400 break-all">{botTokenTexto}</code>
             </div>
             <p className="mt-1.5 text-xs text-muted-foreground">
-              Guarda este token. Lo usarás cuando activemos la validación por empresa en el endpoint.
+              Este token no se valida todavía — la autenticación real del endpoint usa el codigoAcceso de la empresa (ver abajo).
             </p>
           </div>
 

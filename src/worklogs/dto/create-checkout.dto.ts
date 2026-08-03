@@ -14,6 +14,9 @@ export class CreateCheckoutDto {
   @IsString()
   talentoNombre: string;
 
+  @IsString()
+  codigoAcceso: string;
+
   @IsDateString()
   fecha: string;
 

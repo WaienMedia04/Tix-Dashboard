@@ -31,11 +31,17 @@ export function Header({
     },
     bitacoras: { titulo: "Bitácoras", subtitulo: "Historial de bitácoras enviadas" },
     empleados: { titulo: "Empleados", subtitulo: "Gestión y perfiles del equipo" },
+    estampas: { titulo: "Estampas", subtitulo: "Reconocimientos y medallas para el equipo" },
     murales: { titulo: "Murales", subtitulo: "El mural personal de cada talento" },
     noticias: { titulo: "Mural informativo", subtitulo: "Noticias, eventos y blog para todo el equipo" },
+    novedades: { titulo: "Novedades", subtitulo: "Logros, buenas acciones y situaciones del equipo" },
+    vacantes: { titulo: "Vacantes", subtitulo: "Publica vacantes y busca candidatos internos con IA" },
     kpis: { titulo: "KPIs y Métricas", subtitulo: "Análisis de productividad del equipo" },
     reportes: { titulo: "Reportes", subtitulo: "Resúmenes ejecutivos por período" },
     configuracion: { titulo: "Configuración", subtitulo: "Datos y accesos de la empresa" },
+    rankings: { titulo: "Rankings", subtitulo: "Los mejores talentos del período" },
+    alertas: { titulo: "Alertas", subtitulo: "Detección automática de riesgos y reconocimientos" },
+    "reportes-ejecutivos": { titulo: "Reportes Ejecutivos", subtitulo: "Análisis narrativo con IA por período" },
   };
 
   const seccion = SECCIONES[segmento] ?? SECCIONES.dashboard;
