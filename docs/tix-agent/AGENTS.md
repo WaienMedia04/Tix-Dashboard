@@ -15,7 +15,7 @@ Antes de hacer cualquier cosa:
 - Lee USER.md — a quién ayudas (el CEO)
 - Lee TOOLS.md — la API y cómo llamarla
 - Lee memory/YYYY-MM-DD.md (hoy + ayer) si existen
-- Si estás en SESIÓN PRINCIPAL (chat directo con el CEO): también lee MEMORY.md y CONSULTAS.md (skill de consultas a la plataforma — rankings, talento del mes, reportes, alertas, etc.)
+- Si estás en SESIÓN PRINCIPAL (chat directo con el CEO): también lee MEMORY.md
 - En un heartbeat: lee HEARTBEAT.md y sigue SOLO esa lista. No hay checklist genérico aquí (nada de correo/calendario/clima — TIX no revisa eso).
 
 ## Memoria
@@ -43,7 +43,7 @@ Sin tablas markdown ni encabezados — usa **negrita**/MAYÚSCULAS y listas con 
 
 ## Herramientas
 
-Configuración y endpoints para registrar bitácoras (check-in/check-out) en
-TOOLS.md. Endpoints de solo consulta para responder preguntas del CEO sobre
-la plataforma (rankings, talento del mes, reportes, alertas, etc.) en
-CONSULTAS.md. No agregues herramientas a ninguno de los dos sin autorización del CEO.
+Configuración y endpoints en TOOLS.md — tanto para registrar bitácoras
+(check-in/check-out) como para las consultas de solo lectura que responden
+preguntas del CEO sobre la plataforma (rankings, talento del mes, reportes,
+alertas, etc.). No agregues herramientas ahí sin autorización del CEO.

@@ -136,6 +136,105 @@ Header: x-codigo-acceso: IAGIL-2026
 
 ---
 
+## 🧭 Consultas de plataforma — solo para chat privado con el CEO
+
+Estos endpoints son de SOLO LECTURA y responden preguntas del CEO sobre la
+plataforma (talento del mes, rankings, alertas, reportes, eventos, etc.).
+**Nunca se usan en el grupo "Bitácoras de CheckOut"** — ver SOUL.md
+"Consultas privadas del CEO" para cuándo y a quién responder con ellos, y
+para el formato de respuesta. Aquí solo está la referencia técnica de cada
+endpoint.
+
+Mecánica común a todos: mismo `x-codigo-acceso: IAGIL-2026`, mismo slug
+`iagil-bots-ia`, mismo tool HTTP Request (GET). Todas devuelven JSON —
+interprétalo y responde con tu propio resumen, nunca pegues el JSON crudo.
+
+### 🏆 Talento del mes / de la semana — `GET /empresas/iagil-bots-ia/reportes`
+
+- `periodo=mensual&valor=YYYY-MM` para el mes (si no te dan el mes, usa el actual).
+- `periodo=personalizado&fechaInicio=YYYY-MM-DD&fechaFin=YYYY-MM-DD` para "esta semana" (lunes de esta semana → hoy). No uses `periodo=semanal`: exige el formato `YYYY-Www` (semana ISO), fácil de calcular mal — con fechas explícitas no hay ambigüedad.
+- `valor` es OBLIGATORIO cuando `periodo` no es `personalizado` — si se omite, la API responde 400.
+
+Respuesta relevante:
+```json
+{
+  "resumen": {
+    "empleadoDelMes": { "nombre": "Eric Vizcaino", "puntajeProm": 9.2 },
+    "empleadoEnRiesgo": { "nombre": "Danny Solis", "cumplimiento": 45 }
+  }
+}
+```
+`empleadoDelMes` = mayor puntaje IA promedio del período. `empleadoEnRiesgo`
+= menor % de cumplimiento. Si vienen `null`, no hay datos suficientes ese
+período — dilo así, no inventes un nombre.
+
+### 📊 Ranking completo / top N — `GET /empresas/iagil-bots-ia/rankings`
+
+`periodo` acepta `mensual` | `anual` | `historico` (con `valor=YYYY-MM` o
+`YYYY` según corresponda; `historico` no lleva `valor`). No existe
+`semanal` ni `personalizado` aquí — para "esta semana" usa Reportes, no
+Rankings.
+
+```json
+{
+  "general": [{ "nombreCompleto": "Eric Vizcaino", "rol": "...", "puntajeIAPromedio": 9.2, "bitacorasEnviadas": 20, "totalBitacoras": 22 }],
+  "porDepartamento": [{ "departamento": "Ventas", "talentos": [...] }]
+}
+```
+`general` ya viene ordenado de mayor a menor — para "top 3" toma los primeros 3.
+
+### ⚠️ Alertas activas — `GET /empresas/iagil-bots-ia/alertas`
+
+```json
+{
+  "resumen": { "criticas": 2, "advertencias": 1, "positivas": 1 },
+  "alertas": [{ "nombreCompleto": "Peter Chavez", "severidad": "critica", "tipo": "inactividad", "mensaje": "3 días sin enviar una bitácora.", "fecha": "..." }]
+}
+```
+`severidad`: `critica` (requiere atención), `advertencia`, `positiva`
+(reconocimiento). Úsalo para "¿hay algo urgente?" o "¿cómo está el equipo?".
+
+### 🧠 Reporte ejecutivo con análisis de IA — `GET /empresas/iagil-bots-ia/reportes-ejecutivos`
+
+Mismos parámetros que Reportes, pero además trae `analisis` (generado por
+IA, más lento y con costo — úsalo solo cuando el CEO pida explícitamente un
+"análisis" o "recomendaciones"; para preguntas de un solo dato usa Reportes
+normal, es gratis e instantáneo):
+```json
+{ "analisis": { "resumenEjecutivo": "...", "fortalezas": ["..."], "riesgos": ["..."], "recomendaciones": ["..."] } }
+```
+Si `analisis` viene `null`, la IA no pudo generar el análisis ese momento —
+da los números crudos igual (resumen/detalle siempre vienen) y dilo.
+
+### 🎂 Cumpleaños — `GET /empresas/iagil-bots-ia/cumpleanos`
+
+`{ "hoy": [...], "esteMes": [...], "porMes": [{ "mes": 1, "talentos": [...] }] }`. Cada persona trae `nombreCompleto`, `departamento`, `dia` (en `esteMes`/`porMes`).
+
+### 📰 Noticias y eventos (mural informativo) — `GET /empresas/iagil-bots-ia/boletin`
+
+Filtro opcional `?tipo=NOTICIA` (o `EVENTO`, `BLOG`; sin `tipo` trae todo).
+`{ "data": [{ "tipo", "titulo", "contenido", "fechaEvento", "createdAt", "autorNombre" }], "hayMas": false }`.
+
+### 🌟 Novedades del equipo — `GET /empresas/iagil-bots-ia/novedades`
+
+Array de `{ "nombreCompleto", "tipo", "fecha", "descripcion", "creadoPorNombre" }`.
+`tipo`: LOGRO, EXITO, BUENA_ACCION, COSA_BUENA, TARDANZA, AUSENCIA, PERMISO,
+NO_CUMPLIMIENTO, ERROR, SITUACION, EVENTO, NOTA — filtra con `?tipo=LOGRO`
+si preguntan específicamente por logros, por ejemplo.
+
+### 💼 Vacantes abiertas — `GET /empresas/iagil-bots-ia/vacantes`
+
+Array de `{ "titulo", "descripcion", "departamento", "estado", "autorNombre" }`.
+`estado` es `ABIERTA` o `CERRADA` — el endpoint no filtra por query param,
+filtra vos en la respuesta (solo menciona las `ABIERTA` si preguntan qué
+vacantes hay abiertas).
+
+> Para preguntas sobre bitácoras o el roster de un talento puntual (ej.
+> "¿qué envió Eric hoy?"), usa los endpoints ya documentados arriba
+> ("Consultar bitácoras" y "Lista de Talentos") — son los mismos.
+
+---
+
 ## 📋 Los 5 estados válidos — `estadoEnvio` (check-out)
 
 | Estado | Cuándo usarlo |
