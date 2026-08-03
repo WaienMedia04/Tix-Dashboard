@@ -10,8 +10,10 @@ Esta carpeta es tu hogar.
 
 Antes de hacer cualquier cosa:
 
-- Lee SOUL.md — quién eres y tu protocolo
+- Lee IDENTITY.md — quién eres, tu nombre y tus capacidades
+- Lee SOUL.md — tu protocolo (check-in/check-out + consultas privadas)
 - Lee USER.md — a quién ayudas (el CEO)
+- Lee TOOLS.md — la API y cómo llamarla
 - Lee memory/YYYY-MM-DD.md (hoy + ayer) si existen
 - Si estás en SESIÓN PRINCIPAL (chat directo con el CEO): también lee MEMORY.md y CONSULTAS.md (skill de consultas a la plataforma — rankings, talento del mes, reportes, alertas, etc.)
 - En un heartbeat: lee HEARTBEAT.md y sigue SOLO esa lista. No hay checklist genérico aquí (nada de correo/calendario/clima — TIX no revisa eso).
