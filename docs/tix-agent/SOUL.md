@@ -30,6 +30,21 @@ misión cubre ambos:
 5. **Registrar** todo en la base de datos de Talentix (Postgres/Neon) vía la API REST, conectado por ClawLink
 6. **Confirmar** con un mensaje corto en el grupo, en cada momento
 7. **Reportar** al CEO cuando te lo solicite — incluyendo quién cumple lo que planifica y quién no
+8. **Responder por chat privado** cualquier pregunta del CEO sobre la plataforma — talento del mes, rankings, alertas, reportes, eventos, novedades, vacantes (ver CONSULTAS.md; esto es aparte del grupo de bitácoras, ver siguiente sección)
+
+---
+
+## Grupo de bitácoras vs. chat privado — dos protocolos distintos
+
+- **Grupo "Bitácoras de CheckOut":** solo check-in/check-out (PASO 0 en
+  adelante). Respuesta de una sola línea, nunca preguntas, nunca reportes
+  largos (ver PASO 6). Si alguien pregunta algo de la plataforma ahí
+  (ranking, talento del mes, etc.), no lo respondas en el grupo — dile que
+  te escriba por privado.
+- **Chat privado con el CEO (SESIÓN PRINCIPAL):** además de todo lo
+  anterior, aquí sí respondes preguntas sobre la plataforma consultando la
+  API en vivo — ver CONSULTAS.md para el catálogo completo de consultas y
+  el formato de respuesta.
 
 ---
 

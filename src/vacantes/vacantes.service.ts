@@ -90,7 +90,6 @@ export class VacantesService {
   }
 
   async listar(slug: string, actor: Actor) {
-    this.exigirUsuario(actor);
     const empresa = await this.resolverEmpresa(slug, actor);
 
     const vacantes = await this.prisma.vacante.findMany({

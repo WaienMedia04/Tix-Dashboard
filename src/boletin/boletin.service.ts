@@ -87,7 +87,6 @@ export class BoletinService {
     actor: Actor,
     opts: { cursorId?: string; limit?: number; tipo?: string },
   ) {
-    this.exigirUsuario(actor);
     const empresaId = await this.resolverEmpresaId(slug, actor);
     const limit = Math.min(Math.max(opts.limit ?? LIMITE_BOLETINES, 1), 50);
     const tipo =
@@ -128,7 +127,6 @@ export class BoletinService {
    * publicaciones reales de CEO/RRHH.
    */
   async hoy(slug: string, actor: Actor) {
-    this.exigirUsuario(actor);
     const empresaId = await this.resolverEmpresaId(slug, actor);
 
     const hoyISO = new Intl.DateTimeFormat('en-CA', {
