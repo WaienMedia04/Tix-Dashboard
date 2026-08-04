@@ -146,7 +146,7 @@ a lo que indicó ese cliente específico.
 
 ```
 agentes/
-  <nombre-o-slug-del-cliente>/
+  Agente <Nombre del Cliente>/
     AGENTS.md      — punto de entrada, qué leer en cada sesión
     IDENTITY.md    — quién es el agente para ese cliente (nombre si lo personalizan, misión)
     SOUL.md        — protocolo completo, con el rubro de puntaje/cumplimiento YA moldeado a ese cliente
@@ -157,7 +157,7 @@ agentes/
 ```
 
 El primer cliente implementado (IAGIL, la propia empresa) vive en
-`agentes/iagil-bots-ia/` como referencia. Para un cliente nuevo: se copia
+`agentes/Agente IAGIL/` como referencia. Para un cliente nuevo: se copia
 esa carpeta completa a `agentes/<cliente-nuevo>/` y se ajustan `SOUL.md`
 (Fase 6), `HEARTBEAT.md`/`TOOLS.md` (slug, código de acceso, horario de
 Fase 5) y `USER.md` (a quién le reporta) — el resto (TOOLS.md en su
