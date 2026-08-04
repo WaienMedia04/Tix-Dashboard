@@ -244,7 +244,7 @@ function SubidaArchivo({
 
 function FondoMoltenMetal() {
   return (
-    <div className="pointer-events-none fixed inset-0 -z-10">
+    <div className="pointer-events-none absolute inset-0">
       <MoltenMetal
         color1="#1E1B4B"
         color2="#9333EA"
