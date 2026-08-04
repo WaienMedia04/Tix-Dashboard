@@ -370,7 +370,7 @@ export default function OnboardingPage() {
       <div className="relative z-10 mx-auto max-w-2xl px-4 py-10 sm:px-6">
         <BrandMark variant="onDark" />
         <h1 className="font-display mt-4 text-2xl font-bold text-white sm:text-3xl">
-          Implementemos <span className="text-violet-300">TalentiX</span> en tu empresa
+          Implementemos <span className="text-primary">TalentiX</span> en tu empresa
         </h1>
         <p className="mt-2 text-sm text-white/75">
           TalentiX se adapta a cómo tu empresa mide y organiza a su equipo. Completa lo que tengas a mano — lo demás
