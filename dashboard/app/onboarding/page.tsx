@@ -6,6 +6,7 @@ import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, Plus, Upload, X } fro
 import { crearSolicitudImplementacion, type SolicitudImplementacionInput } from "@/lib/api";
 import { mensajeError } from "@/lib/errores";
 import { BrandMark } from "@/components/BrandMark";
+import MoltenMetal from "@/components/vendor/MoltenMetal/MoltenMetal";
 
 const CAMPO =
   "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring";
@@ -241,6 +242,33 @@ function SubidaArchivo({
   );
 }
 
+function FondoMoltenMetal() {
+  return (
+    <div className="pointer-events-none fixed inset-0 -z-10">
+      <MoltenMetal
+        color1="#1E1B4B"
+        color2="#9333EA"
+        color3="#22D3EE"
+        speed={0.35}
+        scale={4}
+        detail={3}
+        glow={1.6}
+        coreSize={0.1}
+        swirl={1}
+        fold={-0.2}
+        blackPoint={0.05}
+        brightness={1.3}
+        colorMode="molten"
+        grain
+        grainIntensity={0.05}
+        mouseInteraction={false}
+        mouseStrength={0.3}
+        opacity={1.0}
+      />
+    </div>
+  );
+}
+
 export default function OnboardingPage() {
   const [paso, setPaso] = useState(0);
   const [f, setF] = useState<FormState>(VACIO);
@@ -321,8 +349,9 @@ export default function OnboardingPage() {
 
   if (enviado) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="max-w-md rounded-lg border border-border bg-card p-8 text-center shadow-card">
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-4">
+        <FondoMoltenMetal />
+        <div className="relative z-10 max-w-md rounded-lg border border-white/10 bg-card p-8 text-center shadow-elegant">
           <CheckCircle2 className="mx-auto h-10 w-10 text-success" />
           <h1 className="font-display mt-4 text-xl font-semibold text-foreground">¡Listo, recibimos tu información!</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -335,27 +364,28 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="h-1.5 bg-gradient-to-r from-cyan-400 via-violet-600 to-fuchsia-500" />
-      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
-        <BrandMark />
-        <h1 className="font-display mt-4 text-2xl font-bold text-foreground sm:text-3xl">
-          Implementemos <span className="text-primary">TalentiX</span> en tu empresa
+    <div className="relative min-h-screen overflow-hidden bg-black">
+      <FondoMoltenMetal />
+      <div className="relative z-10 h-1.5 bg-gradient-to-r from-cyan-400 via-violet-600 to-fuchsia-500" />
+      <div className="relative z-10 mx-auto max-w-2xl px-4 py-10 sm:px-6">
+        <BrandMark variant="onDark" />
+        <h1 className="font-display mt-4 text-2xl font-bold text-white sm:text-3xl">
+          Implementemos <span className="text-violet-300">TalentiX</span> en tu empresa
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-white/75">
           TalentiX se adapta a cómo tu empresa mide y organiza a su equipo. Completa lo que tengas a mano — lo demás
           lo resolvemos juntos en la reunión de arranque.
         </p>
 
         {/* Progreso */}
         <div className="mt-6">
-          <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+          <div className="flex items-center justify-between text-xs font-medium text-white/75">
             <span>
               Paso {paso + 1} de {PASOS.length}
             </span>
             <span>{PASOS[paso]}</span>
           </div>
-          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
             <div
               className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-violet-600 to-fuchsia-500 transition-all duration-300"
               style={{ width: `${((paso + 1) / PASOS.length) * 100}%` }}
@@ -364,7 +394,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* Contenido del paso */}
-        <div className="mt-8 space-y-4 rounded-lg border border-border bg-card p-5 shadow-card sm:p-6">
+        <div className="mt-8 space-y-4 rounded-lg border border-white/10 bg-card p-5 shadow-elegant sm:p-6">
           {paso === 0 && (
             <>
               <div>
