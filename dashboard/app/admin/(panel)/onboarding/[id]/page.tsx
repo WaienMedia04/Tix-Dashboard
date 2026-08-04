@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, FileDown } from "lucide-react";
+import { ChevronLeft, FileDown, FileText, Trash2 } from "lucide-react";
 import {
   type EstadoSolicitudImplementacion,
   type SolicitudImplementacionDetalle,
   AdminNoAutorizadoError,
   actualizarEstadoSolicitudImplementacionAdmin,
+  borrarSolicitudImplementacionAdmin,
   fetchSolicitudImplementacionAdmin,
 } from "@/lib/admin-api";
 import { leerTokenAdmin, borrarTokenAdmin } from "@/lib/admin-auth";
@@ -56,6 +57,7 @@ export default function AdminOnboardingDetallePage() {
   const [s, setS] = useState<SolicitudImplementacionDetalle | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [guardandoEstado, setGuardandoEstado] = useState(false);
+  const [borrando, setBorrando] = useState(false);
 
   useEffect(() => {
     const token = leerTokenAdmin();
@@ -87,12 +89,32 @@ export default function AdminOnboardingDetallePage() {
     }
   }
 
+  async function handleBorrar() {
+    const token = leerTokenAdmin();
+    if (!token || !s) return;
+    if (!confirm(`¿Eliminar la solicitud de "${s.empresaNombre}"? Esta acción no se puede deshacer.`)) return;
+    setBorrando(true);
+    try {
+      await borrarSolicitudImplementacionAdmin(token, id);
+      router.push("/admin/onboarding");
+    } catch (err) {
+      if (err instanceof AdminNoAutorizadoError) {
+        borrarTokenAdmin();
+        router.replace("/admin");
+      } else {
+        alert("No se pudo eliminar la solicitud.");
+      }
+    } finally {
+      setBorrando(false);
+    }
+  }
+
   if (error) return <p className="text-sm text-destructive">{error}</p>;
   if (!s) return <LoadingScreen />;
 
   return (
     <div className="max-w-3xl space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="print:hidden flex flex-wrap items-center gap-3">
         <Link href="/admin/onboarding" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="h-4 w-4" /> Volver
         </Link>
@@ -110,7 +132,30 @@ export default function AdminOnboardingDetallePage() {
               </option>
             ))}
           </select>
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            <FileText className="h-4 w-4" />
+            Descargar reporte
+          </button>
+          <button
+            onClick={() => void handleBorrar()}
+            disabled={borrando}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm font-medium text-destructive transition-colors hover:border-destructive disabled:opacity-50"
+          >
+            <Trash2 className="h-4 w-4" />
+            Eliminar
+          </button>
         </div>
+      </div>
+
+      <div className="hidden print:block">
+        <h1 className="font-display text-xl font-semibold text-foreground">TalentiX RD — Solicitud de implementación</h1>
+        <p className="text-sm text-muted-foreground">
+          {s.empresaNombre} · Recibida el {formatearFecha(s.createdAt)}
+        </p>
+        <div className="my-3 border-t border-border" />
       </div>
 
       <div className="rounded-xl border border-border bg-card p-5 shadow-card">

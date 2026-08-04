@@ -401,3 +401,7 @@ export function actualizarEstadoSolicitudImplementacionAdmin(
     body: JSON.stringify({ estado }),
   });
 }
+
+export function borrarSolicitudImplementacionAdmin(token: string, id: string): Promise<{ ok: boolean }> {
+  return adminFetch(`/admin/onboarding/${id}`, token, { method: "DELETE" });
+}

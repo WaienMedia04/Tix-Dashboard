@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -43,5 +44,11 @@ export class OnboardingController {
     @Body() dto: ActualizarEstadoSolicitudDto,
   ) {
     return this.onboardingService.actualizarEstadoAdmin(id, dto);
+  }
+
+  @Delete('admin/onboarding/:id')
+  @UseGuards(AdminGuard)
+  borrarAdmin(@Param('id') id: string) {
+    return this.onboardingService.borrarAdmin(id);
   }
 }

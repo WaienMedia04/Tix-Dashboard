@@ -49,4 +49,10 @@ export class OnboardingService {
       data: { estado: dto.estado },
     });
   }
+
+  async borrarAdmin(id: string) {
+    await this.obtenerAdmin(id);
+    await this.prisma.solicitudImplementacion.delete({ where: { id } });
+    return { ok: true };
+  }
 }
