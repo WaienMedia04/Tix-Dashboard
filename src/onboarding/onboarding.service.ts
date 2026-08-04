@@ -24,11 +24,18 @@ export class OnboardingService {
       select: {
         id: true,
         estado: true,
+        vista: true,
         empresaNombre: true,
         contactoNombre: true,
         contactoCorreo: true,
         createdAt: true,
       },
+    });
+  }
+
+  async contarNoVistas() {
+    return this.prisma.solicitudImplementacion.count({
+      where: { vista: false },
     });
   }
 
@@ -38,6 +45,12 @@ export class OnboardingService {
     });
     if (!solicitud) {
       throw new NotFoundException('Solicitud no encontrada');
+    }
+    if (!solicitud.vista) {
+      return this.prisma.solicitudImplementacion.update({
+        where: { id },
+        data: { vista: true },
+      });
     }
     return solicitud;
   }

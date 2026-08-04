@@ -31,6 +31,14 @@ export class OnboardingController {
     return this.onboardingService.listarAdmin();
   }
 
+  /** Debe ir antes de la ruta con :id — si no, Nest la confunde con un id. */
+  @Get('admin/onboarding/pendientes')
+  @UseGuards(AdminGuard)
+  async contarNoVistas() {
+    const total = await this.onboardingService.contarNoVistas();
+    return { total };
+  }
+
   @Get('admin/onboarding/:id')
   @UseGuards(AdminGuard)
   obtenerAdmin(@Param('id') id: string) {

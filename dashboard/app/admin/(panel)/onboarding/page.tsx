@@ -104,17 +104,27 @@ export default function AdminOnboardingPage() {
             </div>
           ) : (
             solicitudes.map((s) => (
-              <div key={s.id} className="flex items-center gap-2 px-5 py-2 hover:bg-accent/40">
+              <div key={s.id} className={`flex items-center gap-2 px-5 py-2 hover:bg-accent/40 ${!s.vista ? "bg-primary/5" : ""}`}>
                 <Link href={`/admin/onboarding/${s.id}`} className="flex min-w-0 flex-1 items-center justify-between gap-3 py-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-foreground">{s.empresaNombre}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {s.contactoNombre} · {s.contactoCorreo}
-                    </p>
+                  <div className="flex min-w-0 items-center gap-2">
+                    {!s.vista && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true" />}
+                    <div className="min-w-0">
+                      <p className={`truncate text-sm text-foreground ${!s.vista ? "font-semibold" : "font-medium opacity-70"}`}>
+                        {s.empresaNombre}
+                      </p>
+                      <p className={`truncate text-xs text-muted-foreground ${s.vista ? "opacity-70" : ""}`}>
+                        {s.contactoNombre} · {s.contactoCorreo}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-3">
+                  <div className="flex shrink-0 items-center gap-2">
                     <span className="text-xs text-muted-foreground">{formatearFecha(s.createdAt)}</span>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${ESTADO_ESTILO[s.estado]}`}>
+                    {!s.vista && (
+                      <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
+                        Nueva
+                      </span>
+                    )}
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${ESTADO_ESTILO[s.estado]} ${s.vista ? "opacity-70" : ""}`}>
                       {ESTADO_LABEL[s.estado]}
                     </span>
                   </div>

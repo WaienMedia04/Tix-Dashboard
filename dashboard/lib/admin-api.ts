@@ -350,6 +350,7 @@ export type EstadoSolicitudImplementacion = "NUEVA" | "EN_PROCESO" | "COMPLETADA
 export interface SolicitudImplementacionResumen {
   id: string;
   estado: EstadoSolicitudImplementacion;
+  vista: boolean;
   empresaNombre: string;
   contactoNombre: string;
   contactoCorreo: string;
@@ -385,6 +386,10 @@ export interface SolicitudImplementacionDetalle extends SolicitudImplementacionR
 
 export function fetchSolicitudesImplementacionAdmin(token: string): Promise<SolicitudImplementacionResumen[]> {
   return adminFetch("/admin/onboarding", token);
+}
+
+export function fetchSolicitudesImplementacionPendientesAdmin(token: string): Promise<{ total: number }> {
+  return adminFetch("/admin/onboarding/pendientes", token);
 }
 
 export function fetchSolicitudImplementacionAdmin(token: string, id: string): Promise<SolicitudImplementacionDetalle> {

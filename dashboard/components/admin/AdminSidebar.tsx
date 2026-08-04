@@ -7,7 +7,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Building2, ChevronsLeft, ChevronsRight, ClipboardList, LayoutDashboard, LifeBuoy, LogOut, Moon, Sun, X } from "lucide-react";
 import { borrarTokenAdmin, leerTokenAdmin } from "@/lib/admin-auth";
-import { fetchSolicitudesSoportePendientesAdmin } from "@/lib/admin-api";
+import { fetchSolicitudesImplementacionPendientesAdmin, fetchSolicitudesSoportePendientesAdmin } from "@/lib/admin-api";
 import { useEsMobile } from "@/lib/use-es-mobile";
 
 const NAV = [
@@ -30,6 +30,7 @@ export function AdminSidebar({ abierto = false, onCerrar }: { abierto?: boolean;
   const [montado, setMontado] = useState(false);
   const [col, setCol] = useState(() => typeof window !== "undefined" && sessionStorage.getItem(CLAVE) === "1");
   const [pendientes, setPendientes] = useState(0);
+  const [onboardingPendientes, setOnboardingPendientes] = useState(0);
 
   // Patrón oficial de next-themes: evita el mismatch de hidratación.
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -43,6 +44,11 @@ export function AdminSidebar({ abierto = false, onCerrar }: { abierto?: boolean;
       fetchSolicitudesSoportePendientesAdmin(token!)
         .then((r) => {
           if (!cancelado) setPendientes(r.total);
+        })
+        .catch(() => {});
+      fetchSolicitudesImplementacionPendientesAdmin(token!)
+        .then((r) => {
+          if (!cancelado) setOnboardingPendientes(r.total);
         })
         .catch(() => {});
     }
@@ -144,11 +150,20 @@ export function AdminSidebar({ abierto = false, onCerrar }: { abierto?: boolean;
                 )}
                 <span className="relative z-10 shrink-0">
                   <item.icon className="h-4 w-4" />
-                  {item.href === "/admin/soporte" && pendientes > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-semibold text-white">
-                      {pendientes > 9 ? "9+" : pendientes}
-                    </span>
-                  )}
+                  {(() => {
+                    const contador =
+                      item.href === "/admin/soporte"
+                        ? pendientes
+                        : item.href === "/admin/onboarding"
+                          ? onboardingPendientes
+                          : 0;
+                    if (contador <= 0) return null;
+                    return (
+                      <span className="absolute -top-1.5 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-semibold text-white">
+                        {contador > 9 ? "9+" : contador}
+                      </span>
+                    );
+                  })()}
                 </span>
                 {!colVisual && <span className="relative z-10 truncate">{item.label}</span>}
                 {colVisual && (

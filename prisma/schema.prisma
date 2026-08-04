@@ -763,6 +763,7 @@ enum EstadoSolicitudImplementacion {
 model SolicitudImplementacion {
   id     String                        @id @default(cuid())
   estado EstadoSolicitudImplementacion @default(NUEVA)
+  vista  Boolean                       @default(false)
 
   // Fase 1 — Empresa
   empresaNombre     String
@@ -808,4 +809,5 @@ model SolicitudImplementacion {
   updatedAt DateTime @updatedAt
 
   @@index([estado, createdAt])
+  @@index([vista])
 }
