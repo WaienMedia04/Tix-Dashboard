@@ -351,7 +351,7 @@ export default function OnboardingPage() {
     return (
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-4">
         <FondoMoltenMetal />
-        <div className="relative z-10 max-w-md rounded-lg border border-white/10 bg-card p-8 text-center shadow-elegant">
+        <div className="relative z-10 max-w-md rounded-lg border border-white/10 bg-black/70 p-8 text-center shadow-elegant backdrop-blur-xl">
           <CheckCircle2 className="mx-auto h-10 w-10 text-success" />
           <h1 className="font-display mt-4 text-xl font-semibold text-foreground">¡Listo, recibimos tu información!</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -394,7 +394,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* Contenido del paso */}
-        <div className="mt-8 space-y-4 rounded-lg border border-white/10 bg-card p-5 shadow-elegant sm:p-6">
+        <div className="mt-8 space-y-4 rounded-lg border border-white/10 bg-black/70 p-5 shadow-elegant backdrop-blur-xl sm:p-6">
           {paso === 0 && (
             <>
               <div>
