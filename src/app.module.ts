@@ -18,6 +18,7 @@ import { ChatModule } from './chat/chat.module';
 import { PizarraModule } from './pizarra/pizarra.module';
 import { BoletinModule } from './boletin/boletin.module';
 import { VacantesModule } from './vacantes/vacantes.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { VacantesModule } from './vacantes/vacantes.module';
     PizarraModule,
     BoletinModule,
     VacantesModule,
+    OnboardingModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

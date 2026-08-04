@@ -748,3 +748,64 @@ model Vacante {
   @@index([empresaId, createdAt])
   @@index([empresaId, estado])
 }
+
+enum EstadoSolicitudImplementacion {
+  NUEVA
+  EN_PROCESO
+  COMPLETADA
+}
+
+/// Envío del formulario público de onboarding — lo llena un cliente
+/// prospecto antes de tener cuenta en la plataforma. No tiene empresaId
+/// porque la Empresa todavía no existe; el equipo de Talentix la usa para
+/// crear la Empresa/Departamentos/Talentos y para moldear el agente TIX de
+/// ese cliente (ver docs/ONBOARDING_CLIENTES.md).
+model SolicitudImplementacion {
+  id     String                        @id @default(cuid())
+  estado EstadoSolicitudImplementacion @default(NUEVA)
+
+  // Fase 1 — Empresa
+  empresaNombre     String
+  giroNegocio       String?
+  cantidadEmpleados Int?
+  logoUrl           String?
+
+  // Fase 2 — Estructura organizacional
+  departamentos             String[]
+  rolesMultiples            String?
+  ceoNombre                 String?
+  rrhhNombre                String?
+  encargadosPorDepartamento Json?
+
+  // Fase 3 — Roster de talentos
+  rosterArchivoUrl String?
+
+  // Fase 4 — Vacantes con IA
+  quiereVacantesIA Boolean @default(false)
+
+  // Fase 5 — Bitácoras / agente TIX
+  canalBitacoras  String
+  nombreGrupo     String?
+  horaCheckin     String?
+  horaCheckout    String?
+  diasLaborales   String[]
+  receptorAlertas String?
+
+  // Fase 6 — Cómo miden el desempeño
+  buenDiaTrabajo        String?
+  medicionPorRol        String?
+  queCalificaBajo       String?
+  interesaCumplimiento  String?
+  baseTalentoDelMes     String?
+
+  // Fase 7 — Contacto
+  contactoNombre   String
+  contactoCargo    String?
+  contactoCorreo   String
+  contactoTelefono String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([estado, createdAt])
+}

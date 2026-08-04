@@ -2574,3 +2574,46 @@ export async function buscarCandidatosInternos(slug: string, id: string): Promis
   }
   return res.json();
 }
+
+export interface SolicitudImplementacionInput {
+  empresaNombre: string;
+  giroNegocio?: string;
+  cantidadEmpleados?: number;
+  logoUrl?: string;
+  departamentos?: string[];
+  rolesMultiples?: string;
+  ceoNombre?: string;
+  rrhhNombre?: string;
+  encargadosPorDepartamento?: { nombre: string; departamento: string }[];
+  rosterArchivoUrl?: string;
+  quiereVacantesIA: boolean;
+  canalBitacoras: "grupo" | "privado";
+  nombreGrupo?: string;
+  horaCheckin?: string;
+  horaCheckout?: string;
+  diasLaborales?: string[];
+  receptorAlertas?: string;
+  buenDiaTrabajo?: string;
+  medicionPorRol?: string;
+  queCalificaBajo?: string;
+  interesaCumplimiento?: string;
+  baseTalentoDelMes?: string;
+  contactoNombre: string;
+  contactoCargo?: string;
+  contactoCorreo: string;
+  contactoTelefono?: string;
+}
+
+/** Formulario público de onboarding — sin sesión, la empresa todavía no existe en la plataforma. */
+export async function crearSolicitudImplementacion(datos: SolicitudImplementacionInput): Promise<{ id: string }> {
+  const res = await fetch(`${API_URL}/onboarding`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  });
+  if (!res.ok) {
+    const cuerpo = await res.json().catch(() => null);
+    throw new Error((cuerpo as { message?: string } | null)?.message ?? "No se pudo enviar el formulario");
+  }
+  return res.json();
+}

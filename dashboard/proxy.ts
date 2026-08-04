@@ -17,7 +17,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/docs") ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/auth/confirm") ||
-    pathname.startsWith("/activar-cuenta");
+    pathname.startsWith("/activar-cuenta") ||
+    pathname.startsWith("/onboarding");
 
   if (esPublica) {
     return NextResponse.next();

@@ -342,3 +342,62 @@ export function fetchSolicitudesSoportePendientesAdmin(token: string): Promise<{
 export function marcarSolicitudSoporteLeidaAdmin(token: string, id: string): Promise<{ id: string; leida: boolean }> {
   return adminFetch(`/admin/soporte/${id}/leida`, token, { method: "PATCH" });
 }
+
+// ── Solicitudes de implementación (formulario público de onboarding) ──────
+
+export type EstadoSolicitudImplementacion = "NUEVA" | "EN_PROCESO" | "COMPLETADA";
+
+export interface SolicitudImplementacionResumen {
+  id: string;
+  estado: EstadoSolicitudImplementacion;
+  empresaNombre: string;
+  contactoNombre: string;
+  contactoCorreo: string;
+  createdAt: string;
+}
+
+export interface SolicitudImplementacionDetalle extends SolicitudImplementacionResumen {
+  giroNegocio: string | null;
+  cantidadEmpleados: number | null;
+  logoUrl: string | null;
+  departamentos: string[];
+  rolesMultiples: string | null;
+  ceoNombre: string | null;
+  rrhhNombre: string | null;
+  encargadosPorDepartamento: { nombre: string; departamento: string }[] | null;
+  rosterArchivoUrl: string | null;
+  quiereVacantesIA: boolean;
+  canalBitacoras: "grupo" | "privado";
+  nombreGrupo: string | null;
+  horaCheckin: string | null;
+  horaCheckout: string | null;
+  diasLaborales: string[];
+  receptorAlertas: string | null;
+  buenDiaTrabajo: string | null;
+  medicionPorRol: string | null;
+  queCalificaBajo: string | null;
+  interesaCumplimiento: string | null;
+  baseTalentoDelMes: string | null;
+  contactoCargo: string | null;
+  contactoTelefono: string | null;
+  updatedAt: string;
+}
+
+export function fetchSolicitudesImplementacionAdmin(token: string): Promise<SolicitudImplementacionResumen[]> {
+  return adminFetch("/admin/onboarding", token);
+}
+
+export function fetchSolicitudImplementacionAdmin(token: string, id: string): Promise<SolicitudImplementacionDetalle> {
+  return adminFetch(`/admin/onboarding/${id}`, token);
+}
+
+export function actualizarEstadoSolicitudImplementacionAdmin(
+  token: string,
+  id: string,
+  estado: EstadoSolicitudImplementacion,
+): Promise<SolicitudImplementacionDetalle> {
+  return adminFetch(`/admin/onboarding/${id}/estado`, token, {
+    method: "PATCH",
+    body: JSON.stringify({ estado }),
+  });
+}

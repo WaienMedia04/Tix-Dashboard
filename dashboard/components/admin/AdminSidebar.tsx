@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Building2, ChevronsLeft, ChevronsRight, LayoutDashboard, LifeBuoy, LogOut, Moon, Sun, X } from "lucide-react";
+import { Building2, ChevronsLeft, ChevronsRight, ClipboardList, LayoutDashboard, LifeBuoy, LogOut, Moon, Sun, X } from "lucide-react";
 import { borrarTokenAdmin, leerTokenAdmin } from "@/lib/admin-auth";
 import { fetchSolicitudesSoportePendientesAdmin } from "@/lib/admin-api";
 import { useEsMobile } from "@/lib/use-es-mobile";
@@ -13,6 +13,7 @@ import { useEsMobile } from "@/lib/use-es-mobile";
 const NAV = [
   { href: "/admin/dashboard", label: "Dashboard global", icon: LayoutDashboard },
   { href: "/admin/empresas", label: "Empresas", icon: Building2 },
+  { href: "/admin/onboarding", label: "Onboarding", icon: ClipboardList },
   { href: "/admin/soporte", label: "Soporte", icon: LifeBuoy },
 ];
 
