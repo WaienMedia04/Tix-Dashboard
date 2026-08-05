@@ -76,7 +76,7 @@ function FilaMision({
         transition={{ duration: 0.5 }}
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted"
       >
-        <IconoCatalogo id={mision.icono} className="h-4 w-4 text-zinc-600" />
+        <IconoCatalogo id={mision.icono} className="h-4 w-4" />
       </motion.span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-medium text-zinc-900">{mision.nombre}</p>

@@ -21,7 +21,7 @@ export function WidgetLogros({ logros }: { logros: LogroMural[] }) {
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
                 {logro.desbloqueado ? (
-                  <IconoCatalogo id={logro.icono} className="h-4 w-4 text-foreground" />
+                  <IconoCatalogo id={logro.icono} className="h-4 w-4" />
                 ) : (
                   <Lock className="h-4 w-4 text-foreground" />
                 )}
