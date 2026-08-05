@@ -24,6 +24,10 @@ export const FONDOS_MURAL_IDS = [
   'lluvia_llovizna',
   'lluvia_normal',
   'lluvia_tormenta',
+  'nebulosa',
+  'obsidiana_real',
+  'esmeralda_imperial',
+  'cobre_ardiente',
 ] as const;
 
 export type FondoMuralId = (typeof FONDOS_MURAL_IDS)[number];

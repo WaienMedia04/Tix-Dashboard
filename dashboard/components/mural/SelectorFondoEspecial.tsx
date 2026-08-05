@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Check, CloudRain, Loader2 } from "lucide-react";
-import { actualizarPerfilMural } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { Check, CloudRain, Loader2, Lock } from "lucide-react";
+import { actualizarPerfilMural, fetchTiendaCatalogo, type ItemFondoTienda } from "@/lib/api";
 import { FONDOS_MURAL, type IntensidadLluvia } from "@/lib/mural-fondos";
 
 /** Códigos de clima WMO (Open-Meteo) que representan algún tipo de lluvia. */
@@ -19,22 +19,46 @@ const FONDO_POR_INTENSIDAD: Record<IntensidadLluvia, string> = {
   tormenta: "lluvia_tormenta",
 };
 
-/** Fondos con animación (por ahora, las 3 variantes de lluvia) + botón para activar automáticamente según el clima real de donde estás. */
+/**
+ * Fondos con animación o diseño premium (lluvia + los especiales de la
+ * Tienda) + botón para activar automáticamente según el clima real de donde
+ * estás. Solo "lluvia_llovizna" es gratis — el resto hay que comprarlo en
+ * la Tienda; acá se ven bloqueados con su precio y candado.
+ */
 export function SelectorFondoEspecial({
   fondoId,
   onCambiado,
+  onAbrirTienda,
 }: {
   fondoId: string;
   onCambiado: (fondoId: string) => void;
+  /** Se llama cuando el talento toca un fondo especial que todavía no compró. */
+  onAbrirTienda: () => void;
 }) {
   const [guardando, setGuardando] = useState<string | null>(null);
   const [sincronizando, setSincronizando] = useState(false);
   const [mensajeClima, setMensajeClima] = useState<string | null>(null);
+  const [itemsTienda, setItemsTienda] = useState<ItemFondoTienda[] | null>(null);
+
+  useEffect(() => {
+    fetchTiendaCatalogo()
+      .then((c) => setItemsTienda(c.fondos))
+      .catch(() => setItemsTienda([]));
+  }, []);
 
   const especiales = FONDOS_MURAL.filter((f) => f.especial);
 
+  function estaComprado(id: string): boolean {
+    const item = itemsTienda?.find((i) => i.id === id);
+    return !item || item.comprado; // si no está en el catálogo de la tienda, es gratis
+  }
+
   async function elegir(id: string) {
     if (id === fondoId) return;
+    if (!estaComprado(id)) {
+      onAbrirTienda();
+      return;
+    }
     setGuardando(id);
     try {
       await actualizarPerfilMural({ fondoId: id });
@@ -68,7 +92,12 @@ export function SelectorFondoEspecial({
               setMensajeClima("Ahorita no está lloviendo donde estás — se dejó el fondo como estaba.");
               return;
             }
-            await elegir(FONDO_POR_INTENSIDAD[intensidad]);
+            const idFondo = FONDO_POR_INTENSIDAD[intensidad];
+            if (!estaComprado(idFondo)) {
+              setMensajeClima("¡Está lloviendo! Pero ese fondo de lluvia todavía no lo compraste en la Tienda.");
+              return;
+            }
+            await elegir(idFondo);
             setMensajeClima("¡Está lloviendo! Se activó el fondo de lluvia.");
           })
           .catch(() => setMensajeClima("No se pudo consultar el clima. Intenta de nuevo."))
@@ -85,27 +114,41 @@ export function SelectorFondoEspecial({
   return (
     <div className="space-y-2.5">
       <div className="flex flex-wrap gap-2.5">
-        {especiales.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => void elegir(f.id)}
-            disabled={guardando !== null}
-            title={f.label}
-            aria-label={f.label}
-            className="relative h-10 w-10 shrink-0 rounded-full border-2 transition-transform disabled:cursor-not-allowed"
-            style={{
-              background: f.css,
-              borderColor: fondoId === f.id ? "var(--primary)" : "transparent",
-              transform: guardando === f.id ? "scale(0.9)" : undefined,
-            }}
-          >
-            {fondoId === f.id && (
-              <span className="absolute inset-0 flex items-center justify-center">
-                <Check className="h-4 w-4 text-white drop-shadow" />
-              </span>
-            )}
-          </button>
-        ))}
+        {especiales.map((f) => {
+          const item = itemsTienda?.find((i) => i.id === f.id);
+          const bloqueado = itemsTienda !== null && item && !item.comprado;
+          return (
+            <button
+              key={f.id}
+              onClick={() => void elegir(f.id)}
+              disabled={guardando !== null}
+              title={bloqueado ? `${f.label} — 🪙 ${item.precio} en la Tienda` : f.label}
+              aria-label={f.label}
+              className="relative h-10 w-10 shrink-0 rounded-full border-2 transition-transform disabled:cursor-not-allowed"
+              style={{
+                background: f.css,
+                borderColor: fondoId === f.id ? "var(--primary)" : "transparent",
+                transform: guardando === f.id ? "scale(0.9)" : undefined,
+              }}
+            >
+              {fondoId === f.id && (
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <Check className="h-4 w-4 text-white drop-shadow" />
+                </span>
+              )}
+              {bloqueado && (
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45">
+                  <Lock className="h-3.5 w-3.5 text-white/90" />
+                </span>
+              )}
+              {bloqueado && (
+                <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full bg-black/80 px-1.5 py-0.5 text-[9px] font-bold whitespace-nowrap text-amber-300">
+                  🪙{item.precio}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <button
@@ -118,6 +161,9 @@ export function SelectorFondoEspecial({
         {sincronizando ? "Consultando el clima..." : "Sincronizar con el clima"}
       </button>
       {mensajeClima && <p className="text-[11px] text-muted-foreground">{mensajeClima}</p>}
+      <p className="text-[11px] text-muted-foreground">
+        Los fondos con 🔒 se compran en la Tienda con las monedas que ganas en el mural.
+      </p>
     </div>
   );
 }

@@ -2,9 +2,12 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProgresoService } from '../progreso/progreso.service';
-import { MARCOS, TITULOS } from './tienda.constant';
+import { FONDOS, MARCOS, TITULOS } from './tienda.constant';
 
-export type TipoItemTienda = 'marco' | 'titulo';
+export type TipoItemTienda = 'marco' | 'titulo' | 'fondo';
+
+/** A diferencia de marcoId/tituloId (nullables), TalentoPerfilMural.fondoId nunca es null — tiene un fondo gratis por defecto. */
+const FONDO_POR_DEFECTO = 'corcho';
 
 @Injectable()
 export class TiendaService {
@@ -18,6 +21,8 @@ export class TiendaService {
     if (marco) return { tipo: 'marco', precio: marco.precio };
     const titulo = TITULOS.find((t) => t.id === itemId);
     if (titulo) return { tipo: 'titulo', precio: titulo.precio };
+    const fondo = FONDOS.find((f) => f.id === itemId);
+    if (fondo) return { tipo: 'fondo', precio: fondo.precio };
     throw new NotFoundException('Ítem de la tienda no encontrado');
   }
 
@@ -30,7 +35,7 @@ export class TiendaService {
       }),
       this.prisma.talentoPerfilMural.findUnique({
         where: { talentoId },
-        select: { marcoId: true, tituloId: true },
+        select: { marcoId: true, tituloId: true, fondoId: true },
       }),
     ]);
     const compradosSet = new Set(comprados.map((c) => c.itemId));
@@ -46,6 +51,11 @@ export class TiendaService {
         ...t,
         comprado: compradosSet.has(t.id),
         equipado: perfil?.tituloId === t.id,
+      })),
+      fondos: FONDOS.map((f) => ({
+        ...f,
+        comprado: compradosSet.has(f.id),
+        equipado: perfil?.fondoId === f.id,
       })),
     };
   }
@@ -104,12 +114,21 @@ export class TiendaService {
       }
     }
 
-    const campo = tipo === 'marco' ? 'marcoId' : 'tituloId';
-    await this.prisma.talentoPerfilMural.upsert({
-      where: { talentoId },
-      create: { talentoId, empresaId, [campo]: itemId },
-      update: { [campo]: itemId },
-    });
+    if (tipo === 'fondo') {
+      const fondoId = itemId ?? FONDO_POR_DEFECTO;
+      await this.prisma.talentoPerfilMural.upsert({
+        where: { talentoId },
+        create: { talentoId, empresaId, fondoId },
+        update: { fondoId },
+      });
+    } else {
+      const campo = tipo === 'marco' ? 'marcoId' : 'tituloId';
+      await this.prisma.talentoPerfilMural.upsert({
+        where: { talentoId },
+        create: { talentoId, empresaId, [campo]: itemId },
+        update: { [campo]: itemId },
+      });
+    }
 
     return this.catalogo(talentoId);
   }

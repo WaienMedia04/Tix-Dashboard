@@ -53,6 +53,34 @@ export const FONDOS_MURAL: FondoMural[] = [
     claro: false,
     especial: true,
   },
+  {
+    id: "nebulosa",
+    label: "Nebulosa",
+    css: "radial-gradient(circle at 30% 20%, rgba(217,70,239,0.35) 0%, transparent 45%), radial-gradient(circle at 75% 65%, rgba(56,189,248,0.3) 0%, transparent 50%), linear-gradient(160deg, #1E1B4B 0%, #4C1D95 55%, #831843 100%)",
+    claro: false,
+    especial: true,
+  },
+  {
+    id: "obsidiana_real",
+    label: "Obsidiana Real",
+    css: "radial-gradient(circle at 80% 15%, rgba(251,191,36,0.25) 0%, transparent 35%), radial-gradient(circle at 15% 85%, rgba(251,191,36,0.12) 0%, transparent 40%), linear-gradient(135deg, #0A0A0F 0%, #1C1C22 50%, #09090B 100%)",
+    claro: false,
+    especial: true,
+  },
+  {
+    id: "esmeralda_imperial",
+    label: "Esmeralda Imperial",
+    css: "radial-gradient(circle at 20% 15%, rgba(52,211,153,0.25) 0%, transparent 40%), linear-gradient(150deg, #022C22 0%, #065F46 45%, #047857 75%, #022C22 100%)",
+    claro: false,
+    especial: true,
+  },
+  {
+    id: "cobre_ardiente",
+    label: "Cobre Ardiente",
+    css: "radial-gradient(circle at 75% 20%, rgba(251,146,60,0.3) 0%, transparent 40%), linear-gradient(150deg, #7C2D12 0%, #C2410C 40%, #EA580C 65%, #7C2D12 100%)",
+    claro: false,
+    especial: true,
+  },
 ];
 
 /** IDs de fondos "especiales" que además de un color de fondo pintan una animación (lluvia en canvas) encima. */

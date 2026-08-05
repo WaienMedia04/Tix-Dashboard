@@ -478,8 +478,12 @@ export function MiMuralView({
         <TiendaModal
           open={mostrarTienda}
           onClose={() => setMostrarTienda(false)}
-          onCambio={(marcoId, tituloId) =>
-            setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, marcoId, tituloId } } : prev))
+          onCambio={(marcoId, tituloId, fondoId) =>
+            setMural((prev) =>
+              prev
+                ? { ...prev, perfil: { ...prev.perfil, marcoId, tituloId, fondoId: fondoId ?? prev.perfil.fondoId } }
+                : prev,
+            )
           }
         />
       )}
@@ -507,6 +511,10 @@ export function MiMuralView({
                 onCambiado={(fondoId) =>
                   setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, fondoId } } : prev))
                 }
+                onAbrirTienda={() => {
+                  setMostrarFondo(false);
+                  setMostrarTienda(true);
+                }}
               />
             </div>
             <div>

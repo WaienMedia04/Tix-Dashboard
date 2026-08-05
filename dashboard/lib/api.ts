@@ -1521,11 +1521,13 @@ export async function abrirCofre(): Promise<EstadoCofre> {
   return res.json();
 }
 
-export type TipoItemTienda = "marco" | "titulo";
+export type TipoItemTienda = "marco" | "titulo" | "fondo";
+export type RarezaItemTienda = "comun" | "raro" | "epico" | "legendario";
 
 export interface ItemTiendaEstado {
   id: string;
   precio: number;
+  rareza: RarezaItemTienda;
   comprado: boolean;
   equipado: boolean;
 }
@@ -1538,10 +1540,15 @@ export interface ItemTituloTienda extends ItemTiendaEstado {
   texto: string;
 }
 
+export interface ItemFondoTienda extends ItemTiendaEstado {
+  nombre: string;
+}
+
 export interface CatalogoTienda {
   monedas: number;
   marcos: ItemMarcoTienda[];
   titulos: ItemTituloTienda[];
+  fondos: ItemFondoTienda[];
 }
 
 export async function fetchTiendaCatalogo(): Promise<CatalogoTienda> {
