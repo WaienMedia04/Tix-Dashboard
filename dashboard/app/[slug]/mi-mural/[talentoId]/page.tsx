@@ -79,6 +79,7 @@ export default function MuralDeCompaneroPage() {
         volverLabel={volverLabel}
         nombre={estado.nombre}
         fotoUrl={estado.fotoUrl}
+        volverAMiMural={estado.miTalentoId ? `/${slug}/mi-mural` : undefined}
       />
 
       <MiMuralView slug={slug} talentoId={talentoId} miTalentoId={estado.miTalentoId} rol={estado.rol} />
