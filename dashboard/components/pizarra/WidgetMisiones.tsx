@@ -1,0 +1,108 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { Target } from "lucide-react";
+import { type MisionConEstado, type PeriodoMision, fetchMisiones, reclamarMision } from "@/lib/api";
+import { estiloWidget, type TemaWidgets } from "@/lib/pizarra-temas";
+
+const ETIQUETAS_PERIODO: Record<PeriodoMision, string> = {
+  diaria: "Diarias",
+  semanal: "Semanales",
+  mensual: "Mensuales",
+};
+
+const ORDEN_PERIODO: PeriodoMision[] = ["diaria", "semanal", "mensual"];
+
+function FilaMision({ mision, onReclamar, cargando }: { mision: MisionConEstado; onReclamar: () => void; cargando: boolean }) {
+  return (
+    <div className="flex items-center gap-2.5 rounded-lg bg-white/60 p-2.5">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-base">
+        {mision.icono}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-medium text-zinc-900">{mision.nombre}</p>
+        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200/70">
+          <motion.div
+            className={`h-full rounded-full ${mision.reclamada ? "bg-emerald-500" : "bg-primary"}`}
+            initial={false}
+            animate={{ width: `${Math.min(100, Math.round((mision.progreso / mision.meta) * 100))}%` }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          />
+        </div>
+        <p className="mt-0.5 text-[10px] text-zinc-500">
+          {mision.progreso}/{mision.meta} · +{mision.recompensaXp} XP · +{mision.recompensaMonedas} 🪙
+        </p>
+      </div>
+      {mision.reclamada ? (
+        <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-medium text-emerald-700">
+          ✅ Lista
+        </span>
+      ) : mision.completada ? (
+        <button
+          onClick={onReclamar}
+          disabled={cargando}
+          className="shrink-0 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {cargando ? "…" : "Reclamar"}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+export function WidgetMisiones({ tema }: { tema: TemaWidgets }) {
+  const [misiones, setMisiones] = useState<MisionConEstado[] | null>(null);
+  const [reclamando, setReclamando] = useState<string | null>(null);
+  const estilo = estiloWidget(tema, "indigo");
+
+  useEffect(() => {
+    fetchMisiones()
+      .then(setMisiones)
+      .catch(() => {});
+  }, []);
+
+  async function reclamar(misionId: string) {
+    if (reclamando) return;
+    setReclamando(misionId);
+    try {
+      setMisiones(await reclamarMision(misionId));
+    } catch {
+      // el usuario puede reintentar
+    } finally {
+      setReclamando(null);
+    }
+  }
+
+  if (misiones === null) return null;
+
+  return (
+    <div className={`rounded-xl border p-3.5 sm:col-span-2 ${estilo.card}`}>
+      <div className="flex items-center gap-2">
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${estilo.badge}`}>
+          <Target className={`h-3.5 w-3.5 ${estilo.icon}`} />
+        </span>
+        <span className="text-xs font-semibold text-zinc-500">Misiones</span>
+      </div>
+
+      <div className="mt-3 space-y-4">
+        {ORDEN_PERIODO.map((periodo) => {
+          const delPeriodo = misiones.filter((m) => m.periodo === periodo);
+          if (delPeriodo.length === 0) return null;
+          return (
+            <div key={periodo}>
+              <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase">
+                {ETIQUETAS_PERIODO[periodo]}
+              </p>
+              <div className="space-y-1.5">
+                {delPeriodo.map((m) => (
+                  <FilaMision key={m.id} mision={m} onReclamar={() => void reclamar(m.id)} cargando={reclamando === m.id} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

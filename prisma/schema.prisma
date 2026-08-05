@@ -128,6 +128,7 @@ model Empresa {
   logrosTalentos         TalentoLogro[]
   cofreAperturas         TalentoCofreApertura[]
   itemsComprados         TalentoItemComprado[]
+  misionesReclamadas     TalentoMisionReclamada[]
 }
 
 /**
@@ -184,6 +185,7 @@ model Talento {
   logros            TalentoLogro[]
   cofreAperturas    TalentoCofreApertura[]
   itemsComprados    TalentoItemComprado[]
+  misionesReclamadas TalentoMisionReclamada[]
 
   @@index([empresaId])
   @@index([empresaId, managerUsuarioId])
@@ -520,6 +522,30 @@ model TalentoItemComprado {
   talento Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
 
   @@unique([talentoId, itemId])
+  @@index([empresaId])
+}
+
+/**
+ * Misión (diaria/semanal/mensual, doc "Actualización Mural 2.0" #22) que un
+ * talento ya reclamó — el catálogo (meta, recompensa) vive en código
+ * (src/misiones/misiones.constant.ts). `periodoId` identifica la instancia
+ * del período (ej. "2026-08-05" para una diaria, "2026-08-03" el lunes de
+ * la semana para una semanal, "2026-08" para una mensual) — junto con
+ * [talentoId, misionId] es la llave que evita reclamarla dos veces en el
+ * mismo período.
+ */
+model TalentoMisionReclamada {
+  id        String   @id @default(cuid())
+  empresaId String
+  talentoId String
+  misionId  String
+  periodoId String
+  createdAt DateTime @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+
+  @@unique([talentoId, misionId, periodoId])
   @@index([empresaId])
 }
 

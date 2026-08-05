@@ -8,6 +8,7 @@ import { PizarraPostCard } from "./PizarraPostCard";
 import { PizarraPaginacion } from "./PizarraPaginacion";
 import { WidgetProgreso } from "./WidgetProgreso";
 import { WidgetResumenSemanal } from "./WidgetResumenSemanal";
+import { WidgetMisiones } from "./WidgetMisiones";
 import { WidgetTopEmpresa } from "./WidgetTopEmpresa";
 import { IdeasDelEquipo } from "./IdeasDelEquipo";
 import { PizarraReconocimientoBanner } from "./PizarraReconocimientoBanner";
@@ -143,6 +144,10 @@ export function PizarraSocial({
 
           <div className="sm:col-span-2">
             <WidgetProgreso progreso={panel?.progresoPropio ?? null} tema={tema} xpGanada={xpGanada} />
+          </div>
+
+          <div className="sm:col-span-2">
+            <WidgetMisiones tema={tema} />
           </div>
 
           <div className="sm:col-span-2">

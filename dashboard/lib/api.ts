@@ -1573,6 +1573,41 @@ export async function equiparItemTienda(tipo: TipoItemTienda, itemId: string | n
   return res.json();
 }
 
+export type PeriodoMision = "diaria" | "semanal" | "mensual";
+
+export interface MisionConEstado {
+  id: string;
+  periodo: PeriodoMision;
+  nombre: string;
+  descripcion: string;
+  icono: string;
+  meta: number;
+  progreso: number;
+  recompensaXp: number;
+  recompensaMonedas: number;
+  completada: boolean;
+  reclamada: boolean;
+}
+
+export async function fetchMisiones(): Promise<MisionConEstado[]> {
+  const res = await fetch(`${API_URL}/talentos/me/misiones`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
+export async function reclamarMision(misionId: string): Promise<MisionConEstado[]> {
+  const res = await fetch(`${API_URL}/talentos/me/misiones/reclamar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify({ misionId }),
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
 export async function actualizarNotaMural(
   id: string,
   datos: Partial<{

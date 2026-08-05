@@ -22,6 +22,7 @@ import { OnboardingModule } from './onboarding/onboarding.module';
 import { CofreModule } from './cofre/cofre.module';
 import { RankingsModule } from './rankings/rankings.module';
 import { TiendaModule } from './tienda/tienda.module';
+import { MisionesModule } from './misiones/misiones.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { TiendaModule } from './tienda/tienda.module';
     CofreModule,
     RankingsModule,
     TiendaModule,
+    MisionesModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
