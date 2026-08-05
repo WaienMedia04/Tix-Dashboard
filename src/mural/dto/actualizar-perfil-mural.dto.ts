@@ -8,7 +8,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { FONDOS_MURAL_IDS_GRATIS } from '../mural-fondos.constant';
-import { COLORES_NOMBRE_MURAL_IDS } from '../mural-colores-nombre.constant';
+import { COLORES_NOMBRE_MURAL_IDS_GRATIS } from '../mural-colores-nombre.constant';
 import { COLOR_WIDGETS_IDS } from '../mural-color-widgets.constant';
 import { MASCOTA_IDS_GRATIS } from '../mural-mascota.constant';
 
@@ -56,9 +56,10 @@ export class ActualizarPerfilMuralDto {
   @IsIn(FONDOS_MURAL_IDS_GRATIS)
   fondoId?: string;
 
+  /** Solo colores gratis — los comprados en la Tienda se equipan vía TiendaService (ya valida que el talento los haya comprado). */
   @IsString()
   @IsOptional()
-  @IsIn(COLORES_NOMBRE_MURAL_IDS)
+  @IsIn(COLORES_NOMBRE_MURAL_IDS_GRATIS)
   colorNombreId?: string;
 
   @IsString()

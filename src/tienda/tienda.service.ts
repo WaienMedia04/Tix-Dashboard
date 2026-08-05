@@ -6,12 +6,26 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProgresoService } from '../progreso/progreso.service';
-import { FONDOS, MARCOS, MASCOTAS, TITULOS } from './tienda.constant';
+import {
+  COLORES_NOMBRE,
+  FONDOS,
+  MARCOS,
+  MASCOTAS,
+  TITULOS,
+} from './tienda.constant';
 
-export type TipoItemTienda = 'marco' | 'titulo' | 'fondo' | 'mascota';
+export type TipoItemTienda =
+  | 'marco'
+  | 'titulo'
+  | 'fondo'
+  | 'mascota'
+  | 'colorNombre';
 
 /** A diferencia de marcoId/tituloId (nullables), TalentoPerfilMural.fondoId nunca es null — tiene un fondo gratis por defecto. */
 const FONDO_POR_DEFECTO = 'corcho';
+
+/** Igual que fondoId: TalentoPerfilMural.colorNombreId nunca es null — siempre tiene un color gratis por defecto. */
+const COLOR_NOMBRE_POR_DEFECTO = 'cian_magenta';
 
 @Injectable()
 export class TiendaService {
@@ -29,6 +43,8 @@ export class TiendaService {
     if (fondo) return { tipo: 'fondo', precio: fondo.precio };
     const mascota = MASCOTAS.find((m) => m.id === itemId);
     if (mascota) return { tipo: 'mascota', precio: mascota.precio };
+    const colorNombre = COLORES_NOMBRE.find((c) => c.id === itemId);
+    if (colorNombre) return { tipo: 'colorNombre', precio: colorNombre.precio };
     throw new NotFoundException('Ítem de la tienda no encontrado');
   }
 
@@ -46,6 +62,7 @@ export class TiendaService {
           tituloId: true,
           fondoId: true,
           mascotaId: true,
+          colorNombreId: true,
         },
       }),
     ]);
@@ -58,6 +75,10 @@ export class TiendaService {
       // aparecen en MASCOTAS — sin este campo, el front no podría distinguir
       // "no tiene mascota" de "tiene una gratis puesta".
       mascotaEquipadaId: perfil?.mascotaId ?? null,
+      // Igual que fondoId: colorNombreId nunca es null (siempre tiene el
+      // gratis por defecto), así que el front necesita el valor real acá
+      // para saber cuál de los 9 colores gratis está puesto.
+      colorNombreEquipadoId: perfil?.colorNombreId ?? COLOR_NOMBRE_POR_DEFECTO,
       marcos: MARCOS.map((m) => ({
         ...m,
         comprado: compradosSet.has(m.id),
@@ -77,6 +98,11 @@ export class TiendaService {
         ...m,
         comprado: compradosSet.has(m.id),
         equipado: perfil?.mascotaId === m.id,
+      })),
+      coloresNombre: COLORES_NOMBRE.map((c) => ({
+        ...c,
+        comprado: compradosSet.has(c.id),
+        equipado: perfil?.colorNombreId === c.id,
       })),
     };
   }
@@ -143,6 +169,13 @@ export class TiendaService {
         where: { talentoId },
         create: { talentoId, empresaId, fondoId },
         update: { fondoId },
+      });
+    } else if (tipo === 'colorNombre') {
+      const colorNombreId = itemId ?? COLOR_NOMBRE_POR_DEFECTO;
+      await this.prisma.talentoPerfilMural.upsert({
+        where: { talentoId },
+        create: { talentoId, empresaId, colorNombreId },
+        update: { colorNombreId },
       });
     } else {
       const campo =
