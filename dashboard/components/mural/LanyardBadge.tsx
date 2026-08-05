@@ -109,9 +109,14 @@ export function LanyardBadge({
     // Medido en vh (no rem fijo): el mural es de altura fija sin scroll, así
     // que el carnet tiene que encogerse en pantallas bajas para dejarle
     // espacio al nombre/estado y al Dock — antes con rem fijo se salía del
-    // viewport y empujaba todo lo demás fuera de vista.
+    // viewport y empujaba todo lo demás fuera de vista. 58vh (antes 76vh)
+    // porque en pantallas de 14" (~700-900px de alto) el 76vh solo dejaba
+    // ~150px para nombre+rol+departamento, que terminaban recortados por el
+    // overflow-hidden del contenedor fijo — con 58vh y un techo más bajo
+    // (46rem en vez de 58rem) sigue viéndose grande en pantallas altas pero
+    // deja aire real para el resto del encabezado en las bajas.
     <div
-      className={`h-[76vh] max-h-[58rem] min-h-[20rem] w-[76vh] max-w-[min(58rem,94vw)] min-w-[20rem] shrink-0 rounded-[2rem] ${marcoClases ?? ""}`}
+      className={`h-[58vh] max-h-[46rem] min-h-[14rem] w-[58vh] max-w-[min(46rem,90vw)] min-w-[14rem] shrink-0 rounded-[2rem] ${marcoClases ?? ""}`}
     >
       <LanyardScene
         position={[0, 0, 16]}
