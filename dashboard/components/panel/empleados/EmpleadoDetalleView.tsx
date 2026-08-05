@@ -16,6 +16,7 @@ import {
   Building2,
   Pencil,
   PenSquare,
+  History,
 } from "lucide-react";
 import {
   type BitacoraItem,
@@ -37,6 +38,7 @@ import { FotoTalento } from "./FotoTalento";
 import { CarnetFotoTalento } from "./CarnetFotoTalento";
 import { CvTalento } from "./CvTalento";
 import { AusenciaForm } from "./AusenciaForm";
+import { NovedadesTalentoModal } from "./NovedadesTalentoModal";
 import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import { Skeleton, SkeletonChart, SkeletonStatCards } from "@/components/motion/Skeleton";
 
@@ -264,6 +266,7 @@ function EmpleadoDetalleResultado({
   const [estado, setEstado] = useState<Estado>({ tipo: "cargando" });
   const [seleccionada, setSeleccionada] = useState<BitacoraItem | null>(null);
   const [actualizando, setActualizando] = useState(false);
+  const [mostrarNovedades, setMostrarNovedades] = useState(false);
   const puedeEditar = rol === "CEO" || rol === "RRHH";
 
   useEffect(() => {
@@ -370,6 +373,13 @@ function EmpleadoDetalleResultado({
               Ver mural
             </Link>
             <button
+              onClick={() => setMostrarNovedades(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+            >
+              <History className="h-3.5 w-3.5" />
+              Novedades
+            </button>
+            <button
               onClick={alternarEstado}
               disabled={actualizando}
               className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
@@ -458,6 +468,14 @@ function EmpleadoDetalleResultado({
       <WorklogDetalleModal
         detalle={seleccionada ? bitacoraItemADetalle(seleccionada) : null}
         onClose={() => setSeleccionada(null)}
+      />
+
+      <NovedadesTalentoModal
+        slug={slug}
+        talentoId={detalle.talento.id}
+        nombreCompleto={detalle.talento.nombreCompleto}
+        open={mostrarNovedades}
+        onClose={() => setMostrarNovedades(false)}
       />
     </div>
   );
