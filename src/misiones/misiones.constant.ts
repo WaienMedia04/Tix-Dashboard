@@ -5,6 +5,7 @@ export interface MisionDefinicion {
   periodo: PeriodoMision;
   nombre: string;
   descripcion: string;
+  /** Clave que resuelve el ícono real en dashboard/lib/iconos-catalogo.ts. */
   icono: string;
   /** Tipo(s) de TalentoProgresoEvento que cuentan para esta misión — si son varios, se suman. */
   tiposEvento: string[];
@@ -25,7 +26,7 @@ export const MISIONES: MisionDefinicion[] = [
     periodo: 'diaria',
     nombre: 'Envía tu bitácora de hoy',
     descripcion: 'Registra tu bitácora del día.',
-    icono: '🌅',
+    icono: 'sunrise',
     tiposEvento: ['bitacora_enviada'],
     meta: 1,
     recompensaXp: 10,
@@ -36,7 +37,7 @@ export const MISIONES: MisionDefinicion[] = [
     periodo: 'diaria',
     nombre: 'Comenta una publicación',
     descripcion: 'Deja un comentario en la pizarra.',
-    icono: '💬',
+    icono: 'message-circle',
     tiposEvento: ['comentario_publicado'],
     meta: 1,
     recompensaXp: 10,
@@ -47,7 +48,7 @@ export const MISIONES: MisionDefinicion[] = [
     periodo: 'diaria',
     nombre: 'Abre tu cofre del día',
     descripcion: 'Reclama el cofre diario.',
-    icono: '🎁',
+    icono: 'gift',
     tiposEvento: ['cofre_diario'],
     meta: 1,
     recompensaXp: 10,
@@ -58,7 +59,7 @@ export const MISIONES: MisionDefinicion[] = [
     periodo: 'diaria',
     nombre: 'Acierta la trivia del día',
     descripcion: 'Responde correctamente la trivia de hoy.',
-    icono: '🧠',
+    icono: 'brain',
     tiposEvento: ['trivia_ganada'],
     meta: 1,
     recompensaXp: 10,
@@ -69,7 +70,7 @@ export const MISIONES: MisionDefinicion[] = [
     periodo: 'semanal',
     nombre: 'Envía 5 bitácoras esta semana',
     descripcion: 'Mantén tu ritmo durante la semana.',
-    icono: '📚',
+    icono: 'book-open',
     tiposEvento: ['bitacora_enviada'],
     meta: 5,
     recompensaXp: 40,
@@ -80,7 +81,7 @@ export const MISIONES: MisionDefinicion[] = [
     periodo: 'semanal',
     nombre: 'Recibe 2 reconocimientos',
     descripcion: 'De un compañero o de CEO/RRHH, cuentan los dos tipos.',
-    icono: '🏆',
+    icono: 'trophy',
     tiposEvento: ['reconocimiento_recibido', 'reconocimiento_rapido_recibido'],
     meta: 2,
     recompensaXp: 40,
@@ -91,7 +92,7 @@ export const MISIONES: MisionDefinicion[] = [
     periodo: 'semanal',
     nombre: 'Comparte 2 publicaciones o ideas',
     descripcion: 'Participa en la pizarra del equipo.',
-    icono: '📣',
+    icono: 'megaphone',
     tiposEvento: ['post_compartido'],
     meta: 2,
     recompensaXp: 30,
@@ -102,7 +103,7 @@ export const MISIONES: MisionDefinicion[] = [
     periodo: 'mensual',
     nombre: 'Envía 15 bitácoras este mes',
     descripcion: 'Constancia a lo largo del mes.',
-    icono: '🗓️',
+    icono: 'calendar',
     tiposEvento: ['bitacora_enviada'],
     meta: 15,
     recompensaXp: 100,
@@ -113,7 +114,7 @@ export const MISIONES: MisionDefinicion[] = [
     periodo: 'mensual',
     nombre: 'Desbloquea un logro este mes',
     descripcion: 'Cualquier logro del catálogo cuenta.',
-    icono: '⭐',
+    icono: 'star',
     tiposEvento: ['logro_desbloqueado'],
     meta: 1,
     recompensaXp: 80,

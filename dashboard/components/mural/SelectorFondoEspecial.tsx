@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, CloudRain, Loader2, Lock } from "lucide-react";
+import { Check, CloudRain, Coins, Loader2, Lock } from "lucide-react";
 import { actualizarPerfilMural, fetchTiendaCatalogo, type ItemFondoTienda } from "@/lib/api";
 import { FONDOS_MURAL, type IntensidadLluvia } from "@/lib/mural-fondos";
 
@@ -122,7 +122,7 @@ export function SelectorFondoEspecial({
               key={f.id}
               onClick={() => void elegir(f.id)}
               disabled={guardando !== null}
-              title={bloqueado ? `${f.label} — 🪙 ${item.precio} en la Tienda` : f.label}
+              title={bloqueado ? `${f.label} — ${item.precio} monedas en la Tienda` : f.label}
               aria-label={f.label}
               className="relative h-10 w-10 shrink-0 rounded-full border-2 transition-transform disabled:cursor-not-allowed"
               style={{
@@ -142,8 +142,9 @@ export function SelectorFondoEspecial({
                 </span>
               )}
               {bloqueado && (
-                <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full bg-black/80 px-1.5 py-0.5 text-[9px] font-bold whitespace-nowrap text-amber-300">
-                  🪙{item.precio}
+                <span className="absolute -bottom-1.5 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-black/80 px-1.5 py-0.5 text-[9px] font-bold whitespace-nowrap text-amber-300">
+                  <Coins className="h-2.5 w-2.5" />
+                  {item.precio}
                 </span>
               )}
             </button>
@@ -161,8 +162,9 @@ export function SelectorFondoEspecial({
         {sincronizando ? "Consultando el clima..." : "Sincronizar con el clima"}
       </button>
       {mensajeClima && <p className="text-[11px] text-muted-foreground">{mensajeClima}</p>}
-      <p className="text-[11px] text-muted-foreground">
-        Los fondos con 🔒 se compran en la Tienda con las monedas que ganas en el mural.
+      <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+        <Lock className="h-3 w-3 shrink-0" />
+        Los fondos bloqueados se compran en la Tienda con las monedas que ganas en el mural.
       </p>
     </div>
   );

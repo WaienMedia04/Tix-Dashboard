@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Cake, PartyPopper } from "lucide-react";
+import { Cake, Gift, PartyPopper, Sparkles, Star } from "lucide-react";
 import { type CumpleanosResponse, enviarNotaAMural, fetchCumpleanos } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
 import { estiloWidget, type TemaWidgets } from "@/lib/pizarra-temas";
@@ -12,12 +12,12 @@ const MESES = [
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
 
-const CONFETI = ["🎉", "🎊", "🎈", "✨", "🎂"];
+const ICONOS_CONFETI = [PartyPopper, Sparkles, Gift, Star, Cake];
 
-/** Ráfaga de confeti liviana (sin dependencias) — partículas que salen del centro y se desvanecen, una sola vez al montar. */
+/** Ráfaga de confeti liviana (sin dependencias) — íconos que salen del centro y se desvanecen, una sola vez al montar. */
 function RafagaConfeti() {
-  const particulas = CONFETI.flatMap((emoji, i) =>
-    Array.from({ length: 2 }, (_, j) => ({ id: `${i}-${j}`, emoji, angulo: (i * 2 + j) * (360 / 10) })),
+  const particulas = ICONOS_CONFETI.flatMap((Icono, i) =>
+    Array.from({ length: 2 }, (_, j) => ({ id: `${i}-${j}`, Icono, angulo: (i * 2 + j) * (360 / 10) })),
   );
 
   return (
@@ -28,7 +28,7 @@ function RafagaConfeti() {
         return (
           <motion.span
             key={p.id}
-            className="absolute top-1/2 left-1/2 text-base"
+            className="absolute top-1/2 left-1/2 text-rose-500"
             initial={{ x: 0, y: 0, opacity: 1, scale: 0.6 }}
             animate={{
               x: Math.cos(rad) * distancia,
@@ -38,7 +38,7 @@ function RafagaConfeti() {
             }}
             transition={{ duration: 1.1, ease: "easeOut" }}
           >
-            {p.emoji}
+            <p.Icono className="h-3.5 w-3.5" />
           </motion.span>
         );
       })}
@@ -53,7 +53,7 @@ function TarjetaCumpleHoy({ slug, talento }: { slug: string; talento: { id: stri
     if (estado !== "idle") return;
     setEstado("enviando");
     try {
-      await enviarNotaAMural(slug, talento.id, { texto: "¡Feliz cumpleaños! 🎉🎂", color: "rosa" });
+      await enviarNotaAMural(slug, talento.id, { texto: "¡Feliz cumpleaños!", color: "rosa" });
       setEstado("felicitado");
     } catch {
       setEstado("idle");
@@ -67,7 +67,10 @@ function TarjetaCumpleHoy({ slug, talento }: { slug: string; talento: { id: stri
         <Avatar nombreCompleto={talento.nombreCompleto} fotoUrl={talento.fotoUrl} size="md" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-zinc-900">{talento.nombreCompleto}</p>
-          <p className="text-xs text-rose-600">🎂 ¡Está de cumpleaños hoy!</p>
+          <p className="flex items-center gap-1 text-xs text-rose-600">
+            <Cake className="h-3 w-3" />
+            ¡Está de cumpleaños hoy!
+          </p>
         </div>
         <button
           onClick={() => void felicitar()}

@@ -20,15 +20,17 @@ export const MARCOS_TIENDA: MarcoTienda[] = [
 export interface TituloTienda {
   id: string;
   texto: string;
+  /** Clave que resuelve el ícono en dashboard/lib/iconos-catalogo.ts. */
+  icono: string;
 }
 
 export const TITULOS_TIENDA: TituloTienda[] = [
-  { id: "crack", texto: "🚀 Crack" },
-  { id: "madrugador", texto: "🌅 Madrugador" },
-  { id: "colaborador_estrella", texto: "🤝 Colaborador estrella" },
-  { id: "imparable", texto: "⚡ Imparable" },
-  { id: "mentor", texto: "🎓 Mentor" },
-  { id: "leyenda", texto: "🌟 Leyenda del equipo" },
+  { id: "crack", texto: "Crack", icono: "rocket" },
+  { id: "madrugador", texto: "Madrugador", icono: "sunrise" },
+  { id: "colaborador_estrella", texto: "Colaborador estrella", icono: "handshake" },
+  { id: "imparable", texto: "Imparable", icono: "zap" },
+  { id: "mentor", texto: "Mentor", icono: "graduation-cap" },
+  { id: "leyenda", texto: "Leyenda del equipo", icono: "crown" },
 ];
 
 export function clasesMarco(marcoId: string | null): string {
@@ -39,4 +41,9 @@ export function clasesMarco(marcoId: string | null): string {
 export function textoTitulo(tituloId: string | null): string | null {
   if (!tituloId) return null;
   return TITULOS_TIENDA.find((t) => t.id === tituloId)?.texto ?? null;
+}
+
+export function iconoTitulo(tituloId: string | null): string | null {
+  if (!tituloId) return null;
+  return TITULOS_TIENDA.find((t) => t.id === tituloId)?.icono ?? null;
 }

@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, History } from "lucide-react";
+import { Cake, ChevronDown, ChevronUp, History, Medal, UserPlus } from "lucide-react";
 import { type PizarraEventoTimeline, fetchPizarraTimeline } from "@/lib/api";
 import { Avatar } from "@/components/Avatar";
 
-const ICONO_POR_TIPO: Record<PizarraEventoTimeline["tipo"], string> = {
-  estampa: "🏅",
-  nuevo: "👋",
-  cumple: "🎂",
+const ICONO_POR_TIPO: Record<PizarraEventoTimeline["tipo"], typeof Medal> = {
+  estampa: Medal,
+  nuevo: UserPlus,
+  cumple: Cake,
 };
 
 function tiempoRelativo(iso: string): string {
@@ -49,15 +49,19 @@ export function PizarraTimeline({ slug }: { slug: string }) {
       </button>
       {abierto && (
         <ul className="mt-2.5 space-y-2">
-          {eventos?.map((e) => (
-            <li key={e.id} className="flex items-center gap-2 text-xs">
-              <Avatar nombreCompleto={e.talento.nombreCompleto} fotoUrl={e.talento.fotoUrl} size="sm" />
-              <span className="flex-1 text-zinc-900">
-                <span className="font-medium">{e.talento.nombreCompleto}</span> {e.texto} {ICONO_POR_TIPO[e.tipo]}
-              </span>
-              <span className="shrink-0 text-[10px] text-zinc-400">{tiempoRelativo(e.fecha)}</span>
-            </li>
-          ))}
+          {eventos?.map((e) => {
+            const Icono = ICONO_POR_TIPO[e.tipo];
+            return (
+              <li key={e.id} className="flex items-center gap-2 text-xs">
+                <Avatar nombreCompleto={e.talento.nombreCompleto} fotoUrl={e.talento.fotoUrl} size="sm" />
+                <span className="flex flex-1 items-center gap-1 text-zinc-900">
+                  <span className="font-medium">{e.talento.nombreCompleto}</span> {e.texto}
+                  <Icono className="h-3 w-3 shrink-0 text-zinc-400" />
+                </span>
+                <span className="shrink-0 text-[10px] text-zinc-400">{tiempoRelativo(e.fecha)}</span>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

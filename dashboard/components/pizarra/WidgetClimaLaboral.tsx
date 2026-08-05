@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Smile, Users } from "lucide-react";
+import { BatteryLow, ChevronDown, Frown, Meh, PartyPopper, Smile, Users } from "lucide-react";
 import {
   type EmojiClima,
   type PizarraClimaEquipo,
@@ -11,16 +11,17 @@ import {
 import { Avatar } from "@/components/Avatar";
 import { estiloWidget, type TemaWidgets } from "@/lib/pizarra-temas";
 
-const OPCIONES: { valor: EmojiClima; emoji: string; label: string }[] = [
-  { valor: "FELIZ", emoji: "😊", label: "Feliz" },
-  { valor: "NEUTRAL", emoji: "😐", label: "Neutral" },
-  { valor: "TRISTE", emoji: "😔", label: "Triste" },
-  { valor: "CANSADO", emoji: "😴", label: "Cansado" },
-  { valor: "EMOCIONADO", emoji: "🤩", label: "Emocionado" },
+const OPCIONES: { valor: EmojiClima; Icono: typeof Smile; label: string }[] = [
+  { valor: "FELIZ", Icono: Smile, label: "Feliz" },
+  { valor: "NEUTRAL", Icono: Meh, label: "Neutral" },
+  { valor: "TRISTE", Icono: Frown, label: "Triste" },
+  { valor: "CANSADO", Icono: BatteryLow, label: "Cansado" },
+  { valor: "EMOCIONADO", Icono: PartyPopper, label: "Emocionado" },
 ];
 
-function emojiDe(valor: EmojiClima): string {
-  return OPCIONES.find((o) => o.valor === valor)?.emoji ?? "😐";
+function IconoClima({ valor, className }: { valor: EmojiClima; className?: string }) {
+  const Icono = OPCIONES.find((o) => o.valor === valor)?.Icono ?? Meh;
+  return <Icono className={className} />;
 }
 
 export function WidgetClimaLaboral({
@@ -76,8 +77,8 @@ export function WidgetClimaLaboral({
       <p className="mt-1.5 text-sm font-medium text-zinc-900">¿Cómo te sientes hoy?</p>
 
       {climaHoy ? (
-        <p className="mt-2 text-sm text-zinc-600">
-          Ya respondiste: <span className="text-base">{emojiDe(climaHoy)}</span>
+        <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-600">
+          Ya respondiste: <IconoClima valor={climaHoy} className="h-4 w-4 text-zinc-700" />
         </p>
       ) : (
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -87,9 +88,9 @@ export function WidgetClimaLaboral({
               onClick={() => void responder(o.valor)}
               disabled={enviando}
               title={o.label}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-lg transition-transform hover:scale-110 disabled:opacity-50"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 transition-transform hover:scale-110 disabled:opacity-50"
             >
-              {o.emoji}
+              <o.Icono className="h-4 w-4" />
             </button>
           ))}
         </div>
@@ -111,13 +112,15 @@ export function WidgetClimaLaboral({
               {equipo !== null && equipo.respuestas.length === 0 && (
                 <p className="text-xs text-zinc-500">Nadie ha respondido todavía hoy.</p>
               )}
-              {equipo?.respuestas.map((r) => (
-                <div key={r.usuarioId} className="flex items-center gap-2 text-xs">
-                  <Avatar nombreCompleto={r.nombre} fotoUrl={r.fotoUrl} size="sm" />
-                  <span className="min-w-0 flex-1 truncate text-zinc-900">{r.nombre}</span>
-                  <span>{emojiDe(r.emoji)}</span>
-                </div>
-              ))}
+              {equipo?.respuestas.map((r) => {
+                return (
+                  <div key={r.usuarioId} className="flex items-center gap-2 text-xs">
+                    <Avatar nombreCompleto={r.nombre} fotoUrl={r.fotoUrl} size="sm" />
+                    <span className="min-w-0 flex-1 truncate text-zinc-900">{r.nombre}</span>
+                    <IconoClima valor={r.emoji} className="h-3.5 w-3.5 text-zinc-500" />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

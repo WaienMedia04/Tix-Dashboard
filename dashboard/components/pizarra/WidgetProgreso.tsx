@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Coins, Sparkles } from "lucide-react";
 import type { PizarraProgresoPropio } from "@/lib/api";
 import { estiloWidget, type TemaWidgets } from "@/lib/pizarra-temas";
 
@@ -44,7 +44,10 @@ export function WidgetProgreso({
             Nivel {progreso.nivel} · {progreso.nombreNivel}
           </p>
         </div>
-        <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-zinc-600">🪙 {progreso.monedas}</span>
+        <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-zinc-600">
+          <Coins className="h-3.5 w-3.5 text-amber-500" />
+          {progreso.monedas}
+        </span>
       </div>
 
       <div className="mt-2.5">

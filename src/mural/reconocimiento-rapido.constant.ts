@@ -1,14 +1,18 @@
 import { TipoReconocimientoRapido } from '@prisma/client';
 
-/** Catálogo fijo del botón de reconocimiento rápido (doc "Actualización Mural 2.0" #7) — el mismo orden se usa en el frontend. */
+/**
+ * Catálogo fijo del botón de reconocimiento rápido (doc "Actualización
+ * Mural 2.0" #7) — el mismo orden se usa en el frontend. `icono` es una
+ * clave que resuelve el ícono real en dashboard/lib/iconos-catalogo.ts.
+ */
 export const RECONOCIMIENTOS_RAPIDOS: Record<
   TipoReconocimientoRapido,
-  { emoji: string; etiqueta: string }
+  { icono: string; etiqueta: string }
 > = {
-  GRACIAS: { emoji: '👏', etiqueta: 'Gracias' },
-  EXCELENTE_TRABAJO: { emoji: '🔥', etiqueta: 'Excelente trabajo' },
-  CRACK: { emoji: '🚀', etiqueta: 'Crack' },
-  INSPIRADOR: { emoji: '⭐', etiqueta: 'Inspirador' },
-  BUENA_IDEA: { emoji: '💡', etiqueta: 'Buena idea' },
-  GRAN_COMPANERO: { emoji: '❤️', etiqueta: 'Gran compañero' },
+  GRACIAS: { icono: 'thumbs-up', etiqueta: 'Gracias' },
+  EXCELENTE_TRABAJO: { icono: 'flame', etiqueta: 'Excelente trabajo' },
+  CRACK: { icono: 'rocket', etiqueta: 'Crack' },
+  INSPIRADOR: { icono: 'star', etiqueta: 'Inspirador' },
+  BUENA_IDEA: { icono: 'lightbulb', etiqueta: 'Buena idea' },
+  GRAN_COMPANERO: { icono: 'heart', etiqueta: 'Gran compañero' },
 };

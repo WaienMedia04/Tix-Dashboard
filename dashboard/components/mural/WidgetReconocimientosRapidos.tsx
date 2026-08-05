@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { type ReconocimientoRapidoMural, type TipoReconocimientoRapido, enviarReconocimientoRapido } from "@/lib/api";
 import { CATALOGO_RECONOCIMIENTOS_RAPIDOS } from "@/lib/reconocimientos-rapidos";
+import { IconoCatalogo } from "@/lib/iconos-catalogo";
 
 function tiempoRelativo(iso: string): string {
   const segundos = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
@@ -52,17 +53,19 @@ export function WidgetReconocimientosRapidos({
         <div>
           <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Reconócelo/a</p>
           <div className="flex flex-wrap gap-2">
-            {CATALOGO_RECONOCIMIENTOS_RAPIDOS.map((r) => (
-              <button
-                key={r.tipo}
-                onClick={() => void reconocer(r.tipo)}
-                disabled={enviando !== null}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span>{r.emoji}</span>
-                {r.etiqueta}
-              </button>
-            ))}
+            {CATALOGO_RECONOCIMIENTOS_RAPIDOS.map((r) => {
+              return (
+                <button
+                  key={r.tipo}
+                  onClick={() => void reconocer(r.tipo)}
+                  disabled={enviando !== null}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <IconoCatalogo id={r.icono} className="h-3.5 w-3.5" />
+                  {r.etiqueta}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -75,15 +78,17 @@ export function WidgetReconocimientosRapidos({
           <p className="text-xs text-muted-foreground">Todavía no ha recibido ninguno.</p>
         ) : (
           <ul className="space-y-1.5">
-            {reconocimientos.map((r) => (
-              <li key={r.id} className="flex items-center gap-2 text-xs">
-                <span className="text-base">{r.emoji}</span>
-                <span className="flex-1 text-foreground">
-                  <span className="font-medium">{r.etiqueta}</span> — de {r.remitenteNombre}
-                </span>
-                <span className="shrink-0 text-[10px] text-muted-foreground">{tiempoRelativo(r.createdAt)}</span>
-              </li>
-            ))}
+            {reconocimientos.map((r) => {
+              return (
+                <li key={r.id} className="flex items-center gap-2 text-xs">
+                  <IconoCatalogo id={r.icono} className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="flex-1 text-foreground">
+                    <span className="font-medium">{r.etiqueta}</span> — de {r.remitenteNombre}
+                  </span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">{tiempoRelativo(r.createdAt)}</span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

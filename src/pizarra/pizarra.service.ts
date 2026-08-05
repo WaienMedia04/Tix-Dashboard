@@ -253,7 +253,7 @@ export class PizarraService {
             empresaId,
             usuarioId,
             tipo: 'PIZARRA_MENCION',
-            titulo: '📣 Te mencionaron',
+            titulo: 'Te mencionaron',
             mensaje: `${autorNombre} te mencionó en la pizarra`,
             enlace: ENLACE_PIZARRA,
           }),
@@ -292,7 +292,7 @@ export class PizarraService {
           empresaId,
           usuarioId: post.autorUsuarioId,
           tipo: 'PIZARRA_REACCION',
-          titulo: '❤️ Nueva reacción',
+          titulo: 'Nueva reacción',
           mensaje: `${usuario.nombre} reaccionó ${dto.emoji} a tu publicación en la pizarra`,
           enlace: ENLACE_PIZARRA,
         });
@@ -329,7 +329,7 @@ export class PizarraService {
         empresaId,
         usuarioId: post.autorUsuarioId,
         tipo: 'PIZARRA_COMENTARIO',
-        titulo: '💬 Nuevo comentario',
+        titulo: 'Nuevo comentario',
         mensaje: `${usuario.nombre} comentó tu publicación en la pizarra`,
         enlace: ENLACE_PIZARRA,
       });
@@ -407,7 +407,7 @@ export class PizarraService {
         empresaId,
         usuarioId: post.autorUsuarioId,
         tipo: 'IDEA_APROBADA',
-        titulo: '💡 ¡Idea aprobada!',
+        titulo: '¡Idea aprobada!',
         mensaje: `${usuario.nombre} aprobó tu idea en la pizarra.`,
         enlace: ENLACE_PIZARRA,
       });
@@ -866,7 +866,7 @@ export class PizarraService {
       empresaId,
       talentoId: dto.talentoId,
       tipo: 'PIZARRA_RECONOCIMIENTO',
-      titulo: '🏆 Reconocimiento',
+      titulo: 'Reconocimiento',
       mensaje: `${usuario.nombre} te reconoció en la pizarra: "${dto.titulo.trim()}"`,
       enlace: ENLACE_PIZARRA,
     });
@@ -951,7 +951,7 @@ export class PizarraService {
         id: `cumple-${t.id}`,
         tipo: 'cumple' as const,
         fecha: new Date(),
-        texto: 'está de cumpleaños hoy 🎂',
+        texto: 'está de cumpleaños hoy',
         talento: {
           id: t.id,
           nombreCompleto: t.nombreCompleto,

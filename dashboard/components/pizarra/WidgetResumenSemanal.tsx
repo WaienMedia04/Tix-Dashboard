@@ -2,17 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarCheck } from "lucide-react";
+import { CalendarCheck, CheckCircle2, Coins, FileText, Lightbulb, MessageCircle, Sparkles, Trophy } from "lucide-react";
 import { type ResumenSemanal, fetchResumenSemanal } from "@/lib/api";
 import { estiloWidget, type TemaWidgets } from "@/lib/pizarra-temas";
 
-const ESTADISTICAS: { clave: keyof ResumenSemanal; etiqueta: string; emoji: string }[] = [
-  { clave: "bitacoras", etiqueta: "Bitácoras", emoji: "📝" },
-  { clave: "xpGanada", etiqueta: "XP ganada", emoji: "✨" },
-  { clave: "monedasGanadas", etiqueta: "Monedas", emoji: "🪙" },
-  { clave: "reconocimientosRecibidos", etiqueta: "Reconocimientos", emoji: "🏆" },
-  { clave: "ideasCompartidas", etiqueta: "Ideas compartidas", emoji: "💡" },
-  { clave: "comentarios", etiqueta: "Comentarios", emoji: "💬" },
+const ESTADISTICAS: { clave: keyof ResumenSemanal; etiqueta: string; Icono: typeof FileText }[] = [
+  { clave: "bitacoras", etiqueta: "Bitácoras", Icono: FileText },
+  { clave: "xpGanada", etiqueta: "XP ganada", Icono: Sparkles },
+  { clave: "monedasGanadas", etiqueta: "Monedas", Icono: Coins },
+  { clave: "reconocimientosRecibidos", etiqueta: "Reconocimientos", Icono: Trophy },
+  { clave: "ideasCompartidas", etiqueta: "Ideas compartidas", Icono: Lightbulb },
+  { clave: "comentarios", etiqueta: "Comentarios", Icono: MessageCircle },
 ];
 
 export function WidgetResumenSemanal({ tema }: { tema: TemaWidgets }) {
@@ -41,8 +41,8 @@ export function WidgetResumenSemanal({ tema }: { tema: TemaWidgets }) {
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
         {ESTADISTICAS.map((e) => (
           <div key={e.clave} className="rounded-lg bg-white/60 p-2.5 text-center">
-            <p className="text-lg">{e.emoji}</p>
-            <p className="font-display text-lg font-bold text-zinc-900">{resumen[e.clave] as number}</p>
+            <e.Icono className="mx-auto h-4 w-4 text-zinc-500" />
+            <p className="font-display mt-0.5 text-lg font-bold text-zinc-900">{resumen[e.clave] as number}</p>
             <p className="text-[11px] text-zinc-500">{e.etiqueta}</p>
           </div>
         ))}
@@ -60,8 +60,9 @@ export function WidgetResumenSemanal({ tema }: { tema: TemaWidgets }) {
                     initial={{ scale: 0, rotate: -20 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: "spring", stiffness: 300, damping: 14 }}
+                    className="text-emerald-600"
                   >
-                    ✅
+                    <CheckCircle2 className="h-3.5 w-3.5" />
                   </motion.span>
                 )}
               </span>

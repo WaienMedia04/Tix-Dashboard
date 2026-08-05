@@ -12,6 +12,8 @@ export interface ItemMarco {
 export interface ItemTitulo {
   id: string;
   texto: string;
+  /** Clave que resuelve el ícono real en dashboard/lib/iconos-catalogo.ts — se muestra junto al texto. */
+  icono: string;
   precio: number;
   rareza: RarezaItemTienda;
 }
@@ -54,12 +56,12 @@ export const MARCOS: ItemMarco[] = [
 
 /** Catálogo de títulos — se muestran como una píldora junto al nombre en el mural. */
 export const TITULOS: ItemTitulo[] = [
-  { id: 'crack', texto: '🚀 Crack', precio: 100, rareza: 'comun' },
-  { id: 'madrugador', texto: '🌅 Madrugador', precio: 100, rareza: 'comun' },
-  { id: 'colaborador_estrella', texto: '🤝 Colaborador estrella', precio: 200, rareza: 'raro' },
-  { id: 'imparable', texto: '⚡ Imparable', precio: 200, rareza: 'raro' },
-  { id: 'mentor', texto: '🎓 Mentor', precio: 300, rareza: 'epico' },
-  { id: 'leyenda', texto: '🌟 Leyenda del equipo', precio: 500, rareza: 'legendario' },
+  { id: 'crack', texto: 'Crack', icono: 'rocket', precio: 100, rareza: 'comun' },
+  { id: 'madrugador', texto: 'Madrugador', icono: 'sunrise', precio: 100, rareza: 'comun' },
+  { id: 'colaborador_estrella', texto: 'Colaborador estrella', icono: 'handshake', precio: 200, rareza: 'raro' },
+  { id: 'imparable', texto: 'Imparable', icono: 'zap', precio: 200, rareza: 'raro' },
+  { id: 'mentor', texto: 'Mentor', icono: 'graduation-cap', precio: 300, rareza: 'epico' },
+  { id: 'leyenda', texto: 'Leyenda del equipo', icono: 'crown', precio: 500, rareza: 'legendario' },
 ];
 
 /**

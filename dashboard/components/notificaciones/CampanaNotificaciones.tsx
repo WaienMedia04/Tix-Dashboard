@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Award,
   AtSign,
   Bell,
   Cake,
@@ -10,9 +11,11 @@ import {
   FileText,
   Gift,
   Heart,
+  Lightbulb,
   Megaphone,
   MessageCircle,
   StickyNote,
+  ThumbsUp,
   Trophy,
 } from "lucide-react";
 import {
@@ -37,6 +40,9 @@ const ICONO_POR_TIPO: Record<TipoNotificacion, { Icon: typeof Bell; color: strin
   PIZARRA_COMENTARIO: { Icon: MessageCircle, color: "text-sky-400" },
   PIZARRA_MENCION: { Icon: AtSign, color: "text-violet-400" },
   PIZARRA_RECONOCIMIENTO: { Icon: Trophy, color: "text-amber-400" },
+  RECONOCIMIENTO_RAPIDO: { Icon: ThumbsUp, color: "text-violet-400" },
+  LOGRO_DESBLOQUEADO: { Icon: Award, color: "text-amber-400" },
+  IDEA_APROBADA: { Icon: Lightbulb, color: "text-emerald-400" },
 };
 
 function tiempoRelativo(iso: string): string {

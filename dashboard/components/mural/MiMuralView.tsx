@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   Building2,
   ClipboardList,
+  Flame,
   Gift,
   MessageCircle,
   Newspaper,
@@ -20,7 +21,8 @@ import {
 } from "lucide-react";
 import { type MuralPropio, fetchChatResumen, fetchMuralDeTalento, fetchMuralPropio, fetchNotificaciones } from "@/lib/api";
 import { fondoMuralCss, fondoMuralTexto, intensidadLluvia } from "@/lib/mural-fondos";
-import { clasesMarco, textoTitulo } from "@/lib/tienda-catalogo";
+import { clasesMarco, iconoTitulo, textoTitulo } from "@/lib/tienda-catalogo";
+import { IconoCatalogo } from "@/lib/iconos-catalogo";
 import { coloresNombreMural } from "@/lib/mural-colores-nombre";
 import { colorParaEstado } from "@/lib/estados-mural";
 import { reproducirSonidoEntrada } from "@/lib/sonidos";
@@ -245,7 +247,8 @@ export function MiMuralView({
             {nombreCompleto}
           </GradientText>
           {textoTitulo(mural.perfil.tituloId) && (
-            <p className="mt-1.5 inline-block self-center rounded-full bg-black/40 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+            <p className="mt-1.5 inline-flex items-center gap-1.5 self-center rounded-full bg-black/40 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+              <IconoCatalogo id={iconoTitulo(mural.perfil.tituloId) ?? "star"} className="h-3.5 w-3.5" />
               {textoTitulo(mural.perfil.tituloId)}
             </p>
           )}
@@ -325,7 +328,8 @@ export function MiMuralView({
           className="fixed bottom-4 left-4 z-30 inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3.5 py-1.5 text-xs font-semibold text-white backdrop-blur-sm print:hidden"
           title="Días seguidos enviando bitácora"
         >
-          🔥 {mural.racha} {mural.racha === 1 ? "día" : "días"}
+          <Flame className="h-3.5 w-3.5 text-orange-400" />
+          {mural.racha} {mural.racha === 1 ? "día" : "días"}
         </div>
       )}
 

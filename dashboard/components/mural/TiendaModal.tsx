@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Circle, CloudRain, Crown, Lock, ShoppingBag, Sparkles, Tag, Type, X } from "lucide-react";
+import { Circle, CloudRain, Coins, Crown, Lock, ShoppingBag, Sparkles, Tag, Type, X } from "lucide-react";
 import {
   type CatalogoTienda,
   type ItemFondoTienda,
@@ -16,6 +16,7 @@ import {
   fetchTiendaCatalogo,
 } from "@/lib/api";
 import { clasesMarco } from "@/lib/tienda-catalogo";
+import { IconoCatalogo } from "@/lib/iconos-catalogo";
 import { fondoMuralCss, FONDOS_LLUVIA_IDS } from "@/lib/mural-fondos";
 import { ESTILO_RAREZA, ordenarPorRareza } from "@/lib/rareza-tienda";
 
@@ -44,7 +45,8 @@ function VistaPrevia({ categoria, item }: { categoria: Categoria; item: ItemCual
     const t = item as ItemTituloTienda;
     return (
       <div className="flex h-16 items-center justify-center px-2">
-        <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-center text-xs font-semibold text-white">
+        <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-center text-xs font-semibold text-white">
+          <IconoCatalogo id={t.icono} className="h-3.5 w-3.5 shrink-0" />
           {t.texto}
         </span>
       </div>
@@ -87,7 +89,7 @@ function BotonAccion({
         title={alcanza ? undefined : "No te alcanzan las monedas"}
         className="flex w-full items-center justify-center gap-1 rounded-lg bg-gradient-to-r from-violet-500 to-indigo-600 py-1.5 text-xs font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
       >
-        🪙 {item.precio}
+        <Coins className="h-3.5 w-3.5" /> {item.precio}
       </button>
     );
   }
@@ -279,7 +281,7 @@ export function TiendaModal({
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <span className="flex items-center gap-1.5 rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1.5 text-sm font-bold text-amber-300">
-                  🪙 {catalogo?.monedas ?? "…"}
+                  <Coins className="h-4 w-4" /> {catalogo?.monedas ?? "…"}
                 </span>
                 <button
                   onClick={onClose}

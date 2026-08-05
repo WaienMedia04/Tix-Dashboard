@@ -1258,7 +1258,8 @@ export type TipoReconocimientoRapido =
 export interface ReconocimientoRapidoMural {
   id: string;
   tipo: TipoReconocimientoRapido;
-  emoji: string;
+  /** Clave que resuelve el ícono en dashboard/lib/iconos-catalogo.ts. */
+  icono: string;
   etiqueta: string;
   remitenteNombre: string;
   createdAt: string;
@@ -1538,6 +1539,8 @@ export interface ItemMarcoTienda extends ItemTiendaEstado {
 
 export interface ItemTituloTienda extends ItemTiendaEstado {
   texto: string;
+  /** Clave que resuelve el ícono en dashboard/lib/iconos-catalogo.ts. */
+  icono: string;
 }
 
 export interface ItemFondoTienda extends ItemTiendaEstado {
@@ -1827,7 +1830,10 @@ export type TipoNotificacion =
   | "PIZARRA_REACCION"
   | "PIZARRA_COMENTARIO"
   | "PIZARRA_MENCION"
-  | "PIZARRA_RECONOCIMIENTO";
+  | "PIZARRA_RECONOCIMIENTO"
+  | "RECONOCIMIENTO_RAPIDO"
+  | "LOGRO_DESBLOQUEADO"
+  | "IDEA_APROBADA";
 
 export interface Notificacion {
   id: string;

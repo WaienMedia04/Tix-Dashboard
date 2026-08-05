@@ -168,7 +168,7 @@ export function PizarraSocial({
 
           <PizarraContenidoDiarioBanner
             contenido={panel?.contenidoDiario ?? null}
-            onResponder={(pregunta) => setPrefillComposer({ texto: `❓ ${pregunta}: ` })}
+            onResponder={(pregunta) => setPrefillComposer({ texto: `Pregunta: ${pregunta} — ` })}
           />
 
           <PizarraEncuestaCard

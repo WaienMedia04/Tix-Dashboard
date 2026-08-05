@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Brain, Trophy } from "lucide-react";
+import { Brain, CheckCircle2, Trophy } from "lucide-react";
 import {
   type PizarraTriviaHoy,
   type PizarraTriviaRankingItem,
@@ -87,8 +87,11 @@ export function PizarraTrivia({ slug }: { slug: string }) {
       </div>
 
       {trivia.yaRespondida && (
-        <p className={`mt-2 text-xs font-medium ${trivia.correcta ? "text-success" : "text-destructive"}`}>
-          {trivia.correcta ? "¡Correcto! 🎉" : "No era esa — ¡mañana hay otra!"}
+        <p
+          className={`mt-2 flex items-center gap-1 text-xs font-medium ${trivia.correcta ? "text-success" : "text-destructive"}`}
+        >
+          {trivia.correcta && <CheckCircle2 className="h-3.5 w-3.5" />}
+          {trivia.correcta ? "¡Correcto!" : "No era esa — ¡mañana hay otra!"}
         </p>
       )}
 

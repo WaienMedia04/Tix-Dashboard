@@ -390,7 +390,7 @@ export class MuralService {
       empresaId,
       talentoId: talentoDestinoId,
       tipo: 'NOTA_RECIBIDA',
-      titulo: '📝 Nueva nota en tu mural',
+      titulo: 'Nueva nota en tu mural',
       mensaje: `${actor.usuario.nombre} te dejó una nota en tu mural.`,
       enlace: '/mi-mural',
     });
@@ -442,12 +442,12 @@ export class MuralService {
       `${actor.usuario.id}-${this.hoyISO()}`,
     );
 
-    const { emoji, etiqueta } = RECONOCIMIENTOS_RAPIDOS[dto.tipo];
+    const { icono, etiqueta } = RECONOCIMIENTOS_RAPIDOS[dto.tipo];
     await this.notificaciones.crearPersonal({
       empresaId,
       talentoId: talentoDestinoId,
       tipo: 'RECONOCIMIENTO_RAPIDO',
-      titulo: `${emoji} Nuevo reconocimiento`,
+      titulo: 'Nuevo reconocimiento',
       mensaje: `${actor.usuario.nombre} te reconoció: "${etiqueta}"`,
       enlace: '/mi-mural',
     });
@@ -455,7 +455,7 @@ export class MuralService {
     return {
       id: reconocimiento.id,
       tipo: reconocimiento.tipo,
-      emoji,
+      icono,
       etiqueta,
       remitenteNombre: actor.usuario.nombre,
       createdAt: reconocimiento.createdAt,

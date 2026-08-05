@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Mic, Send } from "lucide-react";
+import { BarChart3, Lightbulb, Mic, Send, Smile } from "lucide-react";
 import { type MensajeMascota, chatMascota } from "@/lib/api";
 
 /** Web Speech API — no todos los navegadores la exponen igual (Chrome/Edge sí, Firefox no la soporta, Safari es inconsistente). */
@@ -63,9 +63,9 @@ const MAX_HISTORIAL = 6;
 
 /** Chips de acceso rápido a las funciones nuevas de la mascota — solo se muestran antes del primer mensaje, para que se descubran sin tener que adivinar qué preguntar. */
 const SUGERENCIAS_RAPIDAS = [
-  { emoji: "💡", etiqueta: "Consejo", texto: "Dame un consejo para mejorar mi desempeño" },
-  { emoji: "😄", etiqueta: "Chiste", texto: "Cuéntame un chiste" },
-  { emoji: "📊", etiqueta: "¿Cómo voy?", texto: "¿Cómo voy esta semana con mis bitácoras?" },
+  { Icono: Lightbulb, etiqueta: "Consejo", texto: "Dame un consejo para mejorar mi desempeño" },
+  { Icono: Smile, etiqueta: "Chiste", texto: "Cuéntame un chiste" },
+  { Icono: BarChart3, etiqueta: "¿Cómo voy?", texto: "¿Cómo voy esta semana con mis bitácoras?" },
 ];
 
 function mensajeSaludo(nombreTalento: string, mascotaNombre: string | null): string {
@@ -325,9 +325,9 @@ export function MascotaClippy({
               key={s.etiqueta}
               onClick={() => void enviar(s.texto)}
               disabled={enviando}
-              className="rounded-full border border-white/10 bg-zinc-900/95 px-2.5 py-1 text-[11px] font-medium text-zinc-200 backdrop-blur-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-zinc-900/95 px-2.5 py-1 text-[11px] font-medium text-zinc-200 backdrop-blur-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {s.emoji} {s.etiqueta}
+              <s.Icono className="h-3 w-3" /> {s.etiqueta}
             </button>
           ))}
         </div>

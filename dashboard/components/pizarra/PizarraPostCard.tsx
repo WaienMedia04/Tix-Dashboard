@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { CheckCircle2, Lightbulb, Trash2 } from "lucide-react";
 import {
   type PizarraPost,
   aprobarPizarraIdea,
@@ -122,11 +122,13 @@ export function PizarraPostCard({
       {post.esIdea && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
-            💡 Idea
+            <Lightbulb className="h-3 w-3" />
+            Idea
           </span>
           {post.aprobada ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-              ✅ Aprobada
+              <CheckCircle2 className="h-3 w-3" />
+              Aprobada
             </span>
           ) : (
             puedeAprobarIdeas && (
