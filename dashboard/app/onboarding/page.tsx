@@ -366,7 +366,7 @@ export default function OnboardingPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-black">
       <FondoMoltenMetal />
-      <div className="relative z-10 h-1.5 bg-gradient-to-r from-cyan-400 via-violet-600 to-fuchsia-500" />
+      <div className="franja-degradado-talentix relative z-10 h-1.5" />
       <div className="relative z-10 mx-auto max-w-2xl px-4 py-10 sm:px-6">
         <BrandMark variant="onDark" />
         <h1 className="font-display mt-4 text-2xl font-bold text-white sm:text-3xl">

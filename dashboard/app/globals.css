@@ -313,7 +313,31 @@
   animation: chisme-blink 1s ease-in-out infinite;
 }
 
+/* Franja superior del formulario de onboarding: los mismos colores de marca
+   (cyan/violeta/fucsia) pero fluyendo de izquierda a derecha en vez de
+   estáticos. La secuencia de colores se repite dos veces con el doble de
+   ancho (background-size 200%) para que el loop sea perfectamente continuo. */
+@keyframes franja-degradado-talentix {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.franja-degradado-talentix {
+  background-image: linear-gradient(
+    90deg,
+    #22d3ee,
+    #7c3aed,
+    #d946ef,
+    #22d3ee,
+    #7c3aed,
+    #d946ef
+  );
+  background-size: 200% 100%;
+  animation: franja-degradado-talentix 6s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton-shimmer { animation: none; }
   .animate-chisme-blink { animation: none; background-color: var(--color-destructive); }
+  .franja-degradado-talentix { animation: none; background-position: 0% 50%; }
 }
