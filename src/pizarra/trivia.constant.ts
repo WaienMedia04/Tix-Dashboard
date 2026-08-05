@@ -128,4 +128,271 @@ export const TRIVIA_PREGUNTAS: PreguntaTrivia[] = [
     opciones: ['Santiago', 'Santo Domingo', 'La Romana', 'Punta Cana'],
     correctaIndex: 1,
   },
+  {
+    pregunta: '¿Cuál es el metal más abundante en la corteza terrestre?',
+    opciones: ['Aluminio', 'Hierro', 'Cobre', 'Oro'],
+    correctaIndex: 0,
+  },
+  {
+    pregunta: '¿Cuántos huesos tiene la mano humana, incluyendo la muñeca?',
+    opciones: ['21', '27', '32', '24'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Qué país tiene la mayor cantidad de husos horarios?',
+    opciones: ['Rusia', 'Estados Unidos', 'Francia', 'China'],
+    correctaIndex: 2,
+  },
+  {
+    pregunta: '¿Cuál es el hueso más largo del cuerpo humano?',
+    opciones: ['Fémur', 'Tibia', 'Húmero', 'Radio'],
+    correctaIndex: 0,
+  },
+  {
+    pregunta: '¿Cuál es el animal más grande del mundo?',
+    opciones: [
+      'Elefante africano',
+      'Ballena azul',
+      'Tiburón ballena',
+      'Jirafa',
+    ],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es el desierto más grande del mundo?',
+    opciones: ['Sahara', 'Gobi', 'Antártida', 'Kalahari'],
+    correctaIndex: 2,
+  },
+  {
+    pregunta: '¿En qué continente se encuentra Egipto?',
+    opciones: ['Asia', 'África', 'Europa', 'Oceanía'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es el elemento químico más ligero?',
+    opciones: ['Helio', 'Hidrógeno', 'Litio', 'Oxígeno'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuántos jugadores tiene un equipo de baloncesto en la cancha?',
+    opciones: ['4', '5', '6', '7'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es la velocidad de la luz, aproximadamente?',
+    opciones: ['300,000 km/s', '150,000 km/s', '1,000,000 km/s', '30,000 km/s'],
+    correctaIndex: 0,
+  },
+  {
+    pregunta: '¿Qué órgano del cuerpo humano produce la insulina?',
+    opciones: ['Hígado', 'Páncreas', 'Riñón', 'Bazo'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es la capital de Canadá?',
+    opciones: ['Toronto', 'Vancouver', 'Ottawa', 'Montreal'],
+    correctaIndex: 2,
+  },
+  {
+    pregunta: '¿Qué pintor pintó "La noche estrellada"?',
+    opciones: ['Picasso', 'Van Gogh', 'Monet', 'Dalí'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es el país más poblado del mundo?',
+    opciones: ['China', 'India', 'Estados Unidos', 'Indonesia'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuántos planetas tiene el sistema solar?',
+    opciones: ['7', '8', '9', '10'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es el ave que no puede volar más grande del mundo?',
+    opciones: ['Pingüino emperador', 'Avestruz', 'Emú', 'Kiwi'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Qué científico formuló la teoría de la relatividad?',
+    opciones: ['Newton', 'Einstein', 'Galileo', 'Tesla'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es el río más largo de Sudamérica?',
+    opciones: ['Orinoco', 'Amazonas', 'Paraná', 'Magdalena'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuántas cuerdas tiene una guitarra clásica?',
+    opciones: ['4', '5', '6', '7'],
+    correctaIndex: 2,
+  },
+  {
+    pregunta: '¿Cuál es el país de origen de la pizza?',
+    opciones: ['Francia', 'España', 'Italia', 'Grecia'],
+    correctaIndex: 2,
+  },
+  {
+    pregunta: '¿Qué gas es el más abundante en la atmósfera terrestre?',
+    opciones: ['Oxígeno', 'Dióxido de carbono', 'Nitrógeno', 'Hidrógeno'],
+    correctaIndex: 2,
+  },
+  {
+    pregunta: '¿Cuál es el hueso más pequeño del cuerpo humano?',
+    opciones: ['Estribo (oído)', 'Falange', 'Rótula', 'Coxis'],
+    correctaIndex: 0,
+  },
+  {
+    pregunta: '¿En qué año cayó el Muro de Berlín?',
+    opciones: ['1987', '1989', '1991', '1993'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta:
+      '¿Qué fruta es popularmente conocida por su alto contenido de potasio?',
+    opciones: ['Manzana', 'Plátano', 'Naranja', 'Piña'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuántos lados tiene un hexágono?',
+    opciones: ['5', '6', '7', '8'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es la capital de España?',
+    opciones: ['Barcelona', 'Madrid', 'Sevilla', 'Valencia'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Qué instrumento se usa para medir la presión atmosférica?',
+    opciones: ['Termómetro', 'Barómetro', 'Higrómetro', 'Anemómetro'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es el país más grande de África por territorio?',
+    opciones: ['Argelia', 'Egipto', 'Sudán', 'Nigeria'],
+    correctaIndex: 0,
+  },
+  {
+    pregunta: '¿Cuántos años dura un siglo?',
+    opciones: ['10', '100', '1000', '50'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es la capital de Rusia?',
+    opciones: ['San Petersburgo', 'Moscú', 'Kiev', 'Minsk'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Qué animal es conocido como "el rey de la selva"?',
+    opciones: ['Tigre', 'León', 'Elefante', 'Gorila'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es el punto más profundo del océano?',
+    opciones: [
+      'Fosa de Puerto Rico',
+      'Fosa de las Marianas',
+      'Fosa de Japón',
+      'Fosa de Tonga',
+    ],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuántos dientes tiene un adulto humano en promedio?',
+    opciones: ['28', '30', '32', '34'],
+    correctaIndex: 2,
+  },
+  {
+    pregunta: '¿Cuál es el idioma oficial de Brasil?',
+    opciones: ['Español', 'Portugués', 'Inglés', 'Francés'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Qué científico descubrió la penicilina?',
+    opciones: [
+      'Louis Pasteur',
+      'Alexander Fleming',
+      'Marie Curie',
+      'Robert Koch',
+    ],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es la moneda oficial de México?',
+    opciones: ['Dólar', 'Peso', 'Real', 'Bolívar'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuántas patas tiene una araña?',
+    opciones: ['6', '8', '10', '12'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es el punto más alto de Sudamérica?',
+    opciones: ['Aconcagua', 'Chimborazo', 'Huascarán', 'Cotopaxi'],
+    correctaIndex: 0,
+  },
+  {
+    pregunta: '¿Qué deporte se juega en el torneo de Wimbledon?',
+    opciones: ['Golf', 'Tenis', 'Cricket', 'Rugby'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta:
+      '¿Cuál es el país con más hablantes de español como lengua materna?',
+    opciones: ['España', 'Argentina', 'México', 'Colombia'],
+    correctaIndex: 2,
+  },
+  {
+    pregunta: '¿Cuántos colores primarios de luz existen (RGB)?',
+    opciones: ['2', '3', '4', '5'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es la capital de Italia?',
+    opciones: ['Milán', 'Roma', 'Nápoles', 'Venecia'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Qué órgano bombea la sangre por el cuerpo?',
+    opciones: ['Pulmón', 'Corazón', 'Hígado', 'Riñón'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál fue el primer planeta visitado por una sonda espacial?',
+    opciones: ['Marte', 'Venus', 'Júpiter', 'Mercurio'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuántos minutos tiene una hora?',
+    opciones: ['30', '60', '90', '120'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es el lago más grande del mundo por superficie?',
+    opciones: ['Lago Superior', 'Mar Caspio', 'Lago Baikal', 'Lago Victoria'],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Qué imperio construyó el Coliseo de Roma?',
+    opciones: [
+      'Imperio Griego',
+      'Imperio Romano',
+      'Imperio Bizantino',
+      'Imperio Otomano',
+    ],
+    correctaIndex: 1,
+  },
+  {
+    pregunta: '¿Cuál es el ave nacional de la República Dominicana?',
+    opciones: ['Cigua Palmera', 'Loro', 'Iguana', 'Manatí'],
+    correctaIndex: 0,
+  },
+  {
+    pregunta: '¿Cuál es el país más pequeño del mundo por territorio?',
+    opciones: ['Mónaco', 'San Marino', 'Vaticano', 'Liechtenstein'],
+    correctaIndex: 2,
+  },
 ];
