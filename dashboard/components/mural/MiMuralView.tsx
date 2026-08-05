@@ -350,56 +350,56 @@ export function MiMuralView({
           <Dock
             items={[
               {
-                icon: <Radio className="h-5 w-5 text-rose-400" />,
+                icon: <Radio className="h-5 w-5" />,
                 label: "Estado",
                 onClick: () => setMostrarEstado(true),
               },
               {
-                icon: <Sparkles className="h-5 w-5 text-amber-400" />,
+                icon: <Sparkles className="h-5 w-5" />,
                 label: "Sobre mí",
                 onClick: () => setMostrarSobreMi(true),
               },
               {
-                icon: <Palette className="h-5 w-5 text-fuchsia-400" />,
+                icon: <Palette className="h-5 w-5" />,
                 label: "Fondo",
                 onClick: () => setMostrarFondo(true),
               },
               {
-                icon: <NotebookPen className="h-5 w-5 text-cyan-400" />,
+                icon: <NotebookPen className="h-5 w-5" />,
                 label: "Mis Bitácoras",
                 onClick: () => router.push(rol === "TALENTO" ? `/${slug}/mi-espacio` : `/${slug}/bitacoras`),
               },
               {
-                icon: <Users className="h-5 w-5 text-emerald-400" />,
+                icon: <Users className="h-5 w-5" />,
                 label: "Compañeros",
                 onClick: () => setMostrarCompaneros(true),
               },
               {
-                icon: <Gift className="h-5 w-5 text-rose-400" />,
+                icon: <Gift className="h-5 w-5" />,
                 label: "Mis Estampas",
                 onClick: () => setMostrarEstampas(true),
               },
               {
-                icon: <Trophy className="h-5 w-5 text-amber-400" />,
+                icon: <Trophy className="h-5 w-5" />,
                 label: "Logros",
                 onClick: () => setMostrarLogros(true),
               },
               {
-                icon: <ShoppingBag className="h-5 w-5 text-lime-400" />,
+                icon: <ShoppingBag className="h-5 w-5" />,
                 label: "Tienda",
                 onClick: () => setMostrarTienda(true),
               },
               {
-                icon: <StickyNote className="h-5 w-5 text-yellow-400" />,
+                icon: <StickyNote className="h-5 w-5" />,
                 label: "Agregar nota",
                 onClick: () => setMostrarNuevaNota(true),
               },
               {
                 icon: (
                   <div className="relative">
-                    <ClipboardList className="h-5 w-5 text-orange-400" />
+                    <ClipboardList className="h-5 w-5" />
                     {pizarraNoLeidas > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-white ring-2 ring-background">
+                      <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white ring-2 ring-[#141420]">
                         {pizarraNoLeidas > 9 ? "9+" : pizarraNoLeidas}
                       </span>
                     )}
@@ -409,18 +409,18 @@ export function MiMuralView({
                 onClick: () => setVentanaPizarra("abierta"),
               },
               {
-                icon: <Newspaper className="h-5 w-5 text-sky-400" />,
+                icon: <Newspaper className="h-5 w-5" />,
                 label: "Mural informativo",
                 onClick: () => setVentanaMural("abierta"),
               },
               {
                 icon: (
                   <div className="relative">
-                    <MessageCircle className="h-5 w-5 text-violet-400" />
+                    <MessageCircle className="h-5 w-5" />
                     {(chatNoLeidos > 0 || chatHayChisme) && (
                       <span
-                        className={`absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white ring-2 ring-background ${
-                          chatHayChisme ? "animate-chisme-blink" : "bg-destructive"
+                        className={`absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white ring-2 ring-[#141420] ${
+                          chatHayChisme ? "animate-chisme-blink" : "bg-primary"
                         }`}
                       >
                         {chatNoLeidos > 9 ? "9+" : chatNoLeidos}

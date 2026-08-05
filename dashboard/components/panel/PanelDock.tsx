@@ -28,14 +28,14 @@ export function PanelDock() {
 
   const items = [
     {
-      icon: <LayoutDashboard className="h-5 w-5 text-violet-400" />,
+      icon: <LayoutDashboard className="h-5 w-5" />,
       label: "Dashboard",
       onClick: () => router.push(`/${slug}/dashboard`),
     },
     ...(rol === "CEO" || rol === "RRHH"
       ? [
           {
-            icon: <Settings className="h-5 w-5 text-slate-400" />,
+            icon: <Settings className="h-5 w-5" />,
             label: "Configuración",
             onClick: () => router.push(`/${slug}/configuracion`),
           },
@@ -45,23 +45,23 @@ export function PanelDock() {
       ? []
       : [
           {
-            icon: <PenSquare className="h-5 w-5 text-fuchsia-400" />,
+            icon: <PenSquare className="h-5 w-5" />,
             label: "Mi Mural",
             onClick: () => router.push(`/${slug}/mi-mural`),
           },
         ]),
     {
-      icon: <LifeBuoy className="h-5 w-5 text-emerald-400" />,
+      icon: <LifeBuoy className="h-5 w-5" />,
       label: "Soporte",
       onClick: () => setMostrarSoporte(true),
     },
     {
-      icon: esOscuro ? <Sun className="h-5 w-5 text-amber-400" /> : <Moon className="h-5 w-5 text-indigo-400" />,
+      icon: esOscuro ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />,
       label: esOscuro ? "Modo claro" : "Modo oscuro",
       onClick: () => setTheme(esOscuro ? "light" : "dark"),
     },
     {
-      icon: <LogOut className="h-5 w-5 text-red-400" />,
+      icon: <LogOut className="h-5 w-5" />,
       label: "Cerrar sesión",
       onClick: () => void cerrarSesion(),
     },
