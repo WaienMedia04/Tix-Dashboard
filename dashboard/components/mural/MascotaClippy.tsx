@@ -87,7 +87,7 @@ export function MascotaClippy({
   const agenteRef = useRef<AgenteClippy | null>(null);
   const [listo, setListo] = useState(false);
   const [chatAbierto, setChatAbierto] = useState(false);
-  const [posicionChat, setPosicionChat] = useState<{ top: number; left: number } | null>(null);
+  const [posicionChat, setPosicionChat] = useState<{ bottom: number; left: number } | null>(null);
   const [mensaje, setMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [historial, setHistorial] = useState<MensajeMascota[]>([]);
@@ -197,17 +197,20 @@ export function MascotaClippy({
     return () => clearInterval(id);
   }, [listo]);
 
-  function calcularPosicionChat(el: HTMLElement): { top: number; left: number } {
+  function calcularPosicionChat(el: HTMLElement): { bottom: number; left: number } {
     const rect = el.getBoundingClientRect();
     // A la derecha de la mascota — si no cabe (pantalla angosta), a la izquierda.
     let left = rect.right + 8;
     if (left + ANCHO_CHAT_PX > window.innerWidth - 8) left = rect.left - ANCHO_CHAT_PX - 8;
     if (left < 8) left = 8;
-    // Centrado verticalmente con la mascota.
-    let top = rect.top + rect.height / 2 - ALTO_CHAT_PX / 2;
-    if (top < 8) top = 8;
-    if (top + ALTO_CHAT_PX > window.innerHeight - 8) top = window.innerHeight - ALTO_CHAT_PX - 8;
-    return { top, left };
+    // Se ancla por ABAJO (no por arriba) a la altura del centro de la
+    // mascota, para que el bloque crezca hacia arriba cuando aparecen las
+    // sugerencias rápidas encima del campo de texto — así el campo nunca
+    // termina fuera de la pantalla, sin importar cuántas filas tenga arriba
+    // (antes se calculaba `top` asumiendo solo la altura del campo, y las
+    // sugerencias lo empujaban por debajo del borde inferior).
+    const bottom = Math.max(8, window.innerHeight - (rect.top + rect.height / 2 + ALTO_CHAT_PX / 2));
+    return { bottom, left };
   }
 
   // Un solo click abre/cierra el chat a la derecha de la mascota. El doble
@@ -312,7 +315,7 @@ export function MascotaClippy({
 
   return (
     <div
-      style={{ position: "fixed", top: posicionChat.top, left: posicionChat.left, zIndex: 10002 }}
+      style={{ position: "fixed", bottom: posicionChat.bottom, left: posicionChat.left, zIndex: 10002 }}
       className="flex w-56 flex-col gap-1.5 print:hidden"
     >
       {historial.length === 0 && (
