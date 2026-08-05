@@ -16,6 +16,7 @@ import { ActualizarLogoEmpresaDto } from './dto/actualizar-logo-empresa.dto';
 import { ActualizarBitacoraDto } from './dto/actualizar-bitacora.dto';
 import { MuralService } from '../mural/mural.service';
 import { EnviarNotaDto } from '../mural/dto/enviar-nota.dto';
+import { EnviarReconocimientoRapidoDto } from '../mural/dto/enviar-reconocimiento-rapido.dto';
 import { AnalisisEjecutivoService } from './analisis-ejecutivo.service';
 import { clasificarEstado, esAusenciaAutorizada } from './estado.util';
 import { invitarUsuario } from '../auth/invitar-usuario.util';
@@ -157,6 +158,30 @@ export class EmpresasService {
     }
 
     return this.mural.crearNotaParaOtro(actor, talento.id, empresa.id, dto);
+  }
+
+  /** Un compañero le manda un reconocimiento rápido a OTRO talento de la empresa. */
+  async enviarReconocimientoRapido(
+    slug: string,
+    actor: Actor,
+    talentoId: string,
+    dto: EnviarReconocimientoRapidoDto,
+  ) {
+    const empresa = await this.resolverEmpresa(slug, actor);
+
+    const talento = await this.prisma.talento.findUnique({
+      where: { id: talentoId },
+    });
+    if (!talento || talento.empresaId !== empresa.id) {
+      throw new NotFoundException('Empleado no encontrado');
+    }
+
+    return this.mural.enviarReconocimientoRapido(
+      actor,
+      talento.id,
+      empresa.id,
+      dto,
+    );
   }
 
   /**

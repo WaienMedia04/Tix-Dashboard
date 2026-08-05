@@ -24,6 +24,7 @@ const COLORES: Record<string, EstiloWidget> = {
   cielo: { card: "border-sky-200 bg-sky-50", badge: "bg-sky-100", icon: "text-sky-600" },
   rosado: { card: "border-pink-200 bg-pink-50", badge: "bg-pink-100", icon: "text-pink-600" },
   indigo: { card: "border-indigo-200 bg-indigo-50", badge: "bg-indigo-100", icon: "text-indigo-600" },
+  violeta: { card: "border-violet-200 bg-violet-50", badge: "bg-violet-100", icon: "text-violet-600" },
 };
 
 const SOLIDO: EstiloWidget = {

@@ -1,11 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ClipboardList } from "lucide-react";
 import { type EmojiClima, type PizarraPanel, type PizarraPost, fetchPizarraPanel, fetchPizarraPosts } from "@/lib/api";
 import { PizarraComposer } from "./PizarraComposer";
 import { PizarraPostCard } from "./PizarraPostCard";
 import { PizarraPaginacion } from "./PizarraPaginacion";
+import { WidgetProgreso } from "./WidgetProgreso";
+import { WidgetResumenSemanal } from "./WidgetResumenSemanal";
+import { WidgetTopEmpresa } from "./WidgetTopEmpresa";
+import { IdeasDelEquipo } from "./IdeasDelEquipo";
 import { PizarraReconocimientoBanner } from "./PizarraReconocimientoBanner";
 import { PizarraNuevoReconocimientoModal } from "./PizarraNuevoReconocimientoModal";
 import { PizarraEncuestaCard } from "./PizarraEncuestaCard";
@@ -26,6 +30,7 @@ import type { TemaWidgets } from "@/lib/pizarra-temas";
 const INTERVALO_POLLING_MS = 15_000;
 const INTERVALO_PANEL_MS = 60_000;
 const POSTS_POR_PAGINA = 10;
+const DURACION_XP_GANADA_MS = 2500;
 
 /** Pizarra compartida por toda la empresa — mismo contenido se vea desde el mural de quien se vea. */
 export function PizarraSocial({
@@ -51,6 +56,8 @@ export function PizarraSocial({
   const [mostrarNuevaEncuesta, setMostrarNuevaEncuesta] = useState(false);
   const [mostrarNuevoReconocimiento, setMostrarNuevoReconocimiento] = useState(false);
   const [prefillComposer, setPrefillComposer] = useState<{ texto: string } | null>(null);
+  const [xpGanada, setXpGanada] = useState<number | null>(null);
+  const xpTotalAnteriorRef = useRef<number | null>(null);
 
   const cargar = useCallback(
     (p: number) => {
@@ -70,7 +77,16 @@ export function PizarraSocial({
 
   const cargarPanel = useCallback(() => {
     fetchPizarraPanel(slug)
-      .then(setPanel)
+      .then((p) => {
+        setPanel(p);
+        const xpNuevo = p.progresoPropio?.xpTotal ?? null;
+        const xpAnterior = xpTotalAnteriorRef.current;
+        if (xpAnterior !== null && xpNuevo !== null && xpNuevo > xpAnterior) {
+          setXpGanada(xpNuevo - xpAnterior);
+          setTimeout(() => setXpGanada(null), DURACION_XP_GANADA_MS);
+        }
+        xpTotalAnteriorRef.current = xpNuevo;
+      })
       .catch(() => {});
   }, [slug]);
 
@@ -125,6 +141,14 @@ export function PizarraSocial({
             />
           </div>
 
+          <div className="sm:col-span-2">
+            <WidgetProgreso progreso={panel?.progresoPropio ?? null} tema={tema} xpGanada={xpGanada} />
+          </div>
+
+          <div className="sm:col-span-2">
+            <WidgetResumenSemanal tema={tema} />
+          </div>
+
           <WidgetClimaLaboral
             slug={slug}
             climaHoy={panel?.climaHoy ?? null}
@@ -152,11 +176,17 @@ export function PizarraSocial({
 
           <PizarraTrivia slug={slug} />
 
+          <IdeasDelEquipo slug={slug} esModerador={esModerador} tema={tema} />
+
           {panel && (
             <div className="sm:col-span-2">
               <WidgetRankingSemanal ranking={panel.rankingSemanal} tema={tema} />
             </div>
           )}
+
+          <div className="sm:col-span-2">
+            <WidgetTopEmpresa slug={slug} tema={tema} />
+          </div>
 
           {panel && <WidgetEstampasRecientes estampas={panel.estampasRecientes} tema={tema} />}
           {panel && <WidgetEventosProximos eventos={panel.eventosProximos} tema={tema} />}

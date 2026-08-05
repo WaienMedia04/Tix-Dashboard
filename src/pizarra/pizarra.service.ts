@@ -8,6 +8,7 @@ import { EmojiClima, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Actor } from '../auth/actor.types';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { ProgresoService } from '../progreso/progreso.service';
 import { calcularRachas } from '../mural/racha.util';
 import { CrearPostDto } from './dto/crear-post.dto';
 import { CrearComentarioDto } from './dto/crear-comentario.dto';
@@ -71,6 +72,7 @@ export class PizarraService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificaciones: NotificacionesService,
+    private readonly progreso: ProgresoService,
   ) {}
 
   /** La pizarra es solo para cuentas humanas — nunca para el tráfico de servicio de ClawLink. */
@@ -128,6 +130,8 @@ export class PizarraService {
       texto: post.texto,
       createdAt: post.createdAt,
       propio: post.autorUsuarioId === usuarioId,
+      esIdea: post.esIdea,
+      aprobada: post.aprobada,
       autor: {
         id: post.autor.id,
         nombre: post.autor.nombre,
@@ -163,17 +167,21 @@ export class PizarraService {
   async listarPosts(
     slug: string,
     actor: Actor,
-    opts: { page?: number; limit?: number },
+    opts: { page?: number; limit?: number; soloIdeas?: boolean },
   ) {
     const usuario = this.exigirUsuario(actor);
     const empresaId = await this.resolverEmpresaId(slug, actor);
     const limit = Math.min(Math.max(opts.limit ?? LIMITE_POSTS, 1), 50);
     const page = Math.max(opts.page ?? 1, 1);
+    const where = {
+      empresaId,
+      ...(opts.soloIdeas && { esIdea: true }),
+    };
 
     const [total, posts] = await Promise.all([
-      this.prisma.pizarraPost.count({ where: { empresaId } }),
+      this.prisma.pizarraPost.count({ where }),
       this.prisma.pizarraPost.findMany({
-        where: { empresaId },
+        where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -193,8 +201,20 @@ export class PizarraService {
     const empresaId = await this.resolverEmpresaId(slug, actor);
 
     const post = await this.prisma.pizarraPost.create({
-      data: { empresaId, autorUsuarioId: usuario.id, texto: dto.texto.trim() },
+      data: {
+        empresaId,
+        autorUsuarioId: usuario.id,
+        texto: dto.texto.trim(),
+        esIdea: dto.esIdea ?? false,
+      },
     });
+
+    await this.progreso.otorgar(
+      empresaId,
+      usuario.talentoId,
+      'post_compartido',
+      post.id,
+    );
 
     const idsCandidatos = this.extraerMenciones(dto.texto);
     if (idsCandidatos.length > 0) {
@@ -293,9 +313,16 @@ export class PizarraService {
     const post = await this.exigirPost(postId, empresaId);
 
     const texto = dto.texto.trim();
-    await this.prisma.pizarraComentario.create({
+    const comentario = await this.prisma.pizarraComentario.create({
       data: { postId, autorUsuarioId: usuario.id, texto },
     });
+
+    await this.progreso.otorgar(
+      empresaId,
+      usuario.talentoId,
+      'comentario_publicado',
+      comentario.id,
+    );
 
     if (post.autorUsuarioId !== usuario.id) {
       await this.notificaciones.crearPersonal({
@@ -344,6 +371,49 @@ export class PizarraService {
 
     await this.prisma.pizarraPost.delete({ where: { id: postId } });
     return { ok: true };
+  }
+
+  /** Solo CEO/RRHH — marca una idea como aprobada, una sola vez (idempotente: reintentarlo no vuelve a premiar). */
+  async aprobarIdea(slug: string, actor: Actor, postId: string) {
+    const usuario = this.exigirUsuario(actor);
+    this.exigirModerador(usuario);
+    const empresaId = await this.resolverEmpresaId(slug, actor);
+    const post = await this.exigirPost(postId, empresaId);
+
+    if (!post.esIdea) {
+      throw new BadRequestException('Esta publicación no es una idea');
+    }
+
+    if (!post.aprobada) {
+      await this.prisma.pizarraPost.update({
+        where: { id: postId },
+        data: { aprobada: true },
+      });
+
+      const autor = await this.prisma.usuario.findUnique({
+        where: { id: post.autorUsuarioId },
+        select: { talentoId: true },
+      });
+      await this.progreso.otorgarMonto(
+        empresaId,
+        autor?.talentoId,
+        'idea_aprobada',
+        postId,
+        40,
+        30,
+      );
+
+      await this.notificaciones.crearPersonal({
+        empresaId,
+        usuarioId: post.autorUsuarioId,
+        tipo: 'IDEA_APROBADA',
+        titulo: '💡 ¡Idea aprobada!',
+        mensaje: `${usuario.nombre} aprobó tu idea en la pizarra.`,
+        enlace: ENLACE_PIZARRA,
+      });
+    }
+
+    return this.obtenerPostCompleto(postId, usuario.id);
   }
 
   // ===== Contenido diario, encuestas y reconocimiento =====
@@ -550,6 +620,7 @@ export class PizarraService {
       rankingSemanal,
       estampasRecientes,
       eventosProximos,
+      progresoPropio,
     ] = await Promise.all([
       this.encuestaActivaParaUsuario(empresaId, usuario.id),
       this.reconocimientoActivo(empresaId),
@@ -560,6 +631,9 @@ export class PizarraService {
       this.rankingSemanal(empresaId),
       this.estampasRecientes(empresaId),
       this.eventosProximos(empresaId),
+      usuario.talentoId
+        ? this.progreso.obtener(usuario.talentoId)
+        : Promise.resolve(null),
     ]);
 
     return {
@@ -572,6 +646,7 @@ export class PizarraService {
       rankingSemanal,
       estampasRecientes,
       eventosProximos,
+      progresoPropio,
     };
   }
 
@@ -770,7 +845,7 @@ export class PizarraService {
       data: { activo: false },
     });
 
-    await this.prisma.pizarraReconocimiento.create({
+    const reconocimiento = await this.prisma.pizarraReconocimiento.create({
       data: {
         empresaId,
         talentoId: dto.talentoId,
@@ -779,6 +854,13 @@ export class PizarraService {
         creadoPorUsuarioId: usuario.id,
       },
     });
+
+    await this.progreso.otorgar(
+      empresaId,
+      dto.talentoId,
+      'reconocimiento_recibido',
+      reconocimiento.id,
+    );
 
     await this.notificaciones.crearPersonal({
       empresaId,
@@ -942,9 +1024,18 @@ export class PizarraService {
     }
 
     const correcta = dto.opcionIndex === pregunta.correctaIndex;
-    await this.prisma.pizarraTriviaRespuesta.create({
+    const respuesta = await this.prisma.pizarraTriviaRespuesta.create({
       data: { empresaId, usuarioId: usuario.id, fecha: hoy, correcta },
     });
+
+    if (correcta) {
+      await this.progreso.otorgar(
+        empresaId,
+        usuario.talentoId,
+        'trivia_ganada',
+        respuesta.id,
+      );
+    }
 
     return {
       pregunta: pregunta.pregunta,

@@ -17,10 +17,12 @@ function CarnetFlipCard({
   nombreCompleto,
   frontImage,
   logoUrl,
+  marcoClases,
 }: {
   nombreCompleto: string;
   frontImage: string | null;
   logoUrl: string | null;
+  marcoClases?: string;
 }) {
   const [volteada, setVolteada] = useState(false);
 
@@ -30,10 +32,10 @@ function CarnetFlipCard({
       <button
         onClick={() => setVolteada((v) => !v)}
         aria-label="Voltear carnet"
-        className="h-[22rem] w-[16rem] shrink-0 [perspective:1200px]"
+        className="h-[26rem] w-[19rem] shrink-0 [perspective:1200px]"
       >
         <div
-          className="relative h-full w-full rounded-2xl shadow-elegant transition-transform duration-500 [transform-style:preserve-3d]"
+          className={`relative h-full w-full rounded-2xl shadow-elegant transition-transform duration-500 [transform-style:preserve-3d] ${marcoClases ?? ""}`}
           style={{ transform: volteada ? "rotateY(180deg)" : "rotateY(0deg)" }}
         >
           {/* Frente: foto de perfil o carnet */}
@@ -74,15 +76,25 @@ export function LanyardBadge({
   nombreCompleto,
   frontImage,
   logoUrl,
+  marcoClases,
 }: {
   nombreCompleto: string;
   frontImage: string | null;
   logoUrl: string | null;
+  /** Clases Tailwind del marco comprado en la Tienda (ring/shadow) — ver dashboard/lib/tienda-catalogo.ts. */
+  marcoClases?: string;
 }) {
   const esMobile = useEsMobile();
 
   if (esMobile) {
-    return <CarnetFlipCard nombreCompleto={nombreCompleto} frontImage={frontImage} logoUrl={logoUrl} />;
+    return (
+      <CarnetFlipCard
+        nombreCompleto={nombreCompleto}
+        frontImage={frontImage}
+        logoUrl={logoUrl}
+        marcoClases={marcoClases}
+      />
+    );
   }
 
   return (
@@ -98,9 +110,11 @@ export function LanyardBadge({
     // que el carnet tiene que encogerse en pantallas bajas para dejarle
     // espacio al nombre/estado y al Dock — antes con rem fijo se salía del
     // viewport y empujaba todo lo demás fuera de vista.
-    <div className="h-[66vh] max-h-[48rem] min-h-[18rem] w-[66vh] max-w-[min(48rem,92vw)] min-w-[18rem] shrink-0">
+    <div
+      className={`h-[76vh] max-h-[58rem] min-h-[20rem] w-[76vh] max-w-[min(58rem,94vw)] min-w-[20rem] shrink-0 rounded-[2rem] ${marcoClases ?? ""}`}
+    >
       <LanyardScene
-        position={[0, 0, 20]}
+        position={[0, 0, 16]}
         frontImage={frontImage ?? undefined}
         backImage={logoUrl ?? undefined}
         imageFit="cover"

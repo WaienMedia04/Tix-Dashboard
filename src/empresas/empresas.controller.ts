@@ -25,6 +25,7 @@ import { ActualizarDepartamentoGestionadoDto } from './dto/actualizar-departamen
 import { ActualizarDepartamentosSupervisadosDto } from './dto/actualizar-departamentos-supervisados.dto';
 import { CrearSolicitudSoporteDto } from './dto/crear-solicitud-soporte.dto';
 import { EnviarNotaDto } from '../mural/dto/enviar-nota.dto';
+import { EnviarReconocimientoRapidoDto } from '../mural/dto/enviar-reconocimiento-rapido.dto';
 import { CambiarCorreoDto } from '../auth/dto/cambiar-correo.dto';
 import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -140,6 +141,22 @@ export class EmpresasController {
     @Req() req: RequestConActor,
   ) {
     return this.empresasService.enviarNotaAMural(
+      slug,
+      req.actor!,
+      talentoId,
+      dto,
+    );
+  }
+
+  @Post(':slug/empleados/:talentoId/mural/reconocimiento-rapido')
+  @UseGuards(CompanyAccessGuard)
+  enviarReconocimientoRapido(
+    @Param('slug') slug: string,
+    @Param('talentoId') talentoId: string,
+    @Body() dto: EnviarReconocimientoRapidoDto,
+    @Req() req: RequestConActor,
+  ) {
+    return this.empresasService.enviarReconocimientoRapido(
       slug,
       req.actor!,
       talentoId,

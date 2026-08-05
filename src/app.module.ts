@@ -19,6 +19,9 @@ import { PizarraModule } from './pizarra/pizarra.module';
 import { BoletinModule } from './boletin/boletin.module';
 import { VacantesModule } from './vacantes/vacantes.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
+import { CofreModule } from './cofre/cofre.module';
+import { RankingsModule } from './rankings/rankings.module';
+import { TiendaModule } from './tienda/tienda.module';
 
 @Module({
   imports: [
@@ -41,6 +44,9 @@ import { OnboardingModule } from './onboarding/onboarding.module';
     BoletinModule,
     VacantesModule,
     OnboardingModule,
+    CofreModule,
+    RankingsModule,
+    TiendaModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

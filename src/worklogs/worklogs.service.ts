@@ -7,10 +7,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateCheckinDto } from './dto/create-checkin.dto';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { RegistrarWorklogPropioDto } from '../talentos/dto/registrar-worklog-propio.dto';
+import { ProgresoService } from '../progreso/progreso.service';
 
 @Injectable()
 export class WorklogsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly progreso: ProgresoService,
+  ) {}
 
   /**
    * Este endpoint no tiene :slug en la URL (lo manda el bot en el body), así
@@ -122,7 +126,7 @@ export class WorklogsService {
     >,
   ) {
     const fecha = new Date(dto.fecha);
-    return this.prisma.worklog.upsert({
+    const worklog = await this.prisma.worklog.upsert({
       where: { talentoId_fecha: { talentoId, fecha } },
       create: {
         empresaId,
@@ -161,6 +165,17 @@ export class WorklogsService {
         notasTix: dto.notasTix ?? null,
       },
     });
+
+    if (worklog.estadoEnvio.includes('✅')) {
+      await this.progreso.otorgar(
+        empresaId,
+        talentoId,
+        'bitacora_enviada',
+        worklog.id,
+      );
+    }
+
+    return worklog;
   }
 
   // TODO: filtrar/escribir por empresaId es manual porque todavia no hay RLS en Postgres.

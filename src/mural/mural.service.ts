@@ -11,7 +11,11 @@ import { CrearNotaDto } from './dto/crear-nota.dto';
 import { EnviarNotaDto } from './dto/enviar-nota.dto';
 import { ActualizarNotaDto } from './dto/actualizar-nota.dto';
 import { ActualizarPosicionEstampaDto } from './dto/actualizar-posicion-estampa.dto';
+import { EnviarReconocimientoRapidoDto } from './dto/enviar-reconocimiento-rapido.dto';
 import { calcularRachas } from './racha.util';
+import { RECONOCIMIENTOS_RAPIDOS } from './reconocimiento-rapido.constant';
+import { ProgresoService } from '../progreso/progreso.service';
+import { LogrosService } from '../logros/logros.service';
 
 const SELECT_PERFIL = {
   apodo: true,
@@ -26,6 +30,8 @@ const SELECT_PERFIL = {
   colorWidgetsId: true,
   mascotaId: true,
   mascotaNombre: true,
+  marcoId: true,
+  tituloId: true,
 } as const;
 
 const PERFIL_POR_DEFECTO = {
@@ -41,6 +47,8 @@ const PERFIL_POR_DEFECTO = {
   colorWidgetsId: 'vibrante',
   mascotaId: null,
   mascotaNombre: null,
+  marcoId: null,
+  tituloId: null,
 };
 
 /** Recorta a 5, recorta espacios y descarta vacíos — misma limpieza al crear y al actualizar. */
@@ -140,6 +148,8 @@ export class MuralService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificaciones: NotificacionesService,
+    private readonly progreso: ProgresoService,
+    private readonly logros: LogrosService,
   ) {}
 
   private exigirTalentoId(actor: Actor): {
@@ -169,46 +179,85 @@ export class MuralService {
   }
 
   private async construirRespuestaMural(talentoId: string, empresaId: string) {
-    const [talento, empresa, perfil, notas, estampasRecibidas, rachas] =
-      await Promise.all([
-        this.prisma.talento.findUniqueOrThrow({
-          where: { id: talentoId },
-          select: {
-            nombreCompleto: true,
-            rol: true,
-            departamento: true,
-            fotoUrl: true,
-            carnetFotoUrl: true,
-          },
-        }),
-        this.prisma.empresa.findUniqueOrThrow({
-          where: { id: empresaId },
-          select: { logoUrl: true },
-        }),
-        this.prisma.talentoPerfilMural.findUnique({
-          where: { talentoId },
-          select: SELECT_PERFIL,
-        }),
-        this.prisma.muralNotaAdhesiva.findMany({
-          where: { talentoId },
-          select: SELECT_NOTA,
-          orderBy: { createdAt: 'asc' },
-        }),
-        this.prisma.estampaOtorgada.findMany({
-          where: { talentoId, enMural: true },
-          select: SELECT_ESTAMPA_OTORGADA,
-          orderBy: { createdAt: 'asc' },
-        }),
-        calcularRachas(this.prisma, talentoId),
-      ]);
+    const [
+      talento,
+      empresa,
+      perfil,
+      notas,
+      estampasRecibidas,
+      rachas,
+      reconocimientosRapidos,
+    ] = await Promise.all([
+      this.prisma.talento.findUniqueOrThrow({
+        where: { id: talentoId },
+        select: {
+          nombreCompleto: true,
+          rol: true,
+          departamento: true,
+          fotoUrl: true,
+          carnetFotoUrl: true,
+          usuario: { select: { id: true } },
+        },
+      }),
+      this.prisma.empresa.findUniqueOrThrow({
+        where: { id: empresaId },
+        select: { logoUrl: true },
+      }),
+      this.prisma.talentoPerfilMural.findUnique({
+        where: { talentoId },
+        select: SELECT_PERFIL,
+      }),
+      this.prisma.muralNotaAdhesiva.findMany({
+        where: { talentoId },
+        select: SELECT_NOTA,
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.estampaOtorgada.findMany({
+        where: { talentoId, enMural: true },
+        select: SELECT_ESTAMPA_OTORGADA,
+        orderBy: { createdAt: 'asc' },
+      }),
+      calcularRachas(this.prisma, talentoId),
+      this.prisma.reconocimientoRapido.findMany({
+        where: { talentoId },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        select: {
+          id: true,
+          tipo: true,
+          createdAt: true,
+          remitente: { select: { nombre: true } },
+        },
+      }),
+    ]);
+
+    const logros = await this.logros.sincronizarYObtener(
+      talentoId,
+      empresaId,
+      talento.usuario?.id ?? null,
+    );
 
     return {
       perfil: perfil ?? PERFIL_POR_DEFECTO,
       notas: notas.map(serializarNota),
       estampasRecibidas: estampasRecibidas.map(serializarEstampaOtorgada),
       racha: rachas.actual,
-      talento,
+      talento: {
+        nombreCompleto: talento.nombreCompleto,
+        rol: talento.rol,
+        departamento: talento.departamento,
+        fotoUrl: talento.fotoUrl,
+        carnetFotoUrl: talento.carnetFotoUrl,
+      },
       empresa,
+      reconocimientosRapidos: reconocimientosRapidos.map((r) => ({
+        id: r.id,
+        tipo: r.tipo,
+        ...RECONOCIMIENTOS_RAPIDOS[r.tipo],
+        remitenteNombre: r.remitente.nombre,
+        createdAt: r.createdAt,
+      })),
+      logros,
     };
   }
 
@@ -347,6 +396,70 @@ export class MuralService {
     });
 
     return serializarNota(nota);
+  }
+
+  /** Fecha de hoy (YYYY-MM-DD) en la zona horaria de República Dominicana — mismo criterio que WorklogsService.hoyISO(). */
+  private hoyISO(): string {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Santo_Domingo',
+    }).format(new Date());
+  }
+
+  /**
+   * Botón de reconocimiento rápido (doc "Actualización Mural 2.0" #7) — sin
+   * límite de envíos, pero el destinatario solo gana XP/monedas una vez por
+   * remitente por día (referenciaId = remitente+fecha en ProgresoService),
+   * para que no se pueda farmear repitiendo el mismo par de compañeros.
+   */
+  async enviarReconocimientoRapido(
+    actor: Actor,
+    talentoDestinoId: string,
+    empresaId: string,
+    dto: EnviarReconocimientoRapidoDto,
+  ) {
+    if (actor.type !== 'usuario') {
+      throw new ForbiddenException(
+        'Esta acción requiere una cuenta de usuario',
+      );
+    }
+    if (talentoDestinoId === actor.usuario.talentoId) {
+      throw new ForbiddenException('No puedes reconocerte a ti mismo');
+    }
+
+    const reconocimiento = await this.prisma.reconocimientoRapido.create({
+      data: {
+        empresaId,
+        talentoId: talentoDestinoId,
+        remitenteUsuarioId: actor.usuario.id,
+        tipo: dto.tipo,
+      },
+    });
+
+    await this.progreso.otorgar(
+      empresaId,
+      talentoDestinoId,
+      'reconocimiento_rapido_recibido',
+      `${actor.usuario.id}-${this.hoyISO()}`,
+    );
+
+    const { emoji, etiqueta } = RECONOCIMIENTOS_RAPIDOS[dto.tipo];
+    await this.notificaciones.crearPersonal({
+      empresaId,
+      talentoId: talentoDestinoId,
+      tipo: 'RECONOCIMIENTO_RAPIDO',
+      titulo: `${emoji} Nuevo reconocimiento`,
+      mensaje: `${actor.usuario.nombre} te reconoció: "${etiqueta}"`,
+      enlace: '/mi-mural',
+    });
+
+    return {
+      id: reconocimiento.id,
+      tipo: reconocimiento.tipo,
+      emoji,
+      etiqueta,
+      remitenteNombre: actor.usuario.nombre,
+      createdAt: reconocimiento.createdAt,
+    };
   }
 
   private async resolverNotaPropia(actor: Actor, notaId: string) {

@@ -54,6 +54,15 @@ const HERRAMIENTAS = [
   {
     type: 'function' as const,
     function: {
+      name: 'consultar_desempeno_propio',
+      description:
+        'Consulta el desempeño real reciente del talento (puntaje IA y cumplimiento de tareas de sus últimas bitácoras, con promedios). Úsala SIEMPRE antes de dar consejos de desempeño o comentar cómo le va — nunca opines sobre su rendimiento sin haber consultado esto primero.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
       name: 'dejar_nota_mural',
       description:
         'Deja una nota adhesiva en un mural. Si no se indica destinatarioNombre, la deja en el propio mural del talento. Si se indica, busca a ese compañero por nombre en la empresa y le deja la nota — solo si hay una única coincidencia clara.',
@@ -97,7 +106,16 @@ function promptSistema(nombre: string, mascotaNombre: string | null): string {
   const presentacion = mascotaNombre
     ? `Te llamas "${mascotaNombre}" — así te debes referir a ti misma cuando haga falta.`
     : `Todavía no tienes un nombre propio — el talento puede ponerte uno desde el menú de la mascota.`;
-  return `Eres la mascota animada del mural de ${nombre} en TalentiX, un panel de gestión de talento. ${presentacion} Tu personalidad es amigable, breve y motivadora — como Clippy de Microsoft Office pero simpático, no molesto. Respondes SIEMPRE en español, en 1-3 frases cortas: esto se muestra en un globo de diálogo pequeño, no en un chat largo. Puedes usar las herramientas disponibles para consultar datos reales del talento o realizar acciones que te pida (cambiar su estado, dejar una nota en un mural). Nunca inventes datos — si necesitas información real, usa la herramienta correspondiente en vez de suponer. Si te piden algo fuera de tu alcance (editar bitácoras, ver datos privados de otros, etc.), dilo con amabilidad y explica que no puedes hacerlo.`;
+  return `Eres la mascota animada del mural de ${nombre} en TalentiX, un panel de gestión de talento. ${presentacion} Tu personalidad es amigable, breve y motivadora — como Clippy de Microsoft Office pero simpático, no molesto. Respondes SIEMPRE en español, en 1-3 frases cortas: esto se muestra en un globo de diálogo pequeño, no en un chat largo.
+
+Además de charlar, puedes:
+- Dar consejos de desempeño personalizados: usa SIEMPRE la herramienta consultar_desempeno_propio antes de opinar sobre su rendimiento, y basa el consejo en esos datos reales (nunca inventes cifras ni tendencias).
+- Contar chistes cortos, limpios y de oficina cuando te los pidan o cuando el ambiente lo amerite.
+- Dar frases motivadoras y tips prácticos de productividad, organización, trabajo en equipo o liderazgo.
+- Sugerir una pausa saludable breve (tomar agua, estirarse, respirar, descansar la vista) si notan que llevan rato trabajando o lo piden.
+- Consultar datos reales del talento o realizar acciones que te pida (cambiar su estado, dejar una nota en un mural) usando las herramientas disponibles.
+
+Nunca inventes datos — si necesitas información real, usa la herramienta correspondiente en vez de suponer. Si te piden algo fuera de tu alcance (editar bitácoras, ver datos privados de otros, etc.), dilo con amabilidad y explica que no puedes hacerlo.`;
 }
 
 /**
@@ -269,6 +287,8 @@ export class MascotaChatService {
     switch (nombre) {
       case 'consultar_resumen_propio':
         return this.resumenPropio(talentoId);
+      case 'consultar_desempeno_propio':
+        return this.desempenoPropio(talentoId);
       case 'actualizar_estado_mural':
         return this.actualizarEstado(actor, campoTexto(args.estado));
       case 'dejar_nota_mural':
@@ -310,6 +330,51 @@ export class MascotaChatService {
         desde: a.fechaInicio.toISOString().slice(0, 10),
         hasta: a.fechaFin.toISOString().slice(0, 10),
       })),
+    };
+  }
+
+  private async desempenoPropio(talentoId: string) {
+    const bitacoras = await this.prisma.worklog.findMany({
+      where: { talentoId, estadoEnvio: { contains: '✅' } },
+      orderBy: { fecha: 'desc' },
+      take: 10,
+      select: {
+        fecha: true,
+        puntajeIA: true,
+        cumplimientoTareas: true,
+        notasTix: true,
+      },
+    });
+
+    const conPuntaje = bitacoras.filter((b) => b.puntajeIA !== null);
+    const promedioPuntajeIA = conPuntaje.length
+      ? Math.round(
+          conPuntaje.reduce((suma, b) => suma + (b.puntajeIA ?? 0), 0) /
+            conPuntaje.length,
+        )
+      : null;
+
+    const conCumplimiento = bitacoras.filter(
+      (b) => b.cumplimientoTareas !== null,
+    );
+    const promedioCumplimientoTareas = conCumplimiento.length
+      ? Math.round(
+          conCumplimiento.reduce(
+            (suma, b) => suma + (b.cumplimientoTareas ?? 0),
+            0,
+          ) / conCumplimiento.length,
+        )
+      : null;
+
+    return {
+      bitacorasRecientes: bitacoras.map((b) => ({
+        fecha: b.fecha.toISOString().slice(0, 10),
+        puntajeIA: b.puntajeIA,
+        cumplimientoTareasPorciento: b.cumplimientoTareas,
+        notaIA: b.notasTix,
+      })),
+      promedioPuntajeIA,
+      promedioCumplimientoTareas,
     };
   }
 

@@ -61,6 +61,13 @@ const ALTO_CHAT_PX = 44;
 const MARGEN_DOCK_PX = 48;
 const MAX_HISTORIAL = 6;
 
+/** Chips de acceso rápido a las funciones nuevas de la mascota — solo se muestran antes del primer mensaje, para que se descubran sin tener que adivinar qué preguntar. */
+const SUGERENCIAS_RAPIDAS = [
+  { emoji: "💡", etiqueta: "Consejo", texto: "Dame un consejo para mejorar mi desempeño" },
+  { emoji: "😄", etiqueta: "Chiste", texto: "Cuéntame un chiste" },
+  { emoji: "📊", etiqueta: "¿Cómo voy?", texto: "¿Cómo voy esta semana con mis bitácoras?" },
+];
+
 function mensajeSaludo(nombreTalento: string, mascotaNombre: string | null): string {
   if (!mascotaNombre) return "¿En qué te puedo ayudar?";
   const primerNombre = nombreTalento.trim().split(/\s+/)[0] || "";
@@ -306,41 +313,57 @@ export function MascotaClippy({
   return (
     <div
       style={{ position: "fixed", top: posicionChat.top, left: posicionChat.left, zIndex: 10002 }}
-      className="flex w-56 items-center gap-1.5 rounded-full border border-white/10 bg-zinc-900/95 p-1.5 shadow-elegant backdrop-blur-sm print:hidden"
+      className="flex w-56 flex-col gap-1.5 print:hidden"
     >
-      {soportaVoz && (
-        <button
-          onClick={alternarEscucha}
-          disabled={enviando}
-          aria-label={escuchando ? "Detener dictado por voz" : "Hablarle por voz"}
-          title={escuchando ? "Detener dictado por voz" : "Hablarle por voz"}
-          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-            escuchando ? "animate-pulse bg-destructive text-white" : "text-zinc-300 hover:bg-white/10"
-          }`}
-        >
-          <Mic className="h-3.5 w-3.5" />
-        </button>
+      {historial.length === 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {SUGERENCIAS_RAPIDAS.map((s) => (
+            <button
+              key={s.etiqueta}
+              onClick={() => void enviar(s.texto)}
+              disabled={enviando}
+              className="rounded-full border border-white/10 bg-zinc-900/95 px-2.5 py-1 text-[11px] font-medium text-zinc-200 backdrop-blur-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {s.emoji} {s.etiqueta}
+            </button>
+          ))}
+        </div>
       )}
-      <input
-        autoFocus
-        value={mensaje}
-        onChange={(e) => setMensaje(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") void enviar();
-        }}
-        placeholder={escuchando ? "Escuchando..." : "Pregúntale a tu mascota..."}
-        maxLength={500}
-        disabled={enviando}
-        className="min-w-0 flex-1 bg-transparent px-2 text-xs text-white placeholder:text-zinc-400 focus:outline-none disabled:opacity-50"
-      />
-      <button
-        onClick={() => void enviar()}
-        disabled={enviando || !mensaje.trim()}
-        aria-label="Enviar"
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <Send className="h-3.5 w-3.5" />
-      </button>
+      <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-zinc-900/95 p-1.5 shadow-elegant backdrop-blur-sm">
+        {soportaVoz && (
+          <button
+            onClick={alternarEscucha}
+            disabled={enviando}
+            aria-label={escuchando ? "Detener dictado por voz" : "Hablarle por voz"}
+            title={escuchando ? "Detener dictado por voz" : "Hablarle por voz"}
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+              escuchando ? "animate-pulse bg-destructive text-white" : "text-zinc-300 hover:bg-white/10"
+            }`}
+          >
+            <Mic className="h-3.5 w-3.5" />
+          </button>
+        )}
+        <input
+          autoFocus
+          value={mensaje}
+          onChange={(e) => setMensaje(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void enviar();
+          }}
+          placeholder={escuchando ? "Escuchando..." : "Pregúntale a tu mascota..."}
+          maxLength={500}
+          disabled={enviando}
+          className="min-w-0 flex-1 bg-transparent px-2 text-xs text-white placeholder:text-zinc-400 focus:outline-none disabled:opacity-50"
+        />
+        <button
+          onClick={() => void enviar()}
+          disabled={enviando || !mensaje.trim()}
+          aria-label="Enviar"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Send className="h-3.5 w-3.5" />
+        </button>
+      </div>
     </div>
   );
 }

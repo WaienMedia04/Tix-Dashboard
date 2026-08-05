@@ -228,7 +228,10 @@ export class NotificacionesService {
       | 'PIZARRA_REACCION'
       | 'PIZARRA_COMENTARIO'
       | 'PIZARRA_MENCION'
-      | 'PIZARRA_RECONOCIMIENTO';
+      | 'PIZARRA_RECONOCIMIENTO'
+      | 'RECONOCIMIENTO_RAPIDO'
+      | 'LOGRO_DESBLOQUEADO'
+      | 'IDEA_APROBADA';
     titulo: string;
     mensaje: string;
     enlace?: string;

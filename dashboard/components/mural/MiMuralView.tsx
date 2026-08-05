@@ -12,12 +12,15 @@ import {
   NotebookPen,
   Palette,
   Radio,
+  ShoppingBag,
   Sparkles,
   StickyNote,
+  Trophy,
   Users,
 } from "lucide-react";
 import { type MuralPropio, fetchChatResumen, fetchMuralDeTalento, fetchMuralPropio, fetchNotificaciones } from "@/lib/api";
 import { fondoMuralCss, fondoMuralTexto, intensidadLluvia } from "@/lib/mural-fondos";
+import { clasesMarco, textoTitulo } from "@/lib/tienda-catalogo";
 import { coloresNombreMural } from "@/lib/mural-colores-nombre";
 import { colorParaEstado } from "@/lib/estados-mural";
 import { reproducirSonidoEntrada } from "@/lib/sonidos";
@@ -41,6 +44,10 @@ import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
 import { EstadoModal } from "./EstadoModal";
 import { VentanaEscritorio } from "./VentanaEscritorio";
+import { WidgetLogros } from "./WidgetLogros";
+import { WidgetReconocimientosRapidos } from "./WidgetReconocimientosRapidos";
+import { CofreDiario } from "./CofreDiario";
+import { TiendaModal } from "./TiendaModal";
 import { BoletinInformativo } from "@/components/boletin/BoletinInformativo";
 import { VacantesInformativo } from "@/components/vacantes/VacantesInformativo";
 import { ClimaWidget } from "./ClimaWidget";
@@ -76,6 +83,8 @@ export function MiMuralView({
   const [mural, setMural] = useState<MuralPropio | null>(null);
   const [error, setError] = useState(false);
   const [mostrarSobreMi, setMostrarSobreMi] = useState(false);
+  const [mostrarLogros, setMostrarLogros] = useState(false);
+  const [mostrarTienda, setMostrarTienda] = useState(false);
   const [mostrarFondo, setMostrarFondo] = useState(false);
   const [mostrarCompaneros, setMostrarCompaneros] = useState(false);
   const [mostrarEstampas, setMostrarEstampas] = useState(false);
@@ -184,6 +193,7 @@ export function MiMuralView({
             nombreCompleto={nombreCompleto}
             frontImage={mural.talento.carnetFotoUrl ?? mural.talento.fotoUrl}
             logoUrl={mural.empresa.logoUrl}
+            marcoClases={clasesMarco(mural.perfil.marcoId)}
           />
           <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
             {mural.perfil.estado &&
@@ -234,6 +244,11 @@ export function MiMuralView({
           >
             {nombreCompleto}
           </GradientText>
+          {textoTitulo(mural.perfil.tituloId) && (
+            <p className="mt-1.5 inline-block self-center rounded-full bg-black/40 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+              {textoTitulo(mural.perfil.tituloId)}
+            </p>
+          )}
           {mural.perfil.apodo && (
             <p className="mt-1 text-lg font-medium italic" style={{ color: texto.color, textShadow: texto.sombra }}>
               &ldquo;{mural.perfil.apodo}&rdquo;
@@ -279,6 +294,13 @@ export function MiMuralView({
                 <Sparkles className="h-3.5 w-3.5" />
                 Sobre esta persona
               </button>
+              <button
+                onClick={() => setMostrarLogros(true)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-card/90 px-4 py-2 text-xs font-medium text-foreground shadow-elegant backdrop-blur-sm transition-transform hover:scale-105"
+              >
+                <Trophy className="h-3.5 w-3.5" />
+                Logros y reconocimientos
+              </button>
             </div>
           )}
         </div>
@@ -314,6 +336,8 @@ export function MiMuralView({
           nombreTalento={nombreCompleto}
         />
       )}
+
+      {editable && <CofreDiario />}
 
       <div className="fixed top-14 right-3 z-0 hidden w-[190px] max-w-[50vw] origin-top-right scale-[0.72] sm:block print:hidden">
         <div className="-rotate-2 rounded-md border-4 border-white bg-white p-1 shadow-lg">
@@ -354,6 +378,16 @@ export function MiMuralView({
                 icon: <Gift className="h-5 w-5 text-rose-400" />,
                 label: "Mis Estampas",
                 onClick: () => setMostrarEstampas(true),
+              },
+              {
+                icon: <Trophy className="h-5 w-5 text-amber-400" />,
+                label: "Logros",
+                onClick: () => setMostrarLogros(true),
+              },
+              {
+                icon: <ShoppingBag className="h-5 w-5 text-lime-400" />,
+                label: "Tienda",
+                onClick: () => setMostrarTienda(true),
               },
               {
                 icon: <StickyNote className="h-5 w-5 text-yellow-400" />,
@@ -420,6 +454,35 @@ export function MiMuralView({
           <SobreMiSoloLectura perfil={mural.perfil} />
         )}
       </Modal>
+
+      <Modal
+        open={mostrarLogros}
+        onClose={() => setMostrarLogros(false)}
+        title={editable ? "Logros y reconocimientos" : `Logros y reconocimientos de ${nombreCompleto.split(" ")[0]}`}
+        size="lg"
+      >
+        <div className="space-y-6">
+          <WidgetReconocimientosRapidos
+            reconocimientos={mural.reconocimientosRapidos}
+            slug={slug}
+            talentoId={editable ? undefined : talentoId}
+            onEnviado={(nuevo) =>
+              setMural((prev) => (prev ? { ...prev, reconocimientosRapidos: [nuevo, ...prev.reconocimientosRapidos] } : prev))
+            }
+          />
+          <WidgetLogros logros={mural.logros} />
+        </div>
+      </Modal>
+
+      {editable && (
+        <TiendaModal
+          open={mostrarTienda}
+          onClose={() => setMostrarTienda(false)}
+          onCambio={(marcoId, tituloId) =>
+            setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, marcoId, tituloId } } : prev))
+          }
+        />
+      )}
 
       {editable && (
         <Modal open={mostrarFondo} onClose={() => setMostrarFondo(false)} title="Personalizar mural">

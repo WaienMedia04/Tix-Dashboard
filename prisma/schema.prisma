@@ -54,6 +54,22 @@ enum TipoNotificacion {
   PIZARRA_COMENTARIO
   PIZARRA_MENCION
   PIZARRA_RECONOCIMIENTO
+  RECONOCIMIENTO_RAPIDO
+  LOGRO_DESBLOQUEADO
+  IDEA_APROBADA
+}
+
+/// Catálogo fijo del botón de reconocimiento rápido entre compañeros (ver
+/// doc "Actualización Mural 2.0" #7) — a diferencia de PizarraReconocimiento
+/// (uno solo, fijado por CEO/RRHH), cualquiera le puede mandar uno de estos
+/// a cualquier compañero, sin límite ni texto libre.
+enum TipoReconocimientoRapido {
+  GRACIAS
+  EXCELENTE_TRABAJO
+  CRACK
+  INSPIRADOR
+  BUENA_IDEA
+  GRAN_COMPANERO
 }
 
 enum TipoBoletin {
@@ -107,6 +123,11 @@ model Empresa {
   usuariosVinculados UsuarioEmpresaAcceso[]
   pizarraClimaRespuestas PizarraClimaRespuesta[]
   pizarraTimeCapsulas    PizarraTimeCapsula[]
+  progresos              TalentoProgreso[]
+  reconocimientosRapidos ReconocimientoRapido[]
+  logrosTalentos         TalentoLogro[]
+  cofreAperturas         TalentoCofreApertura[]
+  itemsComprados         TalentoItemComprado[]
 }
 
 /**
@@ -158,6 +179,11 @@ model Talento {
   estampasRecibidas EstampaOtorgada[]
   notificaciones    Notificacion[]
   pizarraReconocimientos PizarraReconocimiento[]
+  progreso          TalentoProgreso?
+  reconocimientosRapidosRecibidos ReconocimientoRapido[]
+  logros            TalentoLogro[]
+  cofreAperturas    TalentoCofreApertura[]
+  itemsComprados    TalentoItemComprado[]
 
   @@index([empresaId])
   @@index([empresaId, managerUsuarioId])
@@ -213,6 +239,7 @@ model Usuario {
   boletinesCreados             Boletin[]
   vacantesCreadas              Vacante[]
   empresasVinculadas           UsuarioEmpresaAcceso[]
+  reconocimientosRapidosEnviados ReconocimientoRapido[]
 
   @@index([empresaId])
   @@index([empresaId, rol])
@@ -359,12 +386,140 @@ model TalentoPerfilMural {
   /// Nombre propio que el talento le puso a su mascota (ej. "Mishi") — si
   /// es null, el saludo usa el nombre genérico del personaje.
   mascotaNombre   String?
+  /// Marco decorativo del carnet, comprado con monedas en la Tienda — id del
+  /// catálogo estático en dashboard/lib/tienda-catalogo.ts / src/tienda/tienda.constant.ts, o null (sin marco).
+  marcoId         String?
+  /// Título que se muestra junto al nombre, comprado con monedas — mismo
+  /// catálogo estático que marcoId, o null (sin título).
+  tituloId        String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   talento Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
 
+  @@index([empresaId])
+}
+
+/**
+ * Motor de gamificación (XP, nivel, monedas) del talento — 1:1. El nivel y el
+ * nombre del nivel ("Aprendiz", "Leyenda", etc.) no se guardan aquí: se
+ * derivan de `xp` en el backend (ver src/progreso/nivel.util.ts) para no
+ * tener que migrar datos si cambia la curva de niveles más adelante.
+ */
+model TalentoProgreso {
+  id        String   @id @default(cuid())
+  empresaId String
+  talentoId String   @unique
+  xp        Int      @default(0)
+  monedas   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresa Empresa                 @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento Talento                 @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+  eventos TalentoProgresoEvento[]
+
+  @@index([empresaId])
+}
+
+/**
+ * Historial de cada otorgamiento de XP/monedas — además de servir para el
+ * futuro resumen semanal, `[progresoId, tipo, referenciaId]` es la llave de
+ * idempotencia: evita que la misma bitácora, comentario o reconocimiento
+ * otorgue XP dos veces si el evento que lo dispara se reintenta o se vuelve
+ * a procesar.
+ */
+model TalentoProgresoEvento {
+  id           String   @id @default(cuid())
+  progresoId   String
+  tipo         String
+  referenciaId String
+  xp           Int
+  monedas      Int
+  createdAt    DateTime @default(now())
+
+  progreso TalentoProgreso @relation(fields: [progresoId], references: [id], onDelete: Cascade)
+
+  @@unique([progresoId, tipo, referenciaId])
+  @@index([progresoId])
+}
+
+/// Botón de reconocimiento rápido entre compañeros — sin texto libre ni
+/// límite de envíos; el destinatario solo gana XP/monedas una vez por
+/// remitente por día (ver ProgresoService), pero cada envío queda registrado
+/// para mostrarse en el perfil del mural.
+model ReconocimientoRapido {
+  id                  String                   @id @default(cuid())
+  empresaId           String
+  talentoId           String
+  remitenteUsuarioId  String
+  tipo                TipoReconocimientoRapido
+  createdAt           DateTime                 @default(now())
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento   Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+  remitente Usuario @relation(fields: [remitenteUsuarioId], references: [id], onDelete: Cascade)
+
+  @@index([empresaId, talentoId])
+  @@index([empresaId])
+}
+
+/// Logro desbloqueado por un talento — el catálogo (nombre, ícono, meta,
+/// recompensa) vive en código (src/logros/logros.constant.ts); acá solo se
+/// persiste CUÁLES ya se desbloquearon y CUÁNDO, para no volver a otorgar la
+/// recompensa ni recalcular el logro ya ganado.
+model TalentoLogro {
+  id        String   @id @default(cuid())
+  empresaId String
+  talentoId String
+  logroId   String
+  createdAt DateTime @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+
+  @@unique([talentoId, logroId])
+  @@index([empresaId])
+}
+
+/// Una apertura de cofre diario por talento por día — `fecha` en formato
+/// YYYY-MM-DD (huso de RD, igual que WorklogsService.hoyISO()) es la llave
+/// de "una vez al día".
+model TalentoCofreApertura {
+  id        String   @id @default(cuid())
+  empresaId String
+  talentoId String
+  fecha     String
+  xp        Int
+  monedas   Int
+  createdAt DateTime @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+
+  @@unique([talentoId, fecha])
+  @@index([empresaId])
+}
+
+/**
+ * Compra de un ítem de la Tienda Virtual (doc "Actualización Mural 2.0" #4)
+ * — el catálogo (marcos, títulos, precio) vive en código
+ * (src/tienda/tienda.constant.ts), acá solo se persiste QUÉ compró cada
+ * talento, para no volver a cobrarle ni perder la compra. Equipar/desequipar
+ * un ítem comprado se guarda en TalentoPerfilMural.marcoId/tituloId.
+ */
+model TalentoItemComprado {
+  id        String   @id @default(cuid())
+  empresaId String
+  talentoId String
+  itemId    String
+  createdAt DateTime @default(now())
+
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  talento Talento @relation(fields: [talentoId], references: [id], onDelete: Cascade)
+
+  @@unique([talentoId, itemId])
   @@index([empresaId])
 }
 
@@ -548,6 +703,10 @@ model PizarraPost {
   empresaId      String
   autorUsuarioId String
   texto          String
+  /// Si es true, este post aparece también en "Idea del día" (doc "Actualización Mural 2.0" #12) — sigue siendo un post normal de la pizarra, solo con una sección/badge aparte.
+  esIdea         Boolean  @default(false)
+  /// Solo aplica cuando esIdea es true — la marca CEO/RRHH; otorga el logro/recompensa de "Idea aprobada".
+  aprobada       Boolean  @default(false)
   createdAt      DateTime @default(now())
 
   empresa     Empresa             @relation(fields: [empresaId], references: [id], onDelete: Cascade)
@@ -557,6 +716,7 @@ model PizarraPost {
   menciones   PizarraMencion[]
 
   @@index([empresaId, createdAt])
+  @@index([empresaId, esIdea, createdAt])
 }
 
 /// Un usuario puede reaccionar a un mismo post con varios emojis distintos, pero no repetir el mismo emoji dos veces.

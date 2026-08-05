@@ -1215,6 +1215,10 @@ export interface PerfilMural {
   mascotaId: string | null;
   /** Nombre propio que el talento le puso a su mascota — null si no le puso ninguno. */
   mascotaNombre: string | null;
+  /** Marco decorativo del carnet, comprado en la Tienda — ver dashboard/lib/tienda-catalogo.ts. null si no tiene. */
+  marcoId: string | null;
+  /** Título que se muestra junto al nombre, comprado en la Tienda — null si no tiene. */
+  tituloId: string | null;
 }
 
 export interface NotaMural {
@@ -1243,6 +1247,34 @@ export interface EstampaOtorgadaMural {
   createdAt: string;
 }
 
+export type TipoReconocimientoRapido =
+  | "GRACIAS"
+  | "EXCELENTE_TRABAJO"
+  | "CRACK"
+  | "INSPIRADOR"
+  | "BUENA_IDEA"
+  | "GRAN_COMPANERO";
+
+export interface ReconocimientoRapidoMural {
+  id: string;
+  tipo: TipoReconocimientoRapido;
+  emoji: string;
+  etiqueta: string;
+  remitenteNombre: string;
+  createdAt: string;
+}
+
+export interface LogroMural {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  icono: string;
+  meta: number;
+  progreso: number;
+  desbloqueado: boolean;
+  desbloqueadoEn: string | null;
+}
+
 export interface MuralPropio {
   perfil: PerfilMural;
   notas: NotaMural[];
@@ -1257,6 +1289,8 @@ export interface MuralPropio {
     carnetFotoUrl: string | null;
   };
   empresa: { logoUrl: string | null };
+  reconocimientosRapidos: ReconocimientoRapidoMural[];
+  logros: LogroMural[];
 }
 
 /** 403 cuando la cuenta autenticada no tiene un Talento vinculado (ej. CEO/RRHH sin ficha propia). */
@@ -1434,6 +1468,108 @@ export async function enviarNotaAMural(
   if (!res.ok) {
     throw new Error("No se pudo enviar la nota");
   }
+  return res.json();
+}
+
+/** Reconocimiento rápido (sin texto libre) a OTRO talento — a diferencia de la nota, no tiene límite de envíos. */
+export async function enviarReconocimientoRapido(
+  slug: string,
+  talentoId: string,
+  tipo: TipoReconocimientoRapido,
+): Promise<ReconocimientoRapidoMural> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/empleados/${encodeURIComponent(talentoId)}/mural/reconocimiento-rapido`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ tipo }),
+    },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (res.status === 404) {
+    throw new EmpresaNoEncontradaError("Empleado no encontrado");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo enviar el reconocimiento");
+  }
+  return res.json();
+}
+
+export interface EstadoCofre {
+  yaAbierto: boolean;
+  xp: number;
+  monedas: number;
+}
+
+export async function fetchCofreEstado(): Promise<EstadoCofre> {
+  const res = await fetch(`${API_URL}/talentos/me/cofre`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
+export async function abrirCofre(): Promise<EstadoCofre> {
+  const res = await fetch(`${API_URL}/talentos/me/cofre/abrir`, {
+    method: "POST",
+    headers: await authHeaders(),
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
+export type TipoItemTienda = "marco" | "titulo";
+
+export interface ItemTiendaEstado {
+  id: string;
+  precio: number;
+  comprado: boolean;
+  equipado: boolean;
+}
+
+export interface ItemMarcoTienda extends ItemTiendaEstado {
+  nombre: string;
+}
+
+export interface ItemTituloTienda extends ItemTiendaEstado {
+  texto: string;
+}
+
+export interface CatalogoTienda {
+  monedas: number;
+  marcos: ItemMarcoTienda[];
+  titulos: ItemTituloTienda[];
+}
+
+export async function fetchTiendaCatalogo(): Promise<CatalogoTienda> {
+  const res = await fetch(`${API_URL}/talentos/me/tienda`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
+export async function comprarItemTienda(itemId: string): Promise<CatalogoTienda> {
+  const res = await fetch(`${API_URL}/talentos/me/tienda/comprar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify({ itemId }),
+  });
+  if (!res.ok) await manejarErrorMural(res);
+  return res.json();
+}
+
+export async function equiparItemTienda(tipo: TipoItemTienda, itemId: string | null): Promise<CatalogoTienda> {
+  const res = await fetch(`${API_URL}/talentos/me/tienda/equipar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+    body: JSON.stringify({ tipo, itemId }),
+  });
+  if (!res.ok) await manejarErrorMural(res);
   return res.json();
 }
 
@@ -1935,6 +2071,10 @@ export interface PizarraPost {
   texto: string;
   createdAt: string;
   propio: boolean;
+  /** Si es true, también aparece en "Idea del día". */
+  esIdea: boolean;
+  /** Solo relevante cuando esIdea es true — la marcó CEO/RRHH. */
+  aprobada: boolean;
   autor: PizarraPersona;
   reacciones: PizarraReaccion[];
   comentarios: PizarraComentario[];
@@ -1951,11 +2091,12 @@ export const fetchPizarraDirectorio = fetchChatDirectorio;
 
 export async function fetchPizarraPosts(
   slug: string,
-  opts?: { page?: number; limit?: number },
+  opts?: { page?: number; limit?: number; soloIdeas?: boolean },
 ): Promise<PizarraPostsResponse> {
   const params = new URLSearchParams();
   if (opts?.page) params.set("page", String(opts.page));
   if (opts?.limit) params.set("limit", String(opts.limit));
+  if (opts?.soloIdeas) params.set("soloIdeas", "true");
   const query = params.toString();
 
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/posts${query ? `?${query}` : ""}`, {
@@ -1971,17 +2112,32 @@ export async function fetchPizarraPosts(
   return res.json();
 }
 
-export async function crearPizarraPost(slug: string, texto: string): Promise<PizarraPost> {
+export async function crearPizarraPost(slug: string, texto: string, esIdea?: boolean): Promise<PizarraPost> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/posts`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-    body: JSON.stringify({ texto }),
+    body: JSON.stringify({ texto, ...(esIdea && { esIdea }) }),
   });
   if (res.status === 401) {
     throw new SesionInvalidaError("Sesión inválida o expirada");
   }
   if (!res.ok) {
     throw new Error("No se pudo publicar en la pizarra");
+  }
+  return res.json();
+}
+
+/** Solo CEO/RRHH — marca una idea como aprobada. */
+export async function aprobarPizarraIdea(slug: string, postId: string): Promise<PizarraPost> {
+  const res = await fetch(
+    `${API_URL}/empresas/${encodeURIComponent(slug)}/pizarra/posts/${encodeURIComponent(postId)}/aprobar`,
+    { method: "POST", headers: await authHeaders() },
+  );
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo aprobar la idea");
   }
   return res.json();
 }
@@ -2088,6 +2244,17 @@ export interface PizarraEventoProximo {
   fechaEvento: string;
 }
 
+export interface PizarraProgresoPropio {
+  nivel: number;
+  nombreNivel: string;
+  xpTotal: number;
+  xpNivelActual: number;
+  xpParaSiguienteNivel: number;
+  porcentaje: number;
+  esNivelMaximo: boolean;
+  monedas: number;
+}
+
 export interface PizarraPanel {
   contenidoDiario: PizarraContenidoDiario;
   misionDelDia: string;
@@ -2098,6 +2265,7 @@ export interface PizarraPanel {
   rankingSemanal: PizarraRankingSemanalItem[];
   estampasRecientes: PizarraEstampaReciente[];
   eventosProximos: PizarraEventoProximo[];
+  progresoPropio: PizarraProgresoPropio | null;
 }
 
 export async function fetchPizarraPanel(slug: string): Promise<PizarraPanel> {
@@ -2111,6 +2279,69 @@ export async function fetchPizarraPanel(slug: string): Promise<PizarraPanel> {
   if (!res.ok) {
     throw new Error("No se pudo cargar el panel de la pizarra");
   }
+  return res.json();
+}
+
+// Nombres con sufijo "Gamificacion" a propósito: ya existe un PeriodoRanking/
+// fetchRankings más arriba en este archivo para el ranking de desempeño
+// (puntajeIA) del panel admin — esto es un sistema distinto (XP, bitácoras,
+// reconocimientos, racha) y su ruta vive bajo /progreso/top, no /rankings.
+export type CategoriaTopGamificacion = "xp" | "actividad" | "bitacoras" | "reconocimientos" | "comentarios" | "racha";
+export type PeriodoTopGamificacion = "semanal" | "mensual" | "historico";
+
+export interface ItemTopGamificacion {
+  talentoId: string;
+  nombreCompleto: string;
+  fotoUrl: string | null;
+  valor: number;
+}
+
+export async function fetchTopGamificacion(
+  slug: string,
+  categoria: CategoriaTopGamificacion,
+  periodo: PeriodoTopGamificacion,
+): Promise<ItemTopGamificacion[]> {
+  const params = new URLSearchParams({ categoria, periodo });
+  const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/progreso/top?${params.toString()}`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    throw new SesionInvalidaError("Sesión inválida o expirada");
+  }
+  if (!res.ok) {
+    throw new Error("No se pudo cargar el ranking");
+  }
+  return res.json();
+}
+
+export interface ObjetivoSemanal {
+  id: string;
+  etiqueta: string;
+  actual: number;
+  meta: number;
+  completado: boolean;
+}
+
+export interface ResumenSemanal {
+  bitacoras: number;
+  xpGanada: number;
+  monedasGanadas: number;
+  reconocimientosRecibidos: number;
+  ideasCompartidas: number;
+  comentarios: number;
+  racha: number;
+  nivel: number;
+  nombreNivel: string;
+  objetivos: ObjetivoSemanal[];
+}
+
+export async function fetchResumenSemanal(): Promise<ResumenSemanal> {
+  const res = await fetch(`${API_URL}/talentos/me/resumen-semanal`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  if (!res.ok) await manejarErrorMural(res);
   return res.json();
 }
 

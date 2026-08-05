@@ -37,11 +37,13 @@ export class PizarraController {
     @Param('slug') slug: string,
     @Query('page') page: string | undefined,
     @Query('limit') limit: string | undefined,
+    @Query('soloIdeas') soloIdeas: string | undefined,
     @Req() req: RequestConActor,
   ) {
     return this.pizarraService.listarPosts(slug, req.actor!, {
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
+      soloIdeas: soloIdeas === 'true',
     });
   }
 
@@ -61,6 +63,15 @@ export class PizarraController {
     @Req() req: RequestConActor,
   ) {
     return this.pizarraService.borrarPost(slug, req.actor!, id);
+  }
+
+  @Post('posts/:id/aprobar')
+  aprobarIdea(
+    @Param('slug') slug: string,
+    @Param('id') id: string,
+    @Req() req: RequestConActor,
+  ) {
+    return this.pizarraService.aprobarIdea(slug, req.actor!, id);
   }
 
   @Post('posts/:id/reacciones')

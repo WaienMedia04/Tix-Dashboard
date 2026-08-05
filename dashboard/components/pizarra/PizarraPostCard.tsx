@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
-import { type PizarraPost, borrarPizarraPost, comentarPizarraPost, reaccionarPizarraPost } from "@/lib/api";
+import {
+  type PizarraPost,
+  aprobarPizarraIdea,
+  borrarPizarraPost,
+  comentarPizarraPost,
+  reaccionarPizarraPost,
+} from "@/lib/api";
 import { renderizarTextoPizarra } from "@/lib/pizarra-texto";
 import { EMOJIS_REACCION_PIZARRA } from "@/lib/emojis-reaccion-pizarra.constant";
 import { Avatar } from "@/components/Avatar";
@@ -23,12 +29,15 @@ export function PizarraPostCard({
   slug,
   post,
   puedeBorrar,
+  puedeAprobarIdeas = false,
   onActualizado,
   onBorrado,
 }: {
   slug: string;
   post: PizarraPost;
   puedeBorrar: boolean;
+  /** Solo CEO/RRHH — muestra el botón "Aprobar" cuando post.esIdea && !post.aprobada. */
+  puedeAprobarIdeas?: boolean;
   onActualizado: (post: PizarraPost) => void;
   onBorrado: (id: string) => void;
 }) {
@@ -36,6 +45,20 @@ export function PizarraPostCard({
   const [comentario, setComentario] = useState("");
   const [enviandoComentario, setEnviandoComentario] = useState(false);
   const [mostrarComentarios, setMostrarComentarios] = useState(false);
+  const [aprobando, setAprobando] = useState(false);
+
+  async function aprobar() {
+    if (aprobando) return;
+    setAprobando(true);
+    try {
+      const actualizado = await aprobarPizarraIdea(slug, post.id);
+      onActualizado(actualizado);
+    } catch {
+      // el usuario puede reintentar
+    } finally {
+      setAprobando(false);
+    }
+  }
 
   async function reaccionar(emoji: string) {
     setMostrarSelector(false);
@@ -95,6 +118,29 @@ export function PizarraPostCard({
           </button>
         )}
       </div>
+
+      {post.esIdea && (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+            💡 Idea
+          </span>
+          {post.aprobada ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+              ✅ Aprobada
+            </span>
+          ) : (
+            puedeAprobarIdeas && (
+              <button
+                onClick={() => void aprobar()}
+                disabled={aprobando}
+                className="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {aprobando ? "Aprobando…" : "Aprobar"}
+              </button>
+            )
+          )}
+        </div>
+      )}
 
       <p className="mt-2 text-sm whitespace-pre-wrap break-words text-zinc-900">
         {renderizarTextoPizarra(post.texto)}
