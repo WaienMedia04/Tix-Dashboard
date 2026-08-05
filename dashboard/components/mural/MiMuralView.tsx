@@ -350,54 +350,54 @@ export function MiMuralView({
           <Dock
             items={[
               {
-                icon: <Radio className="h-5 w-5" />,
+                icon: <Radio className="h-5 w-5 text-[#E8A0AC]" />,
                 label: "Estado",
                 onClick: () => setMostrarEstado(true),
               },
               {
-                icon: <Sparkles className="h-5 w-5" />,
+                icon: <Sparkles className="h-5 w-5 text-[#D293D6]" />,
                 label: "Sobre mí",
                 onClick: () => setMostrarSobreMi(true),
               },
               {
-                icon: <Palette className="h-5 w-5" />,
+                icon: <Palette className="h-5 w-5 text-[#B79AE6]" />,
                 label: "Fondo",
                 onClick: () => setMostrarFondo(true),
               },
               {
-                icon: <NotebookPen className="h-5 w-5" />,
+                icon: <NotebookPen className="h-5 w-5 text-[#8FD3C4]" />,
                 label: "Mis Bitácoras",
                 onClick: () => router.push(rol === "TALENTO" ? `/${slug}/mi-espacio` : `/${slug}/bitacoras`),
               },
               {
-                icon: <Users className="h-5 w-5" />,
+                icon: <Users className="h-5 w-5 text-[#9BD1A8]" />,
                 label: "Compañeros",
                 onClick: () => setMostrarCompaneros(true),
               },
               {
-                icon: <Gift className="h-5 w-5" />,
+                icon: <Gift className="h-5 w-5 text-[#E092B4]" />,
                 label: "Mis Estampas",
                 onClick: () => setMostrarEstampas(true),
               },
               {
-                icon: <Trophy className="h-5 w-5" />,
+                icon: <Trophy className="h-5 w-5 text-[#E6C687]" />,
                 label: "Logros",
                 onClick: () => setMostrarLogros(true),
               },
               {
-                icon: <ShoppingBag className="h-5 w-5" />,
+                icon: <ShoppingBag className="h-5 w-5 text-[#B8CB8E]" />,
                 label: "Tienda",
                 onClick: () => setMostrarTienda(true),
               },
               {
-                icon: <StickyNote className="h-5 w-5" />,
+                icon: <StickyNote className="h-5 w-5 text-[#E3AD8C]" />,
                 label: "Agregar nota",
                 onClick: () => setMostrarNuevaNota(true),
               },
               {
                 icon: (
                   <div className="relative">
-                    <ClipboardList className="h-5 w-5" />
+                    <ClipboardList className="h-5 w-5 text-[#8FB4E0]" />
                     {pizarraNoLeidas > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white ring-2 ring-[#141420]">
                         {pizarraNoLeidas > 9 ? "9+" : pizarraNoLeidas}
@@ -409,14 +409,14 @@ export function MiMuralView({
                 onClick: () => setVentanaPizarra("abierta"),
               },
               {
-                icon: <Newspaper className="h-5 w-5" />,
+                icon: <Newspaper className="h-5 w-5 text-[#87C4D6]" />,
                 label: "Mural informativo",
                 onClick: () => setVentanaMural("abierta"),
               },
               {
                 icon: (
                   <div className="relative">
-                    <MessageCircle className="h-5 w-5" />
+                    <MessageCircle className="h-5 w-5 text-[#9C9CE8]" />
                     {(chatNoLeidos > 0 || chatHayChisme) && (
                       <span
                         className={`absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white ring-2 ring-[#141420] ${

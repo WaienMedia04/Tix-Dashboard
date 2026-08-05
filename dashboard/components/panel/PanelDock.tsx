@@ -28,14 +28,14 @@ export function PanelDock() {
 
   const items = [
     {
-      icon: <LayoutDashboard className="h-5 w-5" />,
+      icon: <LayoutDashboard className="h-5 w-5 text-[#8FB4E0]" />,
       label: "Dashboard",
       onClick: () => router.push(`/${slug}/dashboard`),
     },
     ...(rol === "CEO" || rol === "RRHH"
       ? [
           {
-            icon: <Settings className="h-5 w-5" />,
+            icon: <Settings className="h-5 w-5 text-[#B0B4C4]" />,
             label: "Configuración",
             onClick: () => router.push(`/${slug}/configuracion`),
           },
@@ -45,23 +45,27 @@ export function PanelDock() {
       ? []
       : [
           {
-            icon: <PenSquare className="h-5 w-5" />,
+            icon: <PenSquare className="h-5 w-5 text-[#D293D6]" />,
             label: "Mi Mural",
             onClick: () => router.push(`/${slug}/mi-mural`),
           },
         ]),
     {
-      icon: <LifeBuoy className="h-5 w-5" />,
+      icon: <LifeBuoy className="h-5 w-5 text-[#9BD1A8]" />,
       label: "Soporte",
       onClick: () => setMostrarSoporte(true),
     },
     {
-      icon: esOscuro ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />,
+      icon: esOscuro ? (
+        <Sun className="h-5 w-5 text-[#E6C687]" />
+      ) : (
+        <Moon className="h-5 w-5 text-[#9C9CE8]" />
+      ),
       label: esOscuro ? "Modo claro" : "Modo oscuro",
       onClick: () => setTheme(esOscuro ? "light" : "dark"),
     },
     {
-      icon: <LogOut className="h-5 w-5" />,
+      icon: <LogOut className="h-5 w-5 text-[#E8A0AC]" />,
       label: "Cerrar sesión",
       onClick: () => void cerrarSesion(),
     },
