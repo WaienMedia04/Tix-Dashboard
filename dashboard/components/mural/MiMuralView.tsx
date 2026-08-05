@@ -20,7 +20,7 @@ import {
   Users,
 } from "lucide-react";
 import { type MuralPropio, fetchChatResumen, fetchMuralDeTalento, fetchMuralPropio, fetchNotificaciones } from "@/lib/api";
-import { fondoMuralCss, fondoMuralTexto, intensidadLluvia } from "@/lib/mural-fondos";
+import { esFondoAnimado, fondoMuralCss, fondoMuralTexto, intensidadLluvia } from "@/lib/mural-fondos";
 import { clasesMarco, iconoTitulo, textoTitulo } from "@/lib/tienda-catalogo";
 import { IconoCatalogo } from "@/lib/iconos-catalogo";
 import { coloresNombreMural } from "@/lib/mural-colores-nombre";
@@ -166,12 +166,13 @@ export function MiMuralView({
   const nombreCompleto = mural.talento.nombreCompleto;
   const texto = fondoMuralTexto(mural.perfil.fondoId);
   const lluvia = intensidadLluvia(mural.perfil.fondoId);
+  const animado = esFondoAnimado(mural.perfil.fondoId);
 
   return (
     <div
       className={`relative transition-[background] duration-500 ${
         escritorioFijo ? "h-[calc(100vh-40px)] overflow-hidden" : "min-h-[calc(100vh-40px)]"
-      }`}
+      } ${animado ? "fondo-mural-animado" : ""}`}
       style={{ background: fondoMuralCss(mural.perfil.fondoId) }}
     >
       {lluvia && (
@@ -482,10 +483,13 @@ export function MiMuralView({
         <TiendaModal
           open={mostrarTienda}
           onClose={() => setMostrarTienda(false)}
-          onCambio={(marcoId, tituloId, fondoId) =>
+          onCambio={(marcoId, tituloId, fondoId, mascotaId) =>
             setMural((prev) =>
               prev
-                ? { ...prev, perfil: { ...prev.perfil, marcoId, tituloId, fondoId: fondoId ?? prev.perfil.fondoId } }
+                ? {
+                    ...prev,
+                    perfil: { ...prev.perfil, marcoId, tituloId, fondoId: fondoId ?? prev.perfil.fondoId, mascotaId },
+                  }
                 : prev,
             )
           }
@@ -554,6 +558,10 @@ export function MiMuralView({
                 onCambiadoNombre={(mascotaNombre) =>
                   setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, mascotaNombre } } : prev))
                 }
+                onAbrirTienda={() => {
+                  setMostrarFondo(false);
+                  setMostrarTienda(true);
+                }}
               />
             </div>
           </div>

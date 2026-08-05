@@ -7,6 +7,8 @@ export interface FondoMural {
   claro: boolean;
   /** true = va en la sección "Colores especiales" (fondos con animación encima) en vez del selector de colores normal. */
   especial?: boolean;
+  /** true = además de ser especial, el degradado se mueve solo (ver .fondo-mural-animado en globals.css) — no confundir con la lluvia, que es un canvas aparte. */
+  animado?: boolean;
 }
 
 export const FONDOS_MURAL: FondoMural[] = [
@@ -81,6 +83,46 @@ export const FONDOS_MURAL: FondoMural[] = [
     claro: false,
     especial: true,
   },
+  {
+    id: "oceano_profundo",
+    label: "Océano Profundo",
+    css: "linear-gradient(120deg, #082F49 0%, #075985 30%, #0891B2 55%, #075985 80%, #082F49 100%)",
+    claro: false,
+    especial: true,
+    animado: true,
+  },
+  {
+    id: "galaxia",
+    label: "Galaxia",
+    css: "linear-gradient(120deg, #1E1B4B 0%, #4C1D95 25%, #6D28D9 50%, #4C1D95 75%, #1E1B4B 100%)",
+    claro: false,
+    especial: true,
+    animado: true,
+  },
+  {
+    id: "aurora_boreal",
+    label: "Aurora Boreal",
+    css: "linear-gradient(120deg, #022C22 0%, #065F46 25%, #0D9488 50%, #064E3B 75%, #022C22 100%)",
+    claro: false,
+    especial: true,
+    animado: true,
+  },
+  {
+    id: "lava_fluida",
+    label: "Lava Fluida",
+    css: "linear-gradient(120deg, #1C0A00 0%, #7C2D12 25%, #EA580C 50%, #7C2D12 75%, #1C0A00 100%)",
+    claro: false,
+    especial: true,
+    animado: true,
+  },
+  {
+    id: "cristal_arcoiris",
+    label: "Cristal Arcoíris",
+    css: "linear-gradient(120deg, #F43F5E 0%, #F59E0B 20%, #22D3EE 40%, #8B5CF6 60%, #D946EF 80%, #F43F5E 100%)",
+    claro: false,
+    especial: true,
+    animado: true,
+  },
 ];
 
 /** IDs de fondos "especiales" que además de un color de fondo pintan una animación (lluvia en canvas) encima. */
@@ -97,6 +139,11 @@ export function intensidadLluvia(fondoId: string): IntensidadLluvia | null {
 
 export function fondoMuralCss(fondoId: string): string {
   return FONDOS_MURAL.find((f) => f.id === fondoId)?.css ?? FONDOS_MURAL[0].css;
+}
+
+/** true si el degradado de `fondoId` se mueve solo (clase .fondo-mural-animado en globals.css). */
+export function esFondoAnimado(fondoId: string): boolean {
+  return FONDOS_MURAL.find((f) => f.id === fondoId)?.animado ?? false;
 }
 
 /**

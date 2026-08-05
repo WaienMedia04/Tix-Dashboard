@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Circle, CloudRain, Coins, Crown, Lock, ShoppingBag, Sparkles, Tag, Type, X } from "lucide-react";
+import { Circle, CloudRain, Coins, Crown, Lock, PawPrint, ShoppingBag, Sparkles, Tag, Type, X } from "lucide-react";
 import {
   type CatalogoTienda,
   type ItemFondoTienda,
   type ItemMarcoTienda,
+  type ItemMascotaTienda,
   type ItemTituloTienda,
   type RarezaItemTienda,
   type TipoItemTienda,
@@ -17,16 +18,17 @@ import {
 } from "@/lib/api";
 import { clasesMarco } from "@/lib/tienda-catalogo";
 import { IconoCatalogo } from "@/lib/iconos-catalogo";
-import { fondoMuralCss, FONDOS_LLUVIA_IDS } from "@/lib/mural-fondos";
+import { esFondoAnimado, fondoMuralCss, FONDOS_LLUVIA_IDS } from "@/lib/mural-fondos";
 import { ESTILO_RAREZA, ordenarPorRareza } from "@/lib/rareza-tienda";
 
-type Categoria = "marco" | "titulo" | "fondo";
-type ItemCualquiera = ItemMarcoTienda | ItemTituloTienda | ItemFondoTienda;
+type Categoria = "marco" | "titulo" | "fondo" | "mascota";
+type ItemCualquiera = ItemMarcoTienda | ItemTituloTienda | ItemFondoTienda | ItemMascotaTienda;
 
 const CATEGORIAS: { valor: Categoria; etiqueta: string; icono: React.ReactNode }[] = [
   { valor: "marco", etiqueta: "Marcos", icono: <Circle className="h-3.5 w-3.5" /> },
   { valor: "titulo", etiqueta: "Títulos", icono: <Type className="h-3.5 w-3.5" /> },
   { valor: "fondo", etiqueta: "Fondos", icono: <Sparkles className="h-3.5 w-3.5" /> },
+  { valor: "mascota", etiqueta: "Mascotas", icono: <PawPrint className="h-3.5 w-3.5" /> },
 ];
 
 const RAREZAS_EN_ORDEN: RarezaItemTienda[] = ["legendario", "epico", "raro", "comun"];
@@ -52,10 +54,25 @@ function VistaPrevia({ categoria, item }: { categoria: Categoria; item: ItemCual
       </div>
     );
   }
+  if (categoria === "mascota") {
+    const m = item as ItemMascotaTienda;
+    return (
+      <div className="flex h-16 items-center justify-center">
+        <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white/5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`/mascotas/${m.id}.png`} alt="" className="h-full w-full object-contain" />
+        </span>
+      </div>
+    );
+  }
   const f = item as ItemFondoTienda;
   const esLluvia = (FONDOS_LLUVIA_IDS as readonly string[]).includes(f.id);
+  const animado = esFondoAnimado(f.id);
   return (
-    <div className="relative h-16 overflow-hidden rounded-lg" style={{ background: fondoMuralCss(f.id) }}>
+    <div
+      className={`relative h-16 overflow-hidden rounded-lg ${animado ? "fondo-mural-animado" : ""}`}
+      style={{ background: fondoMuralCss(f.id) }}
+    >
       {esLluvia && (
         <span className="absolute right-1.5 bottom-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
           <CloudRain className="h-3 w-3 text-white/90" />
@@ -178,7 +195,7 @@ export function TiendaModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onCambio: (marcoId: string | null, tituloId: string | null, fondoId: string | null) => void;
+  onCambio: (marcoId: string | null, tituloId: string | null, fondoId: string | null, mascotaId: string | null) => void;
 }) {
   const [catalogo, setCatalogo] = useState<CatalogoTienda | null>(null);
   const [categoria, setCategoria] = useState<Categoria>("marco");
@@ -206,6 +223,7 @@ export function TiendaModal({
       nuevo.marcos.find((m) => m.equipado)?.id ?? null,
       nuevo.titulos.find((t) => t.equipado)?.id ?? null,
       nuevo.fondos.find((f) => f.equipado)?.id ?? null,
+      nuevo.mascotaEquipadaId,
     );
   }
 
@@ -237,6 +255,7 @@ export function TiendaModal({
     if (!catalogo) return [];
     if (categoria === "marco") return catalogo.marcos;
     if (categoria === "titulo") return catalogo.titulos;
+    if (categoria === "mascota") return catalogo.mascotas;
     return catalogo.fondos;
   }, [catalogo, categoria]);
 
@@ -297,7 +316,14 @@ export function TiendaModal({
             <div className="flex shrink-0 gap-1 border-b border-white/10 px-5 py-2.5">
               {CATEGORIAS.map((c) => {
                 const cantidad =
-                  catalogo && (c.valor === "marco" ? catalogo.marcos.length : c.valor === "titulo" ? catalogo.titulos.length : catalogo.fondos.length);
+                  catalogo &&
+                  (c.valor === "marco"
+                    ? catalogo.marcos.length
+                    : c.valor === "titulo"
+                      ? catalogo.titulos.length
+                      : c.valor === "mascota"
+                        ? catalogo.mascotas.length
+                        : catalogo.fondos.length);
                 return (
                   <button
                     key={c.valor}

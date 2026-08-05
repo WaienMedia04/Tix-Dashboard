@@ -1,10 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProgresoService } from '../progreso/progreso.service';
-import { FONDOS, MARCOS, TITULOS } from './tienda.constant';
+import { FONDOS, MARCOS, MASCOTAS, TITULOS } from './tienda.constant';
 
-export type TipoItemTienda = 'marco' | 'titulo' | 'fondo';
+export type TipoItemTienda = 'marco' | 'titulo' | 'fondo' | 'mascota';
 
 /** A diferencia de marcoId/tituloId (nullables), TalentoPerfilMural.fondoId nunca es null — tiene un fondo gratis por defecto. */
 const FONDO_POR_DEFECTO = 'corcho';
@@ -23,6 +27,8 @@ export class TiendaService {
     if (titulo) return { tipo: 'titulo', precio: titulo.precio };
     const fondo = FONDOS.find((f) => f.id === itemId);
     if (fondo) return { tipo: 'fondo', precio: fondo.precio };
+    const mascota = MASCOTAS.find((m) => m.id === itemId);
+    if (mascota) return { tipo: 'mascota', precio: mascota.precio };
     throw new NotFoundException('Ítem de la tienda no encontrado');
   }
 
@@ -35,13 +41,23 @@ export class TiendaService {
       }),
       this.prisma.talentoPerfilMural.findUnique({
         where: { talentoId },
-        select: { marcoId: true, tituloId: true, fondoId: true },
+        select: {
+          marcoId: true,
+          tituloId: true,
+          fondoId: true,
+          mascotaId: true,
+        },
       }),
     ]);
     const compradosSet = new Set(comprados.map((c) => c.itemId));
 
     return {
       monedas: progreso.monedas,
+      // A diferencia de marco/titulo (siempre null o un ítem de la Tienda),
+      // mascotaId puede ser una de las 3 gratis (clippy/bonzi/f1), que no
+      // aparecen en MASCOTAS — sin este campo, el front no podría distinguir
+      // "no tiene mascota" de "tiene una gratis puesta".
+      mascotaEquipadaId: perfil?.mascotaId ?? null,
       marcos: MARCOS.map((m) => ({
         ...m,
         comprado: compradosSet.has(m.id),
@@ -57,6 +73,11 @@ export class TiendaService {
         comprado: compradosSet.has(f.id),
         equipado: perfil?.fondoId === f.id,
       })),
+      mascotas: MASCOTAS.map((m) => ({
+        ...m,
+        comprado: compradosSet.has(m.id),
+        equipado: perfil?.mascotaId === m.id,
+      })),
     };
   }
 
@@ -70,7 +91,9 @@ export class TiendaService {
     const { precio } = this.buscarItem(itemId);
     const cobrado = await this.progreso.gastar(talentoId, precio);
     if (!cobrado) {
-      throw new BadRequestException('No te alcanzan las monedas para este ítem');
+      throw new BadRequestException(
+        'No te alcanzan las monedas para este ítem',
+      );
     }
 
     try {
@@ -122,7 +145,12 @@ export class TiendaService {
         update: { fondoId },
       });
     } else {
-      const campo = tipo === 'marco' ? 'marcoId' : 'tituloId';
+      const campo =
+        tipo === 'marco'
+          ? 'marcoId'
+          : tipo === 'titulo'
+            ? 'tituloId'
+            : 'mascotaId';
       await this.prisma.talentoPerfilMural.upsert({
         where: { talentoId },
         create: { talentoId, empresaId, [campo]: itemId },

@@ -2,7 +2,7 @@ import { IsIn, IsOptional, IsString } from 'class-validator';
 import type { TipoItemTienda } from '../tienda.service';
 
 export class EquiparItemDto {
-  @IsIn(['marco', 'titulo', 'fondo'])
+  @IsIn(['marco', 'titulo', 'fondo', 'mascota'])
   tipo!: TipoItemTienda;
 
   /** null desequipa. */

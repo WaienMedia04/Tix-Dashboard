@@ -336,8 +336,23 @@
   animation: franja-degradado-talentix 6s linear infinite;
 }
 
+/* Fondos animados del mural (Tienda): el mismo degradado del fondo pero con
+   background-size ampliado, para que el barrido de background-position se
+   note como un flujo continuo de color en vez de solo desplazar los bordes. */
+@keyframes fondo-mural-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.fondo-mural-animado {
+  background-size: 300% 300% !important;
+  animation: fondo-mural-flow 14s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton-shimmer { animation: none; }
   .animate-chisme-blink { animation: none; background-color: var(--color-destructive); }
   .franja-degradado-talentix { animation: none; background-position: 0% 50%; }
+  .fondo-mural-animado { animation: none; }
 }

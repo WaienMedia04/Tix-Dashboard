@@ -1,4 +1,12 @@
-import { Body, Controller, ForbiddenException, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { TiendaService } from './tienda.service';
 import { ComprarItemDto } from './dto/comprar-item.dto';
 import { EquiparItemDto } from './dto/equipar-item.dto';
@@ -11,7 +19,10 @@ import type { RequestConActor } from '../auth/actor.types';
 export class TiendaController {
   constructor(private readonly tiendaService: TiendaService) {}
 
-  private exigirTalentoId(req: RequestConActor): { talentoId: string; empresaId: string } {
+  private exigirTalentoId(req: RequestConActor): {
+    talentoId: string;
+    empresaId: string;
+  } {
     const actor = req.actor!;
     if (actor.type !== 'usuario' || !actor.usuario.talentoId) {
       throw new ForbiddenException(

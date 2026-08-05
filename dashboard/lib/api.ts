@@ -1522,7 +1522,7 @@ export async function abrirCofre(): Promise<EstadoCofre> {
   return res.json();
 }
 
-export type TipoItemTienda = "marco" | "titulo" | "fondo";
+export type TipoItemTienda = "marco" | "titulo" | "fondo" | "mascota";
 export type RarezaItemTienda = "comun" | "raro" | "epico" | "legendario";
 
 export interface ItemTiendaEstado {
@@ -1547,11 +1547,18 @@ export interface ItemFondoTienda extends ItemTiendaEstado {
   nombre: string;
 }
 
+export interface ItemMascotaTienda extends ItemTiendaEstado {
+  nombre: string;
+}
+
 export interface CatalogoTienda {
   monedas: number;
+  /** mascotaId real del perfil (puede ser una de las 3 gratis, que no aparecen en `mascotas`). */
+  mascotaEquipadaId: string | null;
   marcos: ItemMarcoTienda[];
   titulos: ItemTituloTienda[];
   fondos: ItemFondoTienda[];
+  mascotas: ItemMascotaTienda[];
 }
 
 export async function fetchTiendaCatalogo(): Promise<CatalogoTienda> {

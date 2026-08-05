@@ -13,3 +13,6 @@ export const MASCOTA_IDS = [
 ] as const;
 
 export type MascotaId = (typeof MASCOTA_IDS)[number];
+
+/** Las únicas 3 mascotas gratis — el resto se compra en la Tienda (src/tienda/tienda.constant.ts). */
+export const MASCOTA_IDS_GRATIS = ['clippy', 'bonzi', 'f1'] as const;

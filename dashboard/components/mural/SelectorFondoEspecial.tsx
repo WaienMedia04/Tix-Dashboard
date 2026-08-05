@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Check, CloudRain, Coins, Loader2, Lock } from "lucide-react";
-import { actualizarPerfilMural, fetchTiendaCatalogo, type ItemFondoTienda } from "@/lib/api";
-import { FONDOS_MURAL, type IntensidadLluvia } from "@/lib/mural-fondos";
+import { actualizarPerfilMural, equiparItemTienda, fetchTiendaCatalogo, type ItemFondoTienda } from "@/lib/api";
+import { esFondoAnimado, FONDOS_MURAL, type IntensidadLluvia } from "@/lib/mural-fondos";
 
 /** Códigos de clima WMO (Open-Meteo) que representan algún tipo de lluvia. */
 function mapearClimaALluvia(codigo: number): IntensidadLluvia | null {
@@ -61,7 +61,12 @@ export function SelectorFondoEspecial({
     }
     setGuardando(id);
     try {
-      await actualizarPerfilMural({ fondoId: id });
+      if (itemsTienda?.some((i) => i.id === id)) {
+        // Fondo comprado en la Tienda: el equipado (y su validación de dueño) pasa por ahí, no por actualizarPerfilMural.
+        await equiparItemTienda("fondo", id);
+      } else {
+        await actualizarPerfilMural({ fondoId: id });
+      }
       onCambiado(id);
     } catch {
       // sin cambios visibles si falla — el swatch simplemente no cambia
@@ -124,7 +129,9 @@ export function SelectorFondoEspecial({
               disabled={guardando !== null}
               title={bloqueado ? `${f.label} — ${item.precio} monedas en la Tienda` : f.label}
               aria-label={f.label}
-              className="relative h-10 w-10 shrink-0 rounded-full border-2 transition-transform disabled:cursor-not-allowed"
+              className={`relative h-10 w-10 shrink-0 rounded-full border-2 transition-transform disabled:cursor-not-allowed ${
+                esFondoAnimado(f.id) ? "fondo-mural-animado" : ""
+              }`}
               style={{
                 background: f.css,
                 borderColor: fondoId === f.id ? "var(--primary)" : "transparent",

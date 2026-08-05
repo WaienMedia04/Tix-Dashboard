@@ -7,10 +7,10 @@ import {
   MaxLength,
   ValidateIf,
 } from 'class-validator';
-import { FONDOS_MURAL_IDS } from '../mural-fondos.constant';
+import { FONDOS_MURAL_IDS_GRATIS } from '../mural-fondos.constant';
 import { COLORES_NOMBRE_MURAL_IDS } from '../mural-colores-nombre.constant';
 import { COLOR_WIDGETS_IDS } from '../mural-color-widgets.constant';
-import { MASCOTA_IDS } from '../mural-mascota.constant';
+import { MASCOTA_IDS_GRATIS } from '../mural-mascota.constant';
 
 export class ActualizarPerfilMuralDto {
   @IsString()
@@ -50,9 +50,10 @@ export class ActualizarPerfilMuralDto {
   @MaxLength(40)
   estado?: string;
 
+  /** Solo fondos gratis — los comprados en la Tienda se equipan vía TiendaService (ya valida que el talento los haya comprado). */
   @IsString()
   @IsOptional()
-  @IsIn(FONDOS_MURAL_IDS)
+  @IsIn(FONDOS_MURAL_IDS_GRATIS)
   fondoId?: string;
 
   @IsString()
@@ -65,10 +66,14 @@ export class ActualizarPerfilMuralDto {
   @IsIn(COLOR_WIDGETS_IDS)
   colorWidgetsId?: string;
 
-  /** Mascota tipo Clippy elegida — null explícito para quitarla. */
+  /**
+   * Mascota tipo Clippy elegida — null explícito para quitarla. Solo las
+   * gratis se pueden poner acá directamente; las compradas en la Tienda se
+   * equipan vía TiendaService (ya valida que el talento las haya comprado).
+   */
   @IsOptional()
   @ValidateIf((o: ActualizarPerfilMuralDto) => o.mascotaId !== null)
-  @IsIn(MASCOTA_IDS)
+  @IsIn(MASCOTA_IDS_GRATIS)
   mascotaId?: string | null;
 
   /** Nombre propio que el talento le puso a su mascota — null explícito para quitarlo. */
