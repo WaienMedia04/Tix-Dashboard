@@ -5,6 +5,7 @@ import { ClipboardList } from "lucide-react";
 import { type EmojiClima, type PizarraPanel, type PizarraPost, fetchPizarraPanel, fetchPizarraPosts } from "@/lib/api";
 import { PizarraComposer } from "./PizarraComposer";
 import { PizarraPostCard } from "./PizarraPostCard";
+import { PizarraPaginacion } from "./PizarraPaginacion";
 import { PizarraReconocimientoBanner } from "./PizarraReconocimientoBanner";
 import { PizarraNuevoReconocimientoModal } from "./PizarraNuevoReconocimientoModal";
 import { PizarraEncuestaCard } from "./PizarraEncuestaCard";
@@ -24,6 +25,7 @@ import type { TemaWidgets } from "@/lib/pizarra-temas";
 
 const INTERVALO_POLLING_MS = 15_000;
 const INTERVALO_PANEL_MS = 60_000;
+const POSTS_POR_PAGINA = 10;
 
 /** Pizarra compartida por toda la empresa — mismo contenido se vea desde el mural de quien se vea. */
 export function PizarraSocial({
@@ -43,21 +45,28 @@ export function PizarraSocial({
   const tema: TemaWidgets = temaWidgets === "solido" ? "solido" : "vibrante";
 
   const [posts, setPosts] = useState<PizarraPost[] | null>(null);
-  const [cargandoMas, setCargandoMas] = useState(false);
-  const [hayMas, setHayMas] = useState(false);
+  const [pagina, setPagina] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
   const [panel, setPanel] = useState<PizarraPanel | null>(null);
   const [mostrarNuevaEncuesta, setMostrarNuevaEncuesta] = useState(false);
   const [mostrarNuevoReconocimiento, setMostrarNuevoReconocimiento] = useState(false);
   const [prefillComposer, setPrefillComposer] = useState<{ texto: string } | null>(null);
 
-  const cargar = useCallback(() => {
-    fetchPizarraPosts(slug)
-      .then((r) => {
-        setPosts(r.data);
-        setHayMas(r.hayMas);
-      })
-      .catch(() => setPosts((prev) => prev ?? []));
-  }, [slug]);
+  const cargar = useCallback(
+    (p: number) => {
+      fetchPizarraPosts(slug, { page: p, limit: POSTS_POR_PAGINA })
+        .then((r) => {
+          if (r.data.length === 0 && p > 1) {
+            setPagina(p - 1);
+            return;
+          }
+          setPosts(r.data);
+          setTotalPaginas(r.totalPaginas);
+        })
+        .catch(() => setPosts((prev) => prev ?? []));
+    },
+    [slug],
+  );
 
   const cargarPanel = useCallback(() => {
     fetchPizarraPanel(slug)
@@ -66,10 +75,10 @@ export function PizarraSocial({
   }, [slug]);
 
   useEffect(() => {
-    cargar();
-    const id = setInterval(cargar, INTERVALO_POLLING_MS);
+    cargar(pagina);
+    const id = setInterval(() => cargar(pagina), INTERVALO_POLLING_MS);
     return () => clearInterval(id);
-  }, [cargar]);
+  }, [cargar, pagina]);
 
   useEffect(() => {
     cargarPanel();
@@ -77,19 +86,9 @@ export function PizarraSocial({
     return () => clearInterval(id);
   }, [cargarPanel]);
 
-  async function cargarMas() {
-    if (!posts || posts.length === 0) return;
-    setCargandoMas(true);
-    try {
-      const ultimo = posts[posts.length - 1];
-      const r = await fetchPizarraPosts(slug, { cursorId: ultimo.id });
-      setPosts((prev) => [...(prev ?? []), ...r.data]);
-      setHayMas(r.hayMas);
-    } catch {
-      // el usuario puede reintentar
-    } finally {
-      setCargandoMas(false);
-    }
+  function irAPagina(p: number) {
+    if (p < 1 || p > totalPaginas) return;
+    setPagina(p);
   }
 
   function actualizarPost(actualizado: PizarraPost) {
@@ -171,7 +170,10 @@ export function PizarraSocial({
 
         <PizarraComposer
           slug={slug}
-          onPublicado={(post) => setPosts((prev) => [post, ...(prev ?? [])])}
+          onPublicado={() => {
+            if (pagina === 1) cargar(1);
+            else setPagina(1);
+          }}
           prefill={prefillComposer}
         />
 
@@ -186,18 +188,11 @@ export function PizarraSocial({
             post={post}
             puedeBorrar={post.propio || esModerador}
             onActualizado={actualizarPost}
-            onBorrado={(id) => setPosts((prev) => prev?.filter((p) => p.id !== id) ?? prev)}
+            onBorrado={() => cargar(pagina)}
           />
         ))}
-        {hayMas && (
-          <button
-            onClick={() => void cargarMas()}
-            disabled={cargandoMas}
-            className="mx-auto block text-xs font-medium text-primary hover:underline disabled:opacity-50"
-          >
-            {cargandoMas ? "Cargando…" : "Cargar más"}
-          </button>
-        )}
+
+        <PizarraPaginacion pagina={pagina} totalPaginas={totalPaginas} onCambiar={irAPagina} />
       </div>
 
       <PizarraNuevaEncuestaModal

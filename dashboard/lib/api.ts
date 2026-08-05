@@ -1942,7 +1942,8 @@ export interface PizarraPost {
 
 export interface PizarraPostsResponse {
   data: PizarraPost[];
-  hayMas: boolean;
+  total: number;
+  totalPaginas: number;
 }
 
 /** Directorio de la empresa para el autocompletado de @menciones — reutiliza el mismo directorio que el chat. */
@@ -1950,10 +1951,10 @@ export const fetchPizarraDirectorio = fetchChatDirectorio;
 
 export async function fetchPizarraPosts(
   slug: string,
-  opts?: { cursorId?: string; limit?: number },
+  opts?: { page?: number; limit?: number },
 ): Promise<PizarraPostsResponse> {
   const params = new URLSearchParams();
-  if (opts?.cursorId) params.set("cursorId", opts.cursorId);
+  if (opts?.page) params.set("page", String(opts.page));
   if (opts?.limit) params.set("limit", String(opts.limit));
   const query = params.toString();
 

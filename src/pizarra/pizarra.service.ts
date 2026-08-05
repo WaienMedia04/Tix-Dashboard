@@ -22,7 +22,7 @@ import { PREGUNTAS_DEL_DIA, FRASES_DEL_DIA } from './contenido-diario.constant';
 import { TRIVIA_PREGUNTAS } from './trivia.constant';
 import { MISIONES_DEL_DIA } from './mision-diaria.constant';
 
-const LIMITE_POSTS = 20;
+const LIMITE_POSTS = 10;
 const LIMITE_TIMELINE = 15;
 const DIAS_TALENTO_NUEVO = 7;
 
@@ -163,34 +163,28 @@ export class PizarraService {
   async listarPosts(
     slug: string,
     actor: Actor,
-    opts: { cursorId?: string; limit?: number },
+    opts: { page?: number; limit?: number },
   ) {
     const usuario = this.exigirUsuario(actor);
     const empresaId = await this.resolverEmpresaId(slug, actor);
     const limit = Math.min(Math.max(opts.limit ?? LIMITE_POSTS, 1), 50);
+    const page = Math.max(opts.page ?? 1, 1);
 
-    let cursorFecha: Date | undefined;
-    if (opts.cursorId) {
-      const referencia = await this.prisma.pizarraPost.findUnique({
-        where: { id: opts.cursorId },
-        select: { createdAt: true },
-      });
-      if (referencia) cursorFecha = referencia.createdAt;
-    }
-
-    const posts = await this.prisma.pizarraPost.findMany({
-      where: {
-        empresaId,
-        ...(cursorFecha ? { createdAt: { lt: cursorFecha } } : {}),
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-      include: INCLUDE_POST,
-    });
+    const [total, posts] = await Promise.all([
+      this.prisma.pizarraPost.count({ where: { empresaId } }),
+      this.prisma.pizarraPost.findMany({
+        where: { empresaId },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: INCLUDE_POST,
+      }),
+    ]);
 
     return {
       data: posts.map((p) => this.mapearPost(p, usuario.id)),
-      hayMas: posts.length === limit,
+      total,
+      totalPaginas: Math.max(Math.ceil(total / limit), 1),
     };
   }
 

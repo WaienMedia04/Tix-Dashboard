@@ -35,12 +35,12 @@ export class PizarraController {
   @Get('posts')
   listarPosts(
     @Param('slug') slug: string,
-    @Query('cursorId') cursorId: string | undefined,
+    @Query('page') page: string | undefined,
     @Query('limit') limit: string | undefined,
     @Req() req: RequestConActor,
   ) {
     return this.pizarraService.listarPosts(slug, req.actor!, {
-      cursorId,
+      page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
     });
   }
