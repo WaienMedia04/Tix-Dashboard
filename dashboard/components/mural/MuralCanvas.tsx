@@ -18,6 +18,7 @@ export function MuralCanvas({
   onNotasChange,
   mostrarNuevaNota,
   onCerrarNuevaNota,
+  onAbrirTienda,
 }: {
   slug: string;
   /** talentoId del dueño de este mural — se usa para ofrecer al resto de compañeros como destinatarios. */
@@ -33,6 +34,8 @@ export function MuralCanvas({
   /** El modal ahora lo abre el botón "Agregar nota" del Dock, no un FAB propio de este componente. */
   mostrarNuevaNota: boolean;
   onCerrarNuevaNota: () => void;
+  /** Se llama cuando el talento quiere comprar más bordes de nota en la Tienda. */
+  onAbrirTienda: () => void;
 }) {
   const esMobile = useEsMobile();
   const arrastrable = editable && !esMobile;
@@ -87,6 +90,7 @@ export function MuralCanvas({
             contenedorRef={contenedorRef}
             onActualizada={actualizarNotaLocal}
             onBorrada={borrarNotaLocal}
+            onAbrirTienda={onAbrirTienda}
           />
         ))}
         {estampas.map((estampa) => (
@@ -119,6 +123,7 @@ export function MuralCanvas({
               contenedorRef={contenedorRef}
               onActualizada={actualizarNotaLocal}
               onBorrada={borrarNotaLocal}
+              onAbrirTienda={onAbrirTienda}
             />
           ))}
         </div>

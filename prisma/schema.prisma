@@ -560,6 +560,8 @@ model MuralNotaAdhesiva {
   rotacion            Float    @default(0)
   zIndex              Int      @default(0)
   escala              Float    @default(1)
+  /// Borde especial comprado en la Tienda (ver BORDES_NOTA en src/tienda/tienda.constant.ts) — null = sin borde.
+  bordeId             String?
   /// Si no es null, la nota la escribió otro compañero (no el dueño del mural) — se muestra "De: {nombre}".
   enviadaPorUsuarioId String?
   createdAt           DateTime @default(now())

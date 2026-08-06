@@ -14,12 +14,14 @@ import {
   PawPrint,
   ShoppingBag,
   Sparkles,
+  StickyNote,
   Tag,
   Type,
   X,
 } from "lucide-react";
 import {
   type CatalogoTienda,
+  type ItemBordeNotaTienda,
   type ItemColorNombreTienda,
   type ItemFondoTienda,
   type ItemMarcoTienda,
@@ -31,17 +33,26 @@ import {
   equiparItemTienda,
   fetchTiendaCatalogo,
 } from "@/lib/api";
-import { clasesMarco } from "@/lib/tienda-catalogo";
+import { clasesBordeNota, clasesMarco } from "@/lib/tienda-catalogo";
 import { IconoCatalogo } from "@/lib/iconos-catalogo";
 import { esFondoAnimado, fondoMuralCss, FONDOS_LLUVIA_IDS } from "@/lib/mural-fondos";
 import { coloresNombreMural } from "@/lib/mural-colores-nombre";
 import { ESTILO_RAREZA, ordenarPorRareza } from "@/lib/rareza-tienda";
 
-type Categoria = "marco" | "titulo" | "fondo" | "mascota" | "colorNombre";
-type ItemCualquiera = ItemMarcoTienda | ItemTituloTienda | ItemFondoTienda | ItemMascotaTienda | ItemColorNombreTienda;
+type Categoria = "marco" | "titulo" | "fondo" | "mascota" | "colorNombre" | "bordeNota";
+type ItemCualquiera =
+  | ItemMarcoTienda
+  | ItemTituloTienda
+  | ItemFondoTienda
+  | ItemMascotaTienda
+  | ItemColorNombreTienda
+  | ItemBordeNotaTienda;
 
 /** Categorías cuyo campo del perfil nunca puede quedar vacío — equipado no se puede "quitar", solo cambiar por otro. */
 const CATEGORIAS_SIEMPRE_PUESTAS: Categoria[] = ["fondo", "colorNombre"];
+
+/** Sin equipado: se compran una vez y después se eligen por nota individual, no hay un solo "puesto" en el perfil. */
+const CATEGORIAS_SIN_EQUIPAR: Categoria[] = ["bordeNota"];
 
 const CATEGORIAS: { valor: Categoria; etiqueta: string; icono: React.ReactNode }[] = [
   { valor: "marco", etiqueta: "Marcos", icono: <Circle className="h-3.5 w-3.5" /> },
@@ -49,12 +60,18 @@ const CATEGORIAS: { valor: Categoria; etiqueta: string; icono: React.ReactNode }
   { valor: "fondo", etiqueta: "Fondos", icono: <Sparkles className="h-3.5 w-3.5" /> },
   { valor: "mascota", etiqueta: "Mascotas", icono: <PawPrint className="h-3.5 w-3.5" /> },
   { valor: "colorNombre", etiqueta: "Colores de nombre", icono: <Palette className="h-3.5 w-3.5" /> },
+  { valor: "bordeNota", etiqueta: "Bordes de nota", icono: <StickyNote className="h-3.5 w-3.5" /> },
 ];
 
 const RAREZAS_EN_ORDEN: RarezaItemTienda[] = ["legendario", "epico", "raro", "comun"];
 
 function nombreDe(item: ItemCualquiera): string {
   return "nombre" in item ? item.nombre : (item as ItemTituloTienda).texto;
+}
+
+/** Los bordes de nota no tienen `equipado` (se eligen por nota, no en el perfil) — este helper evita repetir el chequeo de tipo. */
+function equipadoDe(item: ItemCualquiera): boolean {
+  return "equipado" in item && item.equipado;
 }
 
 function VistaPrevia({ categoria, item, grande }: { categoria: Categoria; item: ItemCualquiera; grande?: boolean }) {
@@ -114,6 +131,15 @@ function VistaPrevia({ categoria, item, grande }: { categoria: Categoria; item: 
       </div>
     );
   }
+  if (categoria === "bordeNota") {
+    return (
+      <div className={`flex ${alto} items-center justify-center`}>
+        <div
+          className={`rounded-[3px] bg-amber-200 ${grande ? "h-14 w-14" : "h-9 w-9"} ${clasesBordeNota(item.id)}`}
+        />
+      </div>
+    );
+  }
   const f = item as ItemFondoTienda;
   const esLluvia = (FONDOS_LLUVIA_IDS as readonly string[]).includes(f.id);
   const animado = esFondoAnimado(f.id);
@@ -132,7 +158,7 @@ function VistaPrevia({ categoria, item, grande }: { categoria: Categoria; item: 
 }
 
 /** Insignia de estado sobre la tarjeta chica — la acción real (comprar/equipar) vive en el modal de detalle. */
-function InsigniaEstado({ item }: { item: ItemCualquiera }) {
+function InsigniaEstado({ categoria, item }: { categoria: Categoria; item: ItemCualquiera }) {
   if (!item.comprado) {
     return (
       <span className="flex w-full items-center justify-center gap-1 rounded-lg bg-white/5 py-1.5 text-xs font-bold text-amber-300">
@@ -140,7 +166,14 @@ function InsigniaEstado({ item }: { item: ItemCualquiera }) {
       </span>
     );
   }
-  if (item.equipado) {
+  if (CATEGORIAS_SIN_EQUIPAR.includes(categoria)) {
+    return (
+      <span className="flex w-full items-center justify-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 py-1.5 text-[11px] font-semibold text-emerald-300">
+        Comprado
+      </span>
+    );
+  }
+  if (equipadoDe(item)) {
     return (
       <span className="flex w-full items-center justify-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 py-1.5 text-[11px] font-semibold text-emerald-300">
         Equipado
@@ -169,7 +202,7 @@ function TarjetaItem({
     <button
       onClick={onAbrir}
       className={`flex flex-col gap-2 rounded-xl border bg-white/[0.03] p-2.5 text-left transition-colors hover:bg-white/[0.06] ${estilo.borde} ${
-        item.equipado ? estilo.resplandor : ""
+        equipadoDe(item) ? estilo.resplandor : ""
       }`}
     >
       <div className="relative">
@@ -184,7 +217,7 @@ function TarjetaItem({
         <p className="truncate text-center text-xs font-semibold text-white">{nombreDe(item)}</p>
         <p className={`text-center text-[10px] font-medium tracking-wide uppercase ${estilo.texto}`}>{estilo.etiqueta}</p>
       </div>
-      <InsigniaEstado item={item} />
+      <InsigniaEstado categoria={categoria} item={item} />
     </button>
   );
 }
@@ -267,24 +300,31 @@ function DetalleItemModal({
                 </div>
               )}
 
-              {item.comprado && item.equipado && CATEGORIAS_SIEMPRE_PUESTAS.includes(categoria) && (
+              {item.comprado && CATEGORIAS_SIN_EQUIPAR.includes(categoria) && (
+                <p className="text-center text-xs font-medium text-emerald-300">
+                  Ya lo tienes — actívalo desde el ícono de borde en cualquier nota.
+                </p>
+              )}
+              {item.comprado && !CATEGORIAS_SIN_EQUIPAR.includes(categoria) && equipadoDe(item) && CATEGORIAS_SIEMPRE_PUESTAS.includes(categoria) && (
                 <span className="flex w-full items-center justify-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 py-2.5 text-sm font-semibold text-emerald-300">
                   Equipado
                 </span>
               )}
-              {item.comprado && !(item.equipado && CATEGORIAS_SIEMPRE_PUESTAS.includes(categoria)) && (
-                <button
-                  onClick={onEquipar}
-                  disabled={cargando}
-                  className={
-                    item.equipado
-                      ? "w-full rounded-lg border border-white/10 py-2.5 text-sm font-medium text-white/60 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
-                      : "w-full rounded-lg bg-emerald-500/90 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
-                  }
-                >
-                  {cargando ? "..." : item.equipado ? "Quitar" : "Equipar"}
-                </button>
-              )}
+              {item.comprado &&
+                !CATEGORIAS_SIN_EQUIPAR.includes(categoria) &&
+                !(equipadoDe(item) && CATEGORIAS_SIEMPRE_PUESTAS.includes(categoria)) && (
+                  <button
+                    onClick={onEquipar}
+                    disabled={cargando}
+                    className={
+                      equipadoDe(item)
+                        ? "w-full rounded-lg border border-white/10 py-2.5 text-sm font-medium text-white/60 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+                        : "w-full rounded-lg bg-emerald-500/90 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    }
+                  >
+                    {cargando ? "..." : equipadoDe(item) ? "Quitar" : "Equipar"}
+                  </button>
+                )}
 
               {error && <p className="text-center text-xs font-medium text-rose-400">{error}</p>}
             </div>
@@ -391,6 +431,7 @@ export function TiendaModal({
     if (categoria === "titulo") return catalogo.titulos;
     if (categoria === "mascota") return catalogo.mascotas;
     if (categoria === "colorNombre") return catalogo.coloresNombre;
+    if (categoria === "bordeNota") return catalogo.bordesNota;
     return catalogo.fondos;
   }, [catalogo, categoria]);
 
@@ -462,7 +503,9 @@ export function TiendaModal({
                         ? catalogo.mascotas.length
                         : c.valor === "colorNombre"
                           ? catalogo.coloresNombre.length
-                          : catalogo.fondos.length);
+                          : c.valor === "bordeNota"
+                            ? catalogo.bordesNota.length
+                            : catalogo.fondos.length);
                 return (
                   <button
                     key={c.valor}
@@ -519,7 +562,7 @@ export function TiendaModal({
                 error={errorAccion}
                 onClose={() => setDetalleId(null)}
                 onComprar={() => itemDetalle && void comprar(itemDetalle)}
-                onEquipar={() => itemDetalle && void equipar(categoria, itemDetalle.id, itemDetalle.equipado)}
+                onEquipar={() => itemDetalle && void equipar(categoria, itemDetalle.id, equipadoDe(itemDetalle))}
               />
             </div>
 

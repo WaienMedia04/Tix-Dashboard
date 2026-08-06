@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Bold, Expand, Italic, Maximize2, Smile, X } from "lucide-react";
-import { type NotaMural, actualizarNotaMural, borrarNotaMural } from "@/lib/api";
+import { useEffect, useRef, useState } from "react";
+import { Bold, Expand, Frame, Italic, Maximize2, Smile, X } from "lucide-react";
+import { type ItemBordeNotaTienda, type NotaMural, actualizarNotaMural, borrarNotaMural, fetchTiendaCatalogo } from "@/lib/api";
 import { COLORES_NOTA, colorNotaEstilo } from "@/lib/mural-fondos";
+import { clasesBordeNota } from "@/lib/tienda-catalogo";
 import { EMOJIS_NOTA } from "@/lib/emojis-nota.constant";
 import { renderizarTextoNota } from "@/lib/nota-texto";
 import { Modal } from "@/components/Modal";
@@ -106,6 +107,7 @@ export function NotaAdhesiva({
   contenedorRef,
   onActualizada,
   onBorrada,
+  onAbrirTienda,
 }: {
   nota: NotaMural;
   arrastrable: boolean;
@@ -114,6 +116,8 @@ export function NotaAdhesiva({
   contenedorRef: React.RefObject<HTMLDivElement | null>;
   onActualizada: (nota: NotaMural) => void;
   onBorrada: (id: string) => void;
+  /** Se llama cuando el talento quiere comprar más bordes en la Tienda. */
+  onAbrirTienda: () => void;
 }) {
   const notaRef = useRef<HTMLDivElement>(null);
   const arrastrandoRef = useRef(false);
@@ -123,9 +127,18 @@ export function NotaAdhesiva({
   const [texto, setTexto] = useState(nota.texto);
   const [editando, setEditando] = useState(false);
   const [mostrarColores, setMostrarColores] = useState(false);
+  const [mostrarBordes, setMostrarBordes] = useState(false);
+  const [bordesComprados, setBordesComprados] = useState<ItemBordeNotaTienda[] | null>(null);
   const [mostrarExpandir, setMostrarExpandir] = useState(false);
   const [borrador, setBorrador] = useState(nota.texto);
   const estilo = colorNotaEstilo(nota.color);
+
+  useEffect(() => {
+    if (!editable) return;
+    fetchTiendaCatalogo()
+      .then((c) => setBordesComprados(c.bordesNota.filter((b) => b.comprado)))
+      .catch(() => setBordesComprados([]));
+  }, [editable]);
 
   function handlePointerDown(e: React.PointerEvent) {
     // El modal "Expandir" se renderiza en un portal fuera del DOM de la nota,
@@ -235,6 +248,16 @@ export function NotaAdhesiva({
     }
   }
 
+  async function cambiarBorde(bordeId: string | null) {
+    setMostrarBordes(false);
+    onActualizada({ ...nota, bordeId });
+    try {
+      await actualizarNotaMural(nota.id, { bordeId });
+    } catch {
+      // sin cambios visibles si falla
+    }
+  }
+
   async function eliminar() {
     onBorrada(nota.id);
     try {
@@ -252,7 +275,7 @@ export function NotaAdhesiva({
       onPointerDown={handlePointerDown}
       className={`group flex w-36 flex-col gap-1.5 rounded-[3px] p-3 text-xs shadow-[0_12px_20px_-10px_rgba(0,0,0,0.45),0_2px_4px_rgba(0,0,0,0.2)] ${
         arrastrable ? "absolute" : "relative"
-      } ${arrastrable ? "cursor-grab active:cursor-grabbing" : ""}`}
+      } ${arrastrable ? "cursor-grab active:cursor-grabbing" : ""} ${clasesBordeNota(nota.bordeId)}`}
       style={
         arrastrable
           ? ({
@@ -275,12 +298,27 @@ export function NotaAdhesiva({
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
+                setMostrarBordes(false);
                 setMostrarColores((v) => !v);
               }}
               className="h-3.5 w-3.5 rounded-full border border-black/10"
               style={{ background: estilo.bg }}
               aria-label="Cambiar color"
             />
+          )}
+          {editable && (
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setMostrarColores(false);
+                setMostrarBordes((v) => !v);
+              }}
+              aria-label="Cambiar borde"
+              className="opacity-70 hover:opacity-100"
+            >
+              <Frame className="h-3.5 w-3.5" />
+            </button>
           )}
         </div>
         <div className="flex items-center gap-1.5">
@@ -342,6 +380,56 @@ export function NotaAdhesiva({
               className="sr-only"
             />
           </label>
+        </div>
+      )}
+
+      {editable && mostrarBordes && (
+        <div
+          onPointerDown={(e) => e.stopPropagation()}
+          className="absolute top-6 left-2 z-10 w-44 rounded-md bg-white/95 p-2 text-black shadow-elegant"
+        >
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                void cambiarBorde(null);
+              }}
+              className={`flex h-6 w-6 items-center justify-center rounded-full border text-[9px] font-bold ${
+                nota.bordeId === null ? "border-primary text-primary" : "border-black/20 text-black/50"
+              }`}
+              aria-label="Sin borde"
+              title="Sin borde"
+            >
+              N
+            </button>
+            {bordesComprados?.map((b) => (
+              <button
+                key={b.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void cambiarBorde(b.id);
+                }}
+                className={`h-6 w-6 rounded-full bg-white ${clasesBordeNota(b.id)}`}
+                aria-label={b.nombre}
+                title={b.nombre}
+              />
+            ))}
+          </div>
+          {bordesComprados?.length === 0 && (
+            <p className="mt-1.5 text-[10px] leading-snug text-black/60">
+              Todavía no tienes bordes especiales — cómpralos en la Tienda.
+            </p>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setMostrarBordes(false);
+              onAbrirTienda();
+            }}
+            className="mt-1.5 text-[10px] font-semibold text-primary hover:underline"
+          >
+            Ver más en la Tienda
+          </button>
         </div>
       )}
 

@@ -68,6 +68,7 @@ const SELECT_NOTA = {
   rotacion: true,
   zIndex: true,
   escala: true,
+  bordeId: true,
   enviadaPor: { select: { nombre: true } },
 } as const;
 
@@ -80,6 +81,7 @@ function serializarNota(nota: {
   rotacion: number;
   zIndex: number;
   escala: number;
+  bordeId: string | null;
   enviadaPor: { nombre: string } | null;
 }) {
   return {
@@ -91,6 +93,7 @@ function serializarNota(nota: {
     rotacion: nota.rotacion,
     zIndex: nota.zIndex,
     escala: nota.escala,
+    bordeId: nota.bordeId,
     enviadaPorNombre: nota.enviadaPor?.nombre ?? null,
   };
 }
@@ -474,7 +477,23 @@ export class MuralService {
   }
 
   async actualizarNota(actor: Actor, notaId: string, dto: ActualizarNotaDto) {
-    await this.resolverNotaPropia(actor, notaId);
+    const notaActual = await this.resolverNotaPropia(actor, notaId);
+
+    if (dto.bordeId) {
+      const comprado = await this.prisma.talentoItemComprado.findUnique({
+        where: {
+          talentoId_itemId: {
+            talentoId: notaActual.talentoId,
+            itemId: dto.bordeId,
+          },
+        },
+      });
+      if (!comprado) {
+        throw new ForbiddenException(
+          'Todavía no compraste ese borde en la Tienda',
+        );
+      }
+    }
 
     const nota = await this.prisma.muralNotaAdhesiva.update({
       where: { id: notaId },
@@ -486,6 +505,7 @@ export class MuralService {
         ...(dto.rotacion !== undefined && { rotacion: dto.rotacion }),
         ...(dto.zIndex !== undefined && { zIndex: dto.zIndex }),
         ...(dto.escala !== undefined && { escala: dto.escala }),
+        ...(dto.bordeId !== undefined && { bordeId: dto.bordeId }),
       },
       select: SELECT_NOTA,
     });

@@ -123,6 +123,48 @@ export const FONDOS_MURAL: FondoMural[] = [
     especial: true,
     animado: true,
   },
+  {
+    id: "cinta_ambiental",
+    label: "Cinta Ambiental",
+    css: "linear-gradient(160deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)",
+    claro: false,
+    especial: true,
+  },
+  {
+    id: "lluvia_digital",
+    label: "Lluvia Digital",
+    css: "linear-gradient(180deg, #000000 0%, #001a0d 60%, #000000 100%)",
+    claro: false,
+    especial: true,
+  },
+  {
+    id: "onda_hexagonal",
+    label: "Onda Hexagonal",
+    css: "linear-gradient(160deg, #0B1120 0%, #111827 50%, #0B1120 100%)",
+    claro: false,
+    especial: true,
+  },
+  {
+    id: "lineas_liquidas",
+    label: "Líneas Líquidas",
+    css: "linear-gradient(160deg, #082F49 0%, #0C4A6E 50%, #082F49 100%)",
+    claro: false,
+    especial: true,
+  },
+  {
+    id: "rieles_neon",
+    label: "Rieles Neón",
+    css: "linear-gradient(160deg, #0A0014 0%, #1A0033 50%, #0A0014 100%)",
+    claro: false,
+    especial: true,
+  },
+  {
+    id: "estela_estelar",
+    label: "Estela Estelar",
+    css: "linear-gradient(160deg, #05010F 0%, #0B0C2A 50%, #05010F 100%)",
+    claro: false,
+    especial: true,
+  },
 ];
 
 /** IDs de fondos "especiales" que además de un color de fondo pintan una animación (lluvia en canvas) encima. */
@@ -135,6 +177,29 @@ export function intensidadLluvia(fondoId: string): IntensidadLluvia | null {
   if (fondoId === "lluvia_normal") return "normal";
   if (fondoId === "lluvia_tormenta") return "tormenta";
   return null;
+}
+
+/** Fondos con un efecto de canvas propio (distinto de la lluvia y del degradado en movimiento CSS). */
+export type EfectoCanvasFondo =
+  | "cinta_ambiental"
+  | "lluvia_digital"
+  | "onda_hexagonal"
+  | "lineas_liquidas"
+  | "rieles_neon"
+  | "estela_estelar";
+
+const EFECTOS_CANVAS: readonly EfectoCanvasFondo[] = [
+  "cinta_ambiental",
+  "lluvia_digital",
+  "onda_hexagonal",
+  "lineas_liquidas",
+  "rieles_neon",
+  "estela_estelar",
+];
+
+/** null si `fondoId` no tiene un efecto de canvas propio — el id del fondo coincide 1:1 con el nombre del efecto. */
+export function efectoCanvasFondo(fondoId: string): EfectoCanvasFondo | null {
+  return (EFECTOS_CANVAS as readonly string[]).includes(fondoId) ? (fondoId as EfectoCanvasFondo) : null;
 }
 
 export function fondoMuralCss(fondoId: string): string {

@@ -1230,6 +1230,7 @@ export interface NotaMural {
   rotacion: number;
   zIndex: number;
   escala: number;
+  bordeId: string | null;
   enviadaPorNombre: string | null;
 }
 
@@ -1522,15 +1523,18 @@ export async function abrirCofre(): Promise<EstadoCofre> {
   return res.json();
 }
 
-export type TipoItemTienda = "marco" | "titulo" | "fondo" | "mascota" | "colorNombre";
+export type TipoItemTienda = "marco" | "titulo" | "fondo" | "mascota" | "colorNombre" | "bordeNota";
 export type RarezaItemTienda = "comun" | "raro" | "epico" | "legendario";
 
-export interface ItemTiendaEstado {
+export interface ItemTiendaEstadoBase {
   id: string;
   precio: number;
   rareza: RarezaItemTienda;
   descripcion: string;
   comprado: boolean;
+}
+
+export interface ItemTiendaEstado extends ItemTiendaEstadoBase {
   equipado: boolean;
 }
 
@@ -1556,6 +1560,11 @@ export interface ItemColorNombreTienda extends ItemTiendaEstado {
   nombre: string;
 }
 
+/** Sin `equipado`: un borde de nota no vive en el perfil, se elige por nota individual (ver `NotaMural.bordeId`). */
+export interface ItemBordeNotaTienda extends ItemTiendaEstadoBase {
+  nombre: string;
+}
+
 export interface CatalogoTienda {
   monedas: number;
   /** mascotaId real del perfil (puede ser una de las 3 gratis, que no aparecen en `mascotas`). */
@@ -1567,6 +1576,7 @@ export interface CatalogoTienda {
   fondos: ItemFondoTienda[];
   mascotas: ItemMascotaTienda[];
   coloresNombre: ItemColorNombreTienda[];
+  bordesNota: ItemBordeNotaTienda[];
 }
 
 export async function fetchTiendaCatalogo(): Promise<CatalogoTienda> {
@@ -1643,6 +1653,7 @@ export async function actualizarNotaMural(
     rotacion: number;
     zIndex: number;
     escala: number;
+    bordeId: string | null;
   }>,
 ): Promise<NotaMural> {
   const res = await fetch(`${API_URL}/talentos/me/mural/notas/${encodeURIComponent(id)}`, {

@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, CloudRain, Coins, Loader2, Lock } from "lucide-react";
+import { Check, CloudRain, Coins, Loader2, Lock, Store } from "lucide-react";
 import { actualizarPerfilMural, equiparItemTienda, fetchTiendaCatalogo, type ItemFondoTienda } from "@/lib/api";
 import { esFondoAnimado, FONDOS_MURAL, type IntensidadLluvia } from "@/lib/mural-fondos";
+
+/** No se muestran todos los fondos bloqueados a la vez (ya son más de 15) — solo una probadita, el resto vive en la Tienda. */
+const LIMITE_BLOQUEADOS_VISIBLES = 5;
 
 /** Códigos de clima WMO (Open-Meteo) que representan algún tipo de lluvia. */
 function mapearClimaALluvia(codigo: number): IntensidadLluvia | null {
@@ -52,6 +55,11 @@ export function SelectorFondoEspecial({
     const item = itemsTienda?.find((i) => i.id === id);
     return !item || item.comprado; // si no está en el catálogo de la tienda, es gratis
   }
+
+  const bloqueados = especiales.filter((f) => !estaComprado(f.id));
+  const bloqueadosVisiblesIds = new Set(bloqueados.slice(0, LIMITE_BLOQUEADOS_VISIBLES).map((f) => f.id));
+  const visibles = especiales.filter((f) => estaComprado(f.id) || bloqueadosVisiblesIds.has(f.id));
+  const hayMasEnTienda = bloqueados.length > bloqueadosVisiblesIds.size;
 
   async function elegir(id: string) {
     if (id === fondoId) return;
@@ -118,8 +126,8 @@ export function SelectorFondoEspecial({
 
   return (
     <div className="space-y-2.5">
-      <div className="flex flex-wrap gap-2.5">
-        {especiales.map((f) => {
+      <div className="flex flex-wrap items-center gap-2.5">
+        {visibles.map((f) => {
           const item = itemsTienda?.find((i) => i.id === f.id);
           const bloqueado = itemsTienda !== null && item && !item.comprado;
           return (
@@ -157,6 +165,16 @@ export function SelectorFondoEspecial({
             </button>
           );
         })}
+        {hayMasEnTienda && (
+          <button
+            type="button"
+            onClick={onAbrirTienda}
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
+          >
+            <Store className="h-3 w-3" />
+            Ver más en la Tienda
+          </button>
+        )}
       </div>
 
       <button

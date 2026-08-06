@@ -7,6 +7,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProgresoService } from '../progreso/progreso.service';
 import {
+  BORDES_NOTA,
   COLORES_NOMBRE,
   FONDOS,
   MARCOS,
@@ -19,7 +20,8 @@ export type TipoItemTienda =
   | 'titulo'
   | 'fondo'
   | 'mascota'
-  | 'colorNombre';
+  | 'colorNombre'
+  | 'bordeNota';
 
 /** A diferencia de marcoId/tituloId (nullables), TalentoPerfilMural.fondoId nunca es null — tiene un fondo gratis por defecto. */
 const FONDO_POR_DEFECTO = 'corcho';
@@ -45,6 +47,8 @@ export class TiendaService {
     if (mascota) return { tipo: 'mascota', precio: mascota.precio };
     const colorNombre = COLORES_NOMBRE.find((c) => c.id === itemId);
     if (colorNombre) return { tipo: 'colorNombre', precio: colorNombre.precio };
+    const bordeNota = BORDES_NOTA.find((b) => b.id === itemId);
+    if (bordeNota) return { tipo: 'bordeNota', precio: bordeNota.precio };
     throw new NotFoundException('Ítem de la tienda no encontrado');
   }
 
@@ -103,6 +107,12 @@ export class TiendaService {
         ...c,
         comprado: compradosSet.has(c.id),
         equipado: perfil?.colorNombreId === c.id,
+      })),
+      // Sin "equipado": un borde de nota no vive en el perfil, se elige por
+      // nota individual (MuralNotaAdhesiva.bordeId, ver MuralService).
+      bordesNota: BORDES_NOTA.map((b) => ({
+        ...b,
+        comprado: compradosSet.has(b.id),
       })),
     };
   }

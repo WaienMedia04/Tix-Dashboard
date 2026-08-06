@@ -20,7 +20,7 @@ import {
   Users,
 } from "lucide-react";
 import { type MuralPropio, fetchChatResumen, fetchMuralDeTalento, fetchMuralPropio, fetchNotificaciones } from "@/lib/api";
-import { esFondoAnimado, fondoMuralCss, fondoMuralTexto, intensidadLluvia } from "@/lib/mural-fondos";
+import { efectoCanvasFondo, esFondoAnimado, fondoMuralCss, fondoMuralTexto, intensidadLluvia } from "@/lib/mural-fondos";
 import { clasesMarco, iconoTitulo, textoTitulo } from "@/lib/tienda-catalogo";
 import { IconoCatalogo } from "@/lib/iconos-catalogo";
 import { coloresNombreMural } from "@/lib/mural-colores-nombre";
@@ -41,6 +41,7 @@ import { SelectorColorNombre } from "./SelectorColorNombre";
 import { SelectorColorWidgets } from "./SelectorColorWidgets";
 import { SelectorMascota } from "./SelectorMascota";
 import { LluviaFondo } from "./LluviaFondo";
+import { EfectoCanvasFondoRender } from "./EfectoCanvasFondo";
 import { MuralCanvas } from "./MuralCanvas";
 import { DirectorioCompaneros } from "./DirectorioCompaneros";
 import { MisEstampasModal } from "./MisEstampasModal";
@@ -166,6 +167,7 @@ export function MiMuralView({
   const nombreCompleto = mural.talento.nombreCompleto;
   const texto = fondoMuralTexto(mural.perfil.fondoId);
   const lluvia = intensidadLluvia(mural.perfil.fondoId);
+  const efectoCanvas = efectoCanvasFondo(mural.perfil.fondoId);
   const animado = esFondoAnimado(mural.perfil.fondoId);
 
   return (
@@ -178,6 +180,11 @@ export function MiMuralView({
       {lluvia && (
         <div className="absolute inset-0 z-0 overflow-hidden">
           <LluviaFondo intensidad={lluvia} />
+        </div>
+      )}
+      {efectoCanvas && (
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <EfectoCanvasFondoRender efecto={efectoCanvas} />
         </div>
       )}
 
@@ -321,6 +328,7 @@ export function MiMuralView({
           onNotasChange={(notas) => setMural((prev) => (prev ? { ...prev, notas } : prev))}
           mostrarNuevaNota={mostrarNuevaNota}
           onCerrarNuevaNota={() => setMostrarNuevaNota(false)}
+          onAbrirTienda={() => setMostrarTienda(true)}
         />
       </div>
 

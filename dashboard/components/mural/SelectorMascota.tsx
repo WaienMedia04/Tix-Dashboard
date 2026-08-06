@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Ban, Check, Coins, Lock } from "lucide-react";
+import { Ban, Check, Coins, Lock, Store } from "lucide-react";
 import { actualizarPerfilMural, equiparItemTienda, fetchTiendaCatalogo, type ItemMascotaTienda } from "@/lib/api";
 import { MASCOTAS_MURAL } from "@/lib/mural-mascotas";
+
+/** No se muestran todas las mascotas bloqueadas a la vez — solo una probadita, el resto vive en la Tienda. */
+const LIMITE_BLOQUEADAS_VISIBLES = 5;
 
 export function SelectorMascota({
   mascotaId,
@@ -39,6 +42,11 @@ export function SelectorMascota({
     const item = itemsTienda?.find((i) => i.id === id);
     return !item || item.comprado; // si no está en el catálogo de la tienda, es gratis
   }
+
+  const bloqueadas = MASCOTAS_MURAL.filter((m) => !estaComprada(m.id));
+  const bloqueadasVisiblesIds = new Set(bloqueadas.slice(0, LIMITE_BLOQUEADAS_VISIBLES).map((m) => m.id));
+  const mascotasVisibles = MASCOTAS_MURAL.filter((m) => estaComprada(m.id) || bloqueadasVisiblesIds.has(m.id));
+  const hayMasEnTienda = bloqueadas.length > bloqueadasVisiblesIds.size;
 
   async function elegir(id: string | null) {
     if (id === mascotaId) return;
@@ -96,7 +104,7 @@ export function SelectorMascota({
           </span>
         </button>
 
-        {MASCOTAS_MURAL.map((m) => {
+        {mascotasVisibles.map((m) => {
           const activo = mascotaId === m.id;
           const item = itemsTienda?.find((i) => i.id === m.id);
           const bloqueada = itemsTienda !== null && item && !item.comprado;
@@ -133,6 +141,16 @@ export function SelectorMascota({
             </button>
           );
         })}
+        {hayMasEnTienda && (
+          <button
+            type="button"
+            onClick={onAbrirTienda}
+            className="flex w-20 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border p-2.5 text-center text-[11px] font-semibold text-primary hover:underline"
+          >
+            <Store className="h-4 w-4" />
+            Ver más en la Tienda
+          </button>
+        )}
       </div>
 
       {mascotaId && (

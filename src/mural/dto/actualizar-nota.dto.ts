@@ -1,4 +1,5 @@
 import {
+  IsIn,
   IsInt,
   IsNumber,
   IsOptional,
@@ -7,8 +8,10 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import { PATRON_COLOR_NOTA } from '../mural-notas-colores.constant';
+import { BORDES_NOTA_IDS } from '../mural-nota-bordes.constant';
 
 export class ActualizarNotaDto {
   @IsString()
@@ -49,4 +52,10 @@ export class ActualizarNotaDto {
   @Min(0.7)
   @Max(1.8)
   escala?: number;
+
+  /** Borde especial comprado en la Tienda — null explícito para quitarlo. La titularidad se valida en MuralService. */
+  @IsOptional()
+  @ValidateIf((o: ActualizarNotaDto) => o.bordeId !== null)
+  @IsIn(BORDES_NOTA_IDS)
+  bordeId?: string | null;
 }

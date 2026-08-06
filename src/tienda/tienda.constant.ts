@@ -44,6 +44,16 @@ export interface ItemColorNombre {
   descripcion: string;
 }
 
+export interface ItemBordeNota {
+  id: string;
+  nombre: string;
+  precio: number;
+  rareza: RarezaItemTienda;
+  descripcion: string;
+  /** Clases Tailwind del anillo/resplandor alrededor de la nota — mismo id que dashboard/lib/tienda-catalogo.ts. */
+  clases: string;
+}
+
 /**
  * Catálogo de marcos (doc "Actualización Mural 2.0" #4 y #20) — decoran el
  * carnet del mural. Precios "retantes": alcanzarlos con las monedas que se
@@ -260,6 +270,53 @@ export const FONDOS: ItemFondo[] = [
     descripcion:
       'Todo el espectro de color fluyendo sin parar — el fondo más vistoso de la Tienda.',
   },
+  {
+    id: 'cinta_ambiental',
+    nombre: 'Cinta Ambiental',
+    precio: 950,
+    rareza: 'epico',
+    descripcion: 'Cintas de color fluyendo en ondas suaves sobre tu mural.',
+  },
+  {
+    id: 'lluvia_digital',
+    nombre: 'Lluvia Digital',
+    precio: 1000,
+    rareza: 'epico',
+    descripcion:
+      'Columnas de caracteres cayendo estilo Matrix, con su propio rastro.',
+  },
+  {
+    id: 'onda_hexagonal',
+    nombre: 'Onda Hexagonal',
+    precio: 1000,
+    rareza: 'epico',
+    descripcion:
+      'Una grilla de hexágonos que pulsa en ondas expandiéndose sobre tu mural.',
+  },
+  {
+    id: 'lineas_liquidas',
+    nombre: 'Líneas Líquidas',
+    precio: 1500,
+    rareza: 'legendario',
+    descripcion:
+      'Capas de curvas que ondulan como agua vista de perfil, con profundidad real.',
+  },
+  {
+    id: 'rieles_neon',
+    nombre: 'Rieles Neón',
+    precio: 1600,
+    rareza: 'legendario',
+    descripcion:
+      'Partículas de neón deslizándose por una grilla de rieles diagonales.',
+  },
+  {
+    id: 'estela_estelar',
+    nombre: 'Estela Estelar',
+    precio: 1700,
+    rareza: 'legendario',
+    descripcion:
+      'Estrellas orbitando en el cielo profundo, dejando una estela que se desvanece.',
+  },
 ];
 
 /**
@@ -437,5 +494,85 @@ export const COLORES_NOMBRE: ItemColorNombre[] = [
     rareza: 'legendario',
     descripcion:
       'Todo el espectro de color en tu nombre — el color más exclusivo del mural.',
+  },
+];
+
+/**
+ * Catálogo de bordes especiales para las notas adhesivas — a diferencia de
+ * marco/titulo/fondo/mascota/colorNombre (un slot único por perfil), un
+ * borde de nota se compra una sola vez pero se puede aplicar a cualquier
+ * nota individual (MuralNotaAdhesiva.bordeId), así que NO pasa por
+ * TiendaService.equipar(). El id debe existir en BORDES_NOTA_IDS
+ * (src/mural/mural-nota-bordes.constant.ts). "Eléctrico" reutiliza a
+ * propósito el mismo estilo violeta que el marco "Eléctrico" del carnet.
+ */
+export const BORDES_NOTA: ItemBordeNota[] = [
+  {
+    id: 'electrico_nota',
+    nombre: 'Eléctrico',
+    precio: 1400,
+    rareza: 'legendario',
+    descripcion:
+      'El mismo resplandor eléctrico violeta del marco del carnet, ahora en tus notas — uno de los bordes más exclusivos.',
+    clases: 'ring-4 ring-violet-500 shadow-[0_0_16px_rgba(139,92,246,0.6)]',
+  },
+  {
+    id: 'dorado_nota',
+    nombre: 'Dorado',
+    precio: 350,
+    rareza: 'raro',
+    descripcion: 'Un anillo dorado clásico para destacar una nota importante.',
+    clases: 'ring-4 ring-amber-400 shadow-[0_0_16px_rgba(251,191,36,0.5)]',
+  },
+  {
+    id: 'esmeralda_nota',
+    nombre: 'Esmeralda',
+    precio: 350,
+    rareza: 'raro',
+    descripcion: 'Un halo verde esmeralda con un brillo suave.',
+    clases: 'ring-4 ring-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.5)]',
+  },
+  {
+    id: 'zafiro_nota',
+    nombre: 'Zafiro',
+    precio: 350,
+    rareza: 'raro',
+    descripcion: 'Un aro azul zafiro, frío y elegante.',
+    clases: 'ring-4 ring-sky-400 shadow-[0_0_16px_rgba(56,189,248,0.5)]',
+  },
+  {
+    id: 'fuego_nota',
+    nombre: 'Fuego',
+    precio: 650,
+    rareza: 'epico',
+    descripcion:
+      'Un resplandor naranja intenso, para notas que no pasan desapercibidas.',
+    clases: 'ring-4 ring-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.65)]',
+  },
+  {
+    id: 'rosa_neon_nota',
+    nombre: 'Rosa Neón',
+    precio: 650,
+    rareza: 'epico',
+    descripcion: 'Un borde rosa neón vibrante con toda la actitud.',
+    clases: 'ring-4 ring-pink-500 shadow-[0_0_18px_rgba(236,72,153,0.65)]',
+  },
+  {
+    id: 'mistico_nota',
+    nombre: 'Místico',
+    precio: 650,
+    rareza: 'epico',
+    descripcion:
+      'Un resplandor fucsia con un aire misterioso, poco común en el mural.',
+    clases: 'ring-4 ring-fuchsia-400 shadow-[0_0_18px_rgba(217,70,239,0.65)]',
+  },
+  {
+    id: 'obsidiana_legendaria_nota',
+    nombre: 'Obsidiana Legendaria',
+    precio: 1200,
+    rareza: 'legendario',
+    descripcion:
+      'Un borde negro profundo con un resplandor sutil — el más exclusivo de todos.',
+    clases: 'ring-4 ring-zinc-700 shadow-[0_0_20px_rgba(0,0,0,0.7)]',
   },
 ];

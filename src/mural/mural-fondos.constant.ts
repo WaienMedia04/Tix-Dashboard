@@ -33,6 +33,12 @@ export const FONDOS_MURAL_IDS = [
   'aurora_boreal',
   'lava_fluida',
   'cristal_arcoiris',
+  'cinta_ambiental',
+  'lluvia_digital',
+  'onda_hexagonal',
+  'lineas_liquidas',
+  'rieles_neon',
+  'estela_estelar',
 ] as const;
 
 export type FondoMuralId = (typeof FONDOS_MURAL_IDS)[number];

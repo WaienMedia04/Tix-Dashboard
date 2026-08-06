@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Coins, Lock } from "lucide-react";
+import { Check, Coins, Lock, Store } from "lucide-react";
 import { actualizarPerfilMural, equiparItemTienda, fetchTiendaCatalogo, type ItemColorNombreTienda } from "@/lib/api";
 import { COLORES_NOMBRE_MURAL } from "@/lib/mural-colores-nombre";
+
+/** No se muestran todos los colores bloqueados a la vez (ya son más de 15) — solo una probadita, el resto vive en la Tienda. */
+const LIMITE_BLOQUEADOS_VISIBLES = 5;
 
 export function SelectorColorNombre({
   colorNombreId,
@@ -29,6 +32,11 @@ export function SelectorColorNombre({
     return !item || item.comprado; // si no está en el catálogo de la tienda, es gratis
   }
 
+  const bloqueados = COLORES_NOMBRE_MURAL.filter((c) => !estaComprado(c.id));
+  const bloqueadosVisiblesIds = new Set(bloqueados.slice(0, LIMITE_BLOQUEADOS_VISIBLES).map((c) => c.id));
+  const coloresVisibles = COLORES_NOMBRE_MURAL.filter((c) => estaComprado(c.id) || bloqueadosVisiblesIds.has(c.id));
+  const hayMasEnTienda = bloqueados.length > bloqueadosVisiblesIds.size;
+
   async function elegir(id: string) {
     if (id === colorNombreId) return;
     if (!estaComprado(id)) {
@@ -52,8 +60,8 @@ export function SelectorColorNombre({
   }
 
   return (
-    <div className="flex flex-wrap gap-2.5">
-      {COLORES_NOMBRE_MURAL.map((c) => {
+    <div className="flex flex-wrap items-center gap-2.5">
+      {coloresVisibles.map((c) => {
         const item = itemsTienda?.find((i) => i.id === c.id);
         const bloqueado = itemsTienda !== null && item && !item.comprado;
         return (
@@ -89,6 +97,16 @@ export function SelectorColorNombre({
           </button>
         );
       })}
+      {hayMasEnTienda && (
+        <button
+          type="button"
+          onClick={onAbrirTienda}
+          className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
+        >
+          <Store className="h-3 w-3" />
+          Ver más en la Tienda
+        </button>
+      )}
     </div>
   );
 }
