@@ -16,6 +16,7 @@ const SELECT_ESTAMPA_DEFINICION = {
   imagenUrl: true,
   forma: true,
   activo: true,
+  precio: true,
   createdAt: true,
   creadoPor: { select: { nombre: true } },
 } as const;
@@ -26,6 +27,7 @@ function serializar(definicion: {
   imagenUrl: string;
   forma: string;
   activo: boolean;
+  precio: number | null;
   createdAt: Date;
   creadoPor: { nombre: string };
 }) {
@@ -35,6 +37,7 @@ function serializar(definicion: {
     imagenUrl: definicion.imagenUrl,
     forma: definicion.forma,
     activo: definicion.activo,
+    precio: definicion.precio,
     creadoPorNombre: definicion.creadoPor.nombre,
     createdAt: definicion.createdAt,
   };
@@ -81,6 +84,7 @@ export class EstampasService {
         nombre: dto.nombre.trim(),
         imagenUrl: dto.imagenUrl,
         forma: dto.forma,
+        precio: dto.precio ?? null,
         creadoPorUsuarioId: actor.usuario.id,
       },
       select: SELECT_ESTAMPA_DEFINICION,
@@ -108,6 +112,7 @@ export class EstampasService {
       where: { id },
       data: {
         ...(dto.activo !== undefined && { activo: dto.activo }),
+        ...(dto.precio !== undefined && { precio: dto.precio }),
       },
       select: SELECT_ESTAMPA_DEFINICION,
     });

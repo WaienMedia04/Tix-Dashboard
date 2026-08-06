@@ -582,6 +582,8 @@ model EstampaDefinicion {
   imagenUrl          String
   forma              TipoEstampaForma
   activo             Boolean          @default(true)
+  /// null = solo se regala (RRHH/CEO); un número = también comprable en la Tienda por esa cantidad de monedas.
+  precio             Int?
   creadoPorUsuarioId String
   createdAt          DateTime         @default(now())
 

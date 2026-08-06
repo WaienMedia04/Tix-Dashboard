@@ -22,6 +22,7 @@ export class TiendaController {
   private exigirTalentoId(req: RequestConActor): {
     talentoId: string;
     empresaId: string;
+    usuarioId: string;
   } {
     const actor = req.actor!;
     if (actor.type !== 'usuario' || !actor.usuario.talentoId) {
@@ -29,19 +30,28 @@ export class TiendaController {
         'Esta acción requiere una cuenta de empleado',
       );
     }
-    return { talentoId: actor.usuario.talentoId, empresaId: actor.empresaId };
+    return {
+      talentoId: actor.usuario.talentoId,
+      empresaId: actor.empresaId,
+      usuarioId: actor.usuario.id,
+    };
   }
 
   @Get()
   catalogo(@Req() req: RequestConActor) {
-    const { talentoId } = this.exigirTalentoId(req);
-    return this.tiendaService.catalogo(talentoId);
+    const { talentoId, empresaId } = this.exigirTalentoId(req);
+    return this.tiendaService.catalogo(talentoId, empresaId);
   }
 
   @Post('comprar')
   comprar(@Body() dto: ComprarItemDto, @Req() req: RequestConActor) {
-    const { talentoId, empresaId } = this.exigirTalentoId(req);
-    return this.tiendaService.comprar(empresaId, talentoId, dto.itemId);
+    const { talentoId, empresaId, usuarioId } = this.exigirTalentoId(req);
+    return this.tiendaService.comprar(
+      empresaId,
+      talentoId,
+      usuarioId,
+      dto.itemId,
+    );
   }
 
   @Post('equipar')

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
-import { Gift, Loader2, Sparkles, Trash2, Upload, Users } from "lucide-react";
+import { Coins, Gift, Loader2, Sparkles, Trash2, Upload, Users } from "lucide-react";
 import {
   type EmpleadoResumen,
   type EstampaDefinicion,
@@ -33,6 +33,7 @@ function ModalNuevaEstampa({
   const [nombre, setNombre] = useState("");
   const [forma, setForma] = useState<TipoEstampaForma>("REDONDEADO");
   const [imagenUrl, setImagenUrl] = useState<string | null>(null);
+  const [precio, setPrecio] = useState("");
   const [subiendo, setSubiendo] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +65,12 @@ function ModalNuevaEstampa({
     setError(null);
     setGuardando(true);
     try {
-      const definicion = await crearEstampaDefinicion(slug, { nombre: nombre.trim(), imagenUrl, forma });
+      const definicion = await crearEstampaDefinicion(slug, {
+        nombre: nombre.trim(),
+        imagenUrl,
+        forma,
+        precio: precio.trim() ? Number(precio) : undefined,
+      });
       onCreada(definicion);
       onClose();
     } catch {
@@ -153,6 +159,24 @@ function ModalNuevaEstampa({
               e.target.value = "";
             }}
           />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            Precio en la Tienda (opcional)
+          </label>
+          <input
+            type="number"
+            min={1}
+            max={20000}
+            value={precio}
+            onChange={(e) => setPrecio(e.target.value)}
+            placeholder="Ej. 300 — déjalo vacío para que solo se pueda regalar"
+            className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Si le pones precio, los talentos también van a poder comprarla con monedas desde la Tienda.
+          </p>
         </div>
 
         {error && <p className="text-xs text-destructive">{error}</p>}
@@ -333,6 +357,8 @@ export function EstampasCatalogo({ slug, empleados }: { slug: string; empleados:
   const [mostrarNueva, setMostrarNueva] = useState(false);
   const [regalando, setRegalando] = useState<EstampaDefinicion | null>(null);
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
+  const [editandoPrecioId, setEditandoPrecioId] = useState<string | null>(null);
+  const [precioInput, setPrecioInput] = useState("");
 
   useEffect(() => {
     let cancelado = false;
@@ -354,6 +380,24 @@ export function EstampasCatalogo({ slug, empleados }: { slug: string; empleados:
       setDefiniciones((prev) => prev?.map((d) => (d.id === definicion.id ? actualizada : d)) ?? prev);
     } catch {
       // sin cambios visibles si falla
+    }
+  }
+
+  function iniciarEdicionPrecio(definicion: EstampaDefinicion) {
+    setEditandoPrecioId(definicion.id);
+    setPrecioInput(definicion.precio !== null ? String(definicion.precio) : "");
+  }
+
+  async function guardarPrecio(definicion: EstampaDefinicion) {
+    const valor = precioInput.trim();
+    const precio = valor ? Number(valor) : null;
+    try {
+      const actualizada = await actualizarEstampaDefinicion(slug, definicion.id, { precio });
+      setDefiniciones((prev) => prev?.map((d) => (d.id === definicion.id ? actualizada : d)) ?? prev);
+    } catch {
+      // sin cambios visibles si falla
+    } finally {
+      setEditandoPrecioId(null);
     }
   }
 
@@ -419,6 +463,44 @@ export function EstampasCatalogo({ slug, empleados }: { slug: string; empleados:
                 />
               </div>
               <p className="line-clamp-1 text-xs font-medium text-foreground">{d.nombre}</p>
+
+              {editandoPrecioId === d.id ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min={1}
+                    max={20000}
+                    autoFocus
+                    value={precioInput}
+                    onChange={(e) => setPrecioInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void guardarPrecio(d);
+                      if (e.key === "Escape") setEditandoPrecioId(null);
+                    }}
+                    onBlur={() => void guardarPrecio(d)}
+                    placeholder="Sin precio"
+                    className="w-16 rounded border border-border bg-background px-1 py-0.5 text-center text-[11px] text-foreground focus:border-primary focus:outline-none"
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => iniciarEdicionPrecio(d)}
+                  className={`flex items-center gap-1 text-[11px] font-medium ${
+                    d.precio !== null ? "text-amber-500" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Cambiar precio en la Tienda"
+                >
+                  {d.precio !== null ? (
+                    <>
+                      <Coins className="h-3 w-3" />
+                      {d.precio}
+                    </>
+                  ) : (
+                    "Sin precio"
+                  )}
+                </button>
+              )}
+
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setRegalando(d)}

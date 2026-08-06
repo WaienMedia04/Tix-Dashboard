@@ -14,6 +14,7 @@ import {
   PawPrint,
   ShoppingBag,
   Sparkles,
+  Sticker,
   StickyNote,
   Tag,
   Type,
@@ -23,6 +24,7 @@ import {
   type CatalogoTienda,
   type ItemBordeNotaTienda,
   type ItemColorNombreTienda,
+  type ItemEstampaTienda,
   type ItemFondoTienda,
   type ItemMarcoTienda,
   type ItemMascotaTienda,
@@ -39,20 +41,26 @@ import { esFondoAnimado, fondoMuralCss, FONDOS_LLUVIA_IDS } from "@/lib/mural-fo
 import { coloresNombreMural } from "@/lib/mural-colores-nombre";
 import { ESTILO_RAREZA, ordenarPorRareza } from "@/lib/rareza-tienda";
 
-type Categoria = "marco" | "titulo" | "fondo" | "mascota" | "colorNombre" | "bordeNota";
+type Categoria = "marco" | "titulo" | "fondo" | "mascota" | "colorNombre" | "bordeNota" | "estampa";
 type ItemCualquiera =
   | ItemMarcoTienda
   | ItemTituloTienda
   | ItemFondoTienda
   | ItemMascotaTienda
   | ItemColorNombreTienda
-  | ItemBordeNotaTienda;
+  | ItemBordeNotaTienda
+  | ItemEstampaTienda;
 
 /** Categorías cuyo campo del perfil nunca puede quedar vacío — equipado no se puede "quitar", solo cambiar por otro. */
 const CATEGORIAS_SIEMPRE_PUESTAS: Categoria[] = ["fondo", "colorNombre"];
 
-/** Sin equipado: se compran una vez y después se eligen por nota individual, no hay un solo "puesto" en el perfil. */
-const CATEGORIAS_SIN_EQUIPAR: Categoria[] = ["bordeNota"];
+/** Sin equipado: se compran una vez y quedan disponibles para usar donde corresponda, sin un solo "puesto" en el perfil. */
+const CATEGORIAS_SIN_EQUIPAR: Categoria[] = ["bordeNota", "estampa"];
+
+const MENSAJE_SIN_EQUIPAR: Record<string, string> = {
+  bordeNota: "Ya lo tienes — actívalo desde el ícono de borde en cualquier nota.",
+  estampa: "Ya la tienes — ábrela desde \"Mis Estampas\" en el Dock para colocarla en tu mural.",
+};
 
 const CATEGORIAS: { valor: Categoria; etiqueta: string; icono: React.ReactNode }[] = [
   { valor: "marco", etiqueta: "Marcos", icono: <Circle className="h-3.5 w-3.5" /> },
@@ -61,6 +69,7 @@ const CATEGORIAS: { valor: Categoria; etiqueta: string; icono: React.ReactNode }
   { valor: "mascota", etiqueta: "Mascotas", icono: <PawPrint className="h-3.5 w-3.5" /> },
   { valor: "colorNombre", etiqueta: "Colores de nombre", icono: <Palette className="h-3.5 w-3.5" /> },
   { valor: "bordeNota", etiqueta: "Bordes de nota", icono: <StickyNote className="h-3.5 w-3.5" /> },
+  { valor: "estampa", etiqueta: "Estampas", icono: <Sticker className="h-3.5 w-3.5" /> },
 ];
 
 const RAREZAS_EN_ORDEN: RarezaItemTienda[] = ["legendario", "epico", "raro", "comun"];
@@ -136,6 +145,19 @@ function VistaPrevia({ categoria, item, grande }: { categoria: Categoria; item: 
       <div className={`flex ${alto} items-center justify-center`}>
         <div
           className={`rounded-[3px] bg-amber-200 ${grande ? "h-14 w-14" : "h-9 w-9"} ${clasesBordeNota(item.id)}`}
+        />
+      </div>
+    );
+  }
+  if (categoria === "estampa") {
+    const e = item as ItemEstampaTienda;
+    return (
+      <div className={`flex ${alto} items-center justify-center`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={e.imagenUrl}
+          alt=""
+          className={`object-contain drop-shadow-md ${grande ? "h-20 w-20" : "h-12 w-12"}`}
         />
       </div>
     );
@@ -301,9 +323,7 @@ function DetalleItemModal({
               )}
 
               {item.comprado && CATEGORIAS_SIN_EQUIPAR.includes(categoria) && (
-                <p className="text-center text-xs font-medium text-emerald-300">
-                  Ya lo tienes — actívalo desde el ícono de borde en cualquier nota.
-                </p>
+                <p className="text-center text-xs font-medium text-emerald-300">{MENSAJE_SIN_EQUIPAR[categoria]}</p>
               )}
               {item.comprado && !CATEGORIAS_SIN_EQUIPAR.includes(categoria) && equipadoDe(item) && CATEGORIAS_SIEMPRE_PUESTAS.includes(categoria) && (
                 <span className="flex w-full items-center justify-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/10 py-2.5 text-sm font-semibold text-emerald-300">
@@ -432,6 +452,7 @@ export function TiendaModal({
     if (categoria === "mascota") return catalogo.mascotas;
     if (categoria === "colorNombre") return catalogo.coloresNombre;
     if (categoria === "bordeNota") return catalogo.bordesNota;
+    if (categoria === "estampa") return catalogo.estampas;
     return catalogo.fondos;
   }, [catalogo, categoria]);
 
@@ -505,7 +526,9 @@ export function TiendaModal({
                           ? catalogo.coloresNombre.length
                           : c.valor === "bordeNota"
                             ? catalogo.bordesNota.length
-                            : catalogo.fondos.length);
+                            : c.valor === "estampa"
+                              ? catalogo.estampas.length
+                              : catalogo.fondos.length);
                 return (
                   <button
                     key={c.valor}

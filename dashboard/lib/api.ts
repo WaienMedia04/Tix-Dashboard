@@ -1523,7 +1523,7 @@ export async function abrirCofre(): Promise<EstadoCofre> {
   return res.json();
 }
 
-export type TipoItemTienda = "marco" | "titulo" | "fondo" | "mascota" | "colorNombre" | "bordeNota";
+export type TipoItemTienda = "marco" | "titulo" | "fondo" | "mascota" | "colorNombre" | "bordeNota" | "estampa";
 export type RarezaItemTienda = "comun" | "raro" | "epico" | "legendario";
 
 export interface ItemTiendaEstadoBase {
@@ -1565,6 +1565,12 @@ export interface ItemBordeNotaTienda extends ItemTiendaEstadoBase {
   nombre: string;
 }
 
+/** Sin `equipado`: comprarla la agrega directo a "Mis Estampas" (una EstampaOtorgada más), no hay un slot único en el perfil. */
+export interface ItemEstampaTienda extends ItemTiendaEstadoBase {
+  nombre: string;
+  imagenUrl: string;
+}
+
 export interface CatalogoTienda {
   monedas: number;
   /** mascotaId real del perfil (puede ser una de las 3 gratis, que no aparecen en `mascotas`). */
@@ -1577,6 +1583,7 @@ export interface CatalogoTienda {
   mascotas: ItemMascotaTienda[];
   coloresNombre: ItemColorNombreTienda[];
   bordesNota: ItemBordeNotaTienda[];
+  estampas: ItemEstampaTienda[];
 }
 
 export async function fetchTiendaCatalogo(): Promise<CatalogoTienda> {
@@ -1742,6 +1749,8 @@ export interface EstampaDefinicion {
   imagenUrl: string;
   forma: TipoEstampaForma;
   activo: boolean;
+  /** null = solo se regala; un número = también comprable en la Tienda por esa cantidad de monedas. */
+  precio: number | null;
   creadoPorNombre: string;
   createdAt: string;
 }
@@ -1765,7 +1774,7 @@ export async function fetchEstampas(slug: string): Promise<EstampaDefinicion[]> 
 
 export async function crearEstampaDefinicion(
   slug: string,
-  datos: { nombre: string; imagenUrl: string; forma: TipoEstampaForma },
+  datos: { nombre: string; imagenUrl: string; forma: TipoEstampaForma; precio?: number },
 ): Promise<EstampaDefinicion> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/estampas`, {
     method: "POST",
@@ -1787,7 +1796,7 @@ export async function crearEstampaDefinicion(
 export async function actualizarEstampaDefinicion(
   slug: string,
   id: string,
-  datos: { activo: boolean },
+  datos: Partial<{ activo: boolean; precio: number | null }>,
 ): Promise<EstampaDefinicion> {
   const res = await fetch(`${API_URL}/empresas/${encodeURIComponent(slug)}/estampas/${encodeURIComponent(id)}`, {
     method: "PATCH",
