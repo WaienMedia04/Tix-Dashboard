@@ -12,6 +12,7 @@ import {
   Lock,
   Palette,
   PawPrint,
+  Search,
   ShoppingBag,
   Sparkles,
   Sticker,
@@ -375,6 +376,8 @@ export function TiendaModal({
   const [procesando, setProcesando] = useState<string | null>(null);
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroRareza, setFiltroRareza] = useState<RarezaItemTienda | "">("");
 
   useEffect(() => {
     if (!open) return;
@@ -388,6 +391,8 @@ export function TiendaModal({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setDetalleId(null);
       setErrorAccion(null);
+      setBusqueda("");
+      setFiltroRareza("");
     }
   }, [open]);
 
@@ -416,6 +421,12 @@ export function TiendaModal({
   function abrirDetalle(itemId: string) {
     setErrorAccion(null);
     setDetalleId(itemId);
+  }
+
+  function cambiarCategoria(nueva: Categoria) {
+    setCategoria(nueva);
+    setBusqueda("");
+    setFiltroRareza("");
   }
 
   async function comprar(item: ItemCualquiera) {
@@ -458,12 +469,26 @@ export function TiendaModal({
 
   const itemDetalle = itemsCategoria.find((i) => i.id === detalleId) ?? null;
 
+  const itemsFiltrados = useMemo(() => {
+    const termino = busqueda.trim().toLowerCase();
+    return itemsCategoria.filter((item) => {
+      if (filtroRareza && item.rareza !== filtroRareza) return false;
+      if (termino && !nombreDe(item).toLowerCase().includes(termino)) return false;
+      return true;
+    });
+  }, [itemsCategoria, busqueda, filtroRareza]);
+
   const gruposPorRareza = useMemo(() => {
-    const ordenados = ordenarPorRareza(itemsCategoria);
+    const ordenados = ordenarPorRareza(itemsFiltrados);
     return RAREZAS_EN_ORDEN.map((r) => ({ rareza: r, items: ordenados.filter((i) => i.rareza === r) })).filter(
       (g) => g.items.length > 0,
     );
-  }, [itemsCategoria]);
+  }, [itemsFiltrados]);
+
+  const rarezasDisponibles = useMemo(
+    () => RAREZAS_EN_ORDEN.filter((r) => itemsCategoria.some((i) => i.rareza === r)),
+    [itemsCategoria],
+  );
 
   if (typeof document === "undefined") return null;
 
@@ -532,7 +557,7 @@ export function TiendaModal({
                 return (
                   <button
                     key={c.valor}
-                    onClick={() => setCategoria(c.valor)}
+                    onClick={() => cambiarCategoria(c.valor)}
                     className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
                       categoria === c.valor
                         ? "bg-gradient-to-r from-violet-500/25 to-indigo-500/15 text-white"
@@ -549,12 +574,55 @@ export function TiendaModal({
 
             {/* Catálogo */}
             <div className="relative min-h-0 flex-1 overflow-y-auto px-5 py-4">
+              {catalogo !== null && itemsCategoria.length > 0 && (
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <div className="relative min-w-[160px] flex-1">
+                    <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-white/40" />
+                    <input
+                      value={busqueda}
+                      onChange={(e) => setBusqueda(e.target.value)}
+                      placeholder="Buscar por nombre..."
+                      className="w-full rounded-lg border border-white/10 bg-white/5 py-1.5 pr-3 pl-8 text-xs text-white placeholder:text-white/40 focus:border-primary/50 focus:outline-none"
+                    />
+                  </div>
+                  {rarezasDisponibles.length > 1 && (
+                    <div className="flex flex-wrap gap-1">
+                      <button
+                        onClick={() => setFiltroRareza("")}
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase transition-colors ${
+                          filtroRareza === ""
+                            ? "bg-white/15 text-white"
+                            : "text-white/40 hover:bg-white/5 hover:text-white/70"
+                        }`}
+                      >
+                        Todas
+                      </button>
+                      {rarezasDisponibles.map((r) => (
+                        <button
+                          key={r}
+                          onClick={() => setFiltroRareza(filtroRareza === r ? "" : r)}
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase transition-colors ${
+                            filtroRareza === r
+                              ? ESTILO_RAREZA[r].fondoInsignia
+                              : "text-white/40 hover:bg-white/5 hover:text-white/70"
+                          }`}
+                        >
+                          {ESTILO_RAREZA[r].etiqueta}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {catalogo === null ? (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className="h-36 animate-pulse rounded-xl bg-white/5" />
                   ))}
                 </div>
+              ) : gruposPorRareza.length === 0 ? (
+                <p className="py-10 text-center text-xs text-white/40">Ningún resultado con esos filtros.</p>
               ) : (
                 <div className="space-y-5">
                   {gruposPorRareza.map(({ rareza, items }) => {

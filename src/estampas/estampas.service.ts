@@ -113,6 +113,7 @@ export class EstampasService {
       data: {
         ...(dto.activo !== undefined && { activo: dto.activo }),
         ...(dto.precio !== undefined && { precio: dto.precio }),
+        ...(dto.imagenUrl !== undefined && { imagenUrl: dto.imagenUrl }),
       },
       select: SELECT_ESTAMPA_DEFINICION,
     });
