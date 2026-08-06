@@ -6,7 +6,54 @@ import { Archive, Coins, Gift, PartyPopper } from "lucide-react";
 import { type EstadoCofre, abrirCofre, fetchCofreEstado } from "@/lib/api";
 import { Modal } from "@/components/Modal";
 
-/** Cofre diario (doc "Actualización Mural 2.0" #6) — flota junto al resto de badges del mural propio, se abre una vez al día. */
+/** Anillo SVG que se va llenando según `progreso/meta` — mismo componente para el botón flotante y el ícono grande del modal. */
+function AnilloProgreso({
+  progreso,
+  meta,
+  tamano,
+  grosor,
+  pista,
+}: {
+  progreso: number;
+  meta: number;
+  tamano: number;
+  grosor: number;
+  pista: string;
+}) {
+  const radio = tamano / 2 - grosor;
+  const circunferencia = 2 * Math.PI * radio;
+  const fraccion = meta > 0 ? Math.min(1, progreso / meta) : 0;
+  const centro = tamano / 2;
+
+  return (
+    <svg
+      className="pointer-events-none absolute inset-0 -rotate-90"
+      viewBox={`0 0 ${tamano} ${tamano}`}
+      aria-hidden
+    >
+      <circle cx={centro} cy={centro} r={radio} fill="none" stroke={pista} strokeWidth={grosor} />
+      <circle
+        cx={centro}
+        cy={centro}
+        r={radio}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={grosor}
+        strokeDasharray={circunferencia}
+        strokeDashoffset={circunferencia * (1 - fraccion)}
+        strokeLinecap="round"
+        className="transition-[stroke-dashoffset] duration-500 ease-out"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Cofre diario — a diferencia de estar disponible de una vez, la barra se
+ * llena con la actividad de hoy en la pizarra y las bitácoras; al llenarse
+ * se desbloquea y se puede abrir una sola vez, y se resetea al día
+ * siguiente (ver META_ACTIVIDADES en src/cofre/cofre.service.ts).
+ */
 export function CofreDiario() {
   const [estado, setEstado] = useState<EstadoCofre | null>(null);
   const [abierto, setAbierto] = useState(false);
@@ -20,7 +67,7 @@ export function CofreDiario() {
   }, []);
 
   async function abrir() {
-    if (abriendo) return;
+    if (abriendo || !estado?.desbloqueado || estado.yaAbierto) return;
     setAbriendo(true);
     try {
       const r = await abrirCofre();
@@ -35,15 +82,29 @@ export function CofreDiario() {
 
   if (estado === null) return null;
 
+  const listoParaAbrir = estado.desbloqueado && !estado.yaAbierto;
+  const enProgreso = !estado.yaAbierto && !listoParaAbrir;
+
   return (
     <>
       <motion.button
         onClick={() => setAbierto(true)}
         className="fixed right-4 bottom-4 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm print:hidden"
-        title={estado.yaAbierto ? "Ya abriste tu cofre de hoy" : "¡Tienes un cofre por abrir!"}
-        animate={estado.yaAbierto ? {} : { scale: [1, 1.12, 1] }}
-        transition={estado.yaAbierto ? undefined : { duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+        title={
+          estado.yaAbierto
+            ? "Ya abriste tu cofre de hoy"
+            : listoParaAbrir
+              ? "¡Tienes un cofre por abrir!"
+              : `Actividad de hoy: ${estado.progreso}/${estado.meta}`
+        }
+        animate={listoParaAbrir ? { scale: [1, 1.12, 1] } : {}}
+        transition={listoParaAbrir ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" } : undefined}
       >
+        {enProgreso && (
+          <span className="absolute inset-0 text-amber-400">
+            <AnilloProgreso progreso={estado.progreso} meta={estado.meta} tamano={44} grosor={3} pista="rgba(255,255,255,0.25)" />
+          </span>
+        )}
         {estado.yaAbierto ? <Archive className="h-5 w-5" /> : <Gift className="h-5 w-5" />}
       </motion.button>
 
@@ -67,12 +128,12 @@ export function CofreDiario() {
               </p>
               {estado.yaAbierto && <p className="text-xs text-muted-foreground">Vuelve mañana por otro.</p>}
             </>
-          ) : (
+          ) : listoParaAbrir ? (
             <>
               <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Gift className="h-9 w-9" />
               </span>
-              <p className="text-sm text-muted-foreground">Tienes un cofre disponible — ábrelo para ganar XP y monedas.</p>
+              <p className="text-sm text-muted-foreground">¡Llenaste la barra de hoy! Ábrelo para ganar XP y monedas.</p>
               <button
                 onClick={() => void abrir()}
                 disabled={abriendo}
@@ -80,6 +141,17 @@ export function CofreDiario() {
               >
                 {abriendo ? "Abriendo…" : "Abrir cofre"}
               </button>
+            </>
+          ) : (
+            <>
+              <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <AnilloProgreso progreso={estado.progreso} meta={estado.meta} tamano={64} grosor={4} pista="rgba(0,0,0,0.08)" />
+                <Gift className="h-9 w-9" />
+              </span>
+              <p className="text-sm text-muted-foreground">Se llena con tu actividad de hoy en la pizarra y las bitácoras.</p>
+              <p className="font-display text-lg font-bold text-foreground">
+                {estado.progreso}/{estado.meta}
+              </p>
             </>
           )}
         </div>

@@ -1503,6 +1503,12 @@ export interface EstadoCofre {
   yaAbierto: boolean;
   xp: number;
   monedas: number;
+  /** Actividades de hoy en pizarra/bitácora, tope en `meta`. */
+  progreso: number;
+  /** Actividades necesarias en el día para desbloquear el cofre. */
+  meta: number;
+  /** true si ya se puede abrir (progreso >= meta) — independiente de `yaAbierto`. */
+  desbloqueado: boolean;
 }
 
 export async function fetchCofreEstado(): Promise<EstadoCofre> {
