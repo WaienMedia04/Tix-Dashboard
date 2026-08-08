@@ -394,6 +394,15 @@ model TalentoPerfilMural {
   /// Título que se muestra junto al nombre, comprado con monedas — mismo
   /// catálogo estático que marcoId, o null (sin título).
   tituloId        String?
+  /// "lanyard" (carnet colgante, por defecto) o "cuadro" (foto enmarcada) —
+  /// qué se muestra en el centro del encabezado del mural.
+  modoEncabezado  String   @default("lanyard")
+  /// Tamaño del cuadro cuando modoEncabezado es "cuadro": "pequeno" | "mediano" | "grande".
+  cuadroTamano    String   @default("mediano")
+  /// Marco del cuadro de foto (distinto del marco del carnet/marcoId) — id
+  /// del catálogo en dashboard/lib/mural-marco-cuadro.ts / src/tienda/tienda.constant.ts,
+  /// o null (sin marco). Solo aplica cuando modoEncabezado es "cuadro".
+  cuadroMarcoId   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

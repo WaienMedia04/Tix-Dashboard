@@ -11,6 +11,7 @@ import {
   COLORES_NOMBRE,
   FONDOS,
   MARCOS,
+  MARCOS_CUADRO,
   MASCOTAS,
   TITULOS,
   type RarezaItemTienda,
@@ -23,7 +24,8 @@ export type TipoItemTienda =
   | 'mascota'
   | 'colorNombre'
   | 'bordeNota'
-  | 'estampa';
+  | 'estampa'
+  | 'marcoCuadro';
 
 /** A diferencia de marcoId/tituloId (nullables), TalentoPerfilMural.fondoId nunca es null — tiene un fondo gratis por defecto. */
 const FONDO_POR_DEFECTO = 'corcho';
@@ -68,6 +70,8 @@ export class TiendaService {
     if (colorNombre) return { tipo: 'colorNombre', precio: colorNombre.precio };
     const bordeNota = BORDES_NOTA.find((b) => b.id === itemId);
     if (bordeNota) return { tipo: 'bordeNota', precio: bordeNota.precio };
+    const marcoCuadro = MARCOS_CUADRO.find((m) => m.id === itemId);
+    if (marcoCuadro) return { tipo: 'marcoCuadro', precio: marcoCuadro.precio };
 
     const estampa = await this.prisma.estampaDefinicion.findUnique({
       where: { id: itemId },
@@ -101,6 +105,7 @@ export class TiendaService {
             fondoId: true,
             mascotaId: true,
             colorNombreId: true,
+            cuadroMarcoId: true,
           },
         }),
         this.prisma.estampaDefinicion.findMany({
@@ -165,6 +170,11 @@ export class TiendaService {
         descripcion:
           'Se agrega a tu colección de estampas — podrás pegarla en tu mural.',
         comprado: compradosSet.has(e.id),
+      })),
+      marcosCuadro: MARCOS_CUADRO.map((m) => ({
+        ...m,
+        comprado: compradosSet.has(m.id),
+        equipado: perfil?.cuadroMarcoId === m.id,
       })),
     };
   }
@@ -265,7 +275,9 @@ export class TiendaService {
           ? 'marcoId'
           : tipo === 'titulo'
             ? 'tituloId'
-            : 'mascotaId';
+            : tipo === 'marcoCuadro'
+              ? 'cuadroMarcoId'
+              : 'mascotaId';
       await this.prisma.talentoPerfilMural.upsert({
         where: { talentoId },
         create: { talentoId, empresaId, [campo]: itemId },

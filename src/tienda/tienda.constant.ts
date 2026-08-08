@@ -54,6 +54,14 @@ export interface ItemBordeNota {
   clases: string;
 }
 
+export interface ItemMarcoCuadro {
+  id: string;
+  nombre: string;
+  precio: number;
+  rareza: RarezaItemTienda;
+  descripcion: string;
+}
+
 /**
  * Catálogo de marcos (doc "Actualización Mural 2.0" #4 y #20) — decoran el
  * carnet del mural. Precios "retantes": alcanzarlos con las monedas que se
@@ -574,5 +582,45 @@ export const BORDES_NOTA: ItemBordeNota[] = [
     descripcion:
       'Un borde negro profundo con un resplandor sutil — el más exclusivo de todos.',
     clases: 'ring-4 ring-zinc-700 shadow-[0_0_20px_rgba(0,0,0,0.7)]',
+  },
+];
+
+/**
+ * Catálogo de marcos para el cuadro de foto EN VENTA — a diferencia de los
+ * 4 marcos que vienen de fábrica (siempre gratis, ver
+ * MARCOS_CUADRO_IDS_GRATIS en src/mural/mural-marco-cuadro.constant.ts),
+ * estos son animados y hay que comprarlos. Solo aplican cuando el talento
+ * eligió "cuadro" como modoEncabezado (en vez del lanyard).
+ */
+export const MARCOS_CUADRO: ItemMarcoCuadro[] = [
+  {
+    id: 'neon_pulsante',
+    nombre: 'Neón Pulsante',
+    precio: 550,
+    rareza: 'raro',
+    descripcion: 'Un marco fucsia que pulsa suavemente alrededor de tu foto.',
+  },
+  {
+    id: 'dorado_real',
+    nombre: 'Dorado Real',
+    precio: 900,
+    rareza: 'epico',
+    descripcion: 'Un marco dorado con un brillo que se desliza sin parar.',
+  },
+  {
+    id: 'arcoiris_fluido',
+    nombre: 'Arcoíris Fluido',
+    precio: 900,
+    rareza: 'epico',
+    descripcion:
+      'Los colores de marca de TalentiX fluyendo alrededor de tu foto.',
+  },
+  {
+    id: 'cristal',
+    nombre: 'Cristal',
+    precio: 1400,
+    rareza: 'legendario',
+    descripcion:
+      'Un marco helado con un destello que recorre el borde — el más exclusivo.',
   },
 ];

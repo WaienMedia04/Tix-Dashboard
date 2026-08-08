@@ -1219,6 +1219,12 @@ export interface PerfilMural {
   marcoId: string | null;
   /** Título que se muestra junto al nombre, comprado en la Tienda — null si no tiene. */
   tituloId: string | null;
+  /** "lanyard" (carnet colgante, por defecto) o "cuadro" (foto enmarcada) — qué se muestra en el centro del encabezado. */
+  modoEncabezado: string;
+  /** Tamaño del cuadro cuando modoEncabezado es "cuadro": "pequeno" | "mediano" | "grande". */
+  cuadroTamano: string;
+  /** Marco del cuadro de foto — ver dashboard/lib/mural-marco-cuadro.ts. null si no tiene. Solo aplica cuando modoEncabezado es "cuadro". */
+  cuadroMarcoId: string | null;
 }
 
 export interface NotaMural {
@@ -1529,7 +1535,15 @@ export async function abrirCofre(): Promise<EstadoCofre> {
   return res.json();
 }
 
-export type TipoItemTienda = "marco" | "titulo" | "fondo" | "mascota" | "colorNombre" | "bordeNota" | "estampa";
+export type TipoItemTienda =
+  | "marco"
+  | "titulo"
+  | "fondo"
+  | "mascota"
+  | "colorNombre"
+  | "bordeNota"
+  | "estampa"
+  | "marcoCuadro";
 export type RarezaItemTienda = "comun" | "raro" | "epico" | "legendario";
 
 export interface ItemTiendaEstadoBase {
@@ -1577,6 +1591,10 @@ export interface ItemEstampaTienda extends ItemTiendaEstadoBase {
   imagenUrl: string;
 }
 
+export interface ItemMarcoCuadroTienda extends ItemTiendaEstado {
+  nombre: string;
+}
+
 export interface CatalogoTienda {
   monedas: number;
   /** mascotaId real del perfil (puede ser una de las 3 gratis, que no aparecen en `mascotas`). */
@@ -1590,6 +1608,7 @@ export interface CatalogoTienda {
   coloresNombre: ItemColorNombreTienda[];
   bordesNota: ItemBordeNotaTienda[];
   estampas: ItemEstampaTienda[];
+  marcosCuadro: ItemMarcoCuadroTienda[];
 }
 
 export async function fetchTiendaCatalogo(): Promise<CatalogoTienda> {

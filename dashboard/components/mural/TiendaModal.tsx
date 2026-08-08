@@ -9,6 +9,7 @@ import {
   CloudRain,
   Coins,
   Crown,
+  Frame,
   Lock,
   Palette,
   PawPrint,
@@ -27,6 +28,7 @@ import {
   type ItemColorNombreTienda,
   type ItemEstampaTienda,
   type ItemFondoTienda,
+  type ItemMarcoCuadroTienda,
   type ItemMarcoTienda,
   type ItemMascotaTienda,
   type ItemTituloTienda,
@@ -37,12 +39,21 @@ import {
   fetchTiendaCatalogo,
 } from "@/lib/api";
 import { clasesBordeNota, clasesMarco } from "@/lib/tienda-catalogo";
+import { marcoCuadroPorId } from "@/lib/mural-marco-cuadro";
 import { IconoCatalogo } from "@/lib/iconos-catalogo";
 import { esFondoAnimado, fondoMuralCss, FONDOS_LLUVIA_IDS } from "@/lib/mural-fondos";
 import { coloresNombreMural } from "@/lib/mural-colores-nombre";
 import { ESTILO_RAREZA, ordenarPorRareza } from "@/lib/rareza-tienda";
 
-type Categoria = "marco" | "titulo" | "fondo" | "mascota" | "colorNombre" | "bordeNota" | "estampa";
+type Categoria =
+  | "marco"
+  | "titulo"
+  | "fondo"
+  | "mascota"
+  | "colorNombre"
+  | "bordeNota"
+  | "estampa"
+  | "marcoCuadro";
 type ItemCualquiera =
   | ItemMarcoTienda
   | ItemTituloTienda
@@ -50,7 +61,8 @@ type ItemCualquiera =
   | ItemMascotaTienda
   | ItemColorNombreTienda
   | ItemBordeNotaTienda
-  | ItemEstampaTienda;
+  | ItemEstampaTienda
+  | ItemMarcoCuadroTienda;
 
 /** Categorías cuyo campo del perfil nunca puede quedar vacío — equipado no se puede "quitar", solo cambiar por otro. */
 const CATEGORIAS_SIEMPRE_PUESTAS: Categoria[] = ["fondo", "colorNombre"];
@@ -71,6 +83,7 @@ const CATEGORIAS: { valor: Categoria; etiqueta: string; icono: React.ReactNode }
   { valor: "colorNombre", etiqueta: "Colores de nombre", icono: <Palette className="h-3.5 w-3.5" /> },
   { valor: "bordeNota", etiqueta: "Bordes de nota", icono: <StickyNote className="h-3.5 w-3.5" /> },
   { valor: "estampa", etiqueta: "Estampas", icono: <Sticker className="h-3.5 w-3.5" /> },
+  { valor: "marcoCuadro", etiqueta: "Marcos de cuadro", icono: <Frame className="h-3.5 w-3.5" /> },
 ];
 
 const RAREZAS_EN_ORDEN: RarezaItemTienda[] = ["legendario", "epico", "raro", "comun"];
@@ -160,6 +173,20 @@ function VistaPrevia({ categoria, item, grande }: { categoria: Categoria; item: 
           alt=""
           className={`object-contain drop-shadow-md ${grande ? "h-20 w-20" : "h-12 w-12"}`}
         />
+      </div>
+    );
+  }
+  if (categoria === "marcoCuadro") {
+    const marco = marcoCuadroPorId(item.id);
+    const dim = grande ? "h-14 w-14" : "h-9 w-9";
+    return (
+      <div className={`flex ${alto} items-center justify-center`}>
+        <span
+          className={`inline-flex rounded-lg ${marco?.clases ?? "bg-white shadow-xl"}`}
+          style={{ padding: grande ? (marco?.grosor ?? "0.5rem") : "0.35rem" }}
+        >
+          <span className={`rounded bg-white/25 ${dim}`} />
+        </span>
       </div>
     );
   }
@@ -369,6 +396,7 @@ export function TiendaModal({
     fondoId: string | null,
     mascotaId: string | null,
     colorNombreId: string,
+    cuadroMarcoId: string | null,
   ) => void;
 }) {
   const [catalogo, setCatalogo] = useState<CatalogoTienda | null>(null);
@@ -415,6 +443,7 @@ export function TiendaModal({
       nuevo.fondos.find((f) => f.equipado)?.id ?? null,
       nuevo.mascotaEquipadaId,
       nuevo.colorNombreEquipadoId,
+      nuevo.marcosCuadro.find((m) => m.equipado)?.id ?? null,
     );
   }
 
@@ -464,6 +493,7 @@ export function TiendaModal({
     if (categoria === "colorNombre") return catalogo.coloresNombre;
     if (categoria === "bordeNota") return catalogo.bordesNota;
     if (categoria === "estampa") return catalogo.estampas;
+    if (categoria === "marcoCuadro") return catalogo.marcosCuadro;
     return catalogo.fondos;
   }, [catalogo, categoria]);
 
@@ -553,7 +583,9 @@ export function TiendaModal({
                             ? catalogo.bordesNota.length
                             : c.valor === "estampa"
                               ? catalogo.estampas.length
-                              : catalogo.fondos.length);
+                              : c.valor === "marcoCuadro"
+                                ? catalogo.marcosCuadro.length
+                                : catalogo.fondos.length);
                 return (
                   <button
                     key={c.valor}

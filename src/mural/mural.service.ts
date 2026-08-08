@@ -32,6 +32,9 @@ const SELECT_PERFIL = {
   mascotaNombre: true,
   marcoId: true,
   tituloId: true,
+  modoEncabezado: true,
+  cuadroTamano: true,
+  cuadroMarcoId: true,
 } as const;
 
 const PERFIL_POR_DEFECTO = {
@@ -49,6 +52,9 @@ const PERFIL_POR_DEFECTO = {
   mascotaNombre: null,
   marcoId: null,
   tituloId: null,
+  modoEncabezado: 'lanyard',
+  cuadroTamano: 'mediano',
+  cuadroMarcoId: null,
 };
 
 /** Recorta a 5, recorta espacios y descarta vacíos — misma limpieza al crear y al actualizar. */
@@ -303,6 +309,15 @@ export class MuralService {
               ? null
               : dto.mascotaNombre.trim() || null,
         }),
+        ...(dto.modoEncabezado !== undefined && {
+          modoEncabezado: dto.modoEncabezado,
+        }),
+        ...(dto.cuadroTamano !== undefined && {
+          cuadroTamano: dto.cuadroTamano,
+        }),
+        ...(dto.cuadroMarcoId !== undefined && {
+          cuadroMarcoId: dto.cuadroMarcoId,
+        }),
       },
       update: {
         ...(dto.apodo !== undefined && { apodo: dto.apodo.trim() || null }),
@@ -335,6 +350,15 @@ export class MuralService {
             dto.mascotaNombre === null
               ? null
               : dto.mascotaNombre.trim() || null,
+        }),
+        ...(dto.modoEncabezado !== undefined && {
+          modoEncabezado: dto.modoEncabezado,
+        }),
+        ...(dto.cuadroTamano !== undefined && {
+          cuadroTamano: dto.cuadroTamano,
+        }),
+        ...(dto.cuadroMarcoId !== undefined && {
+          cuadroMarcoId: dto.cuadroMarcoId,
         }),
       },
       select: SELECT_PERFIL,

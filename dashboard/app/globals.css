@@ -350,9 +350,39 @@
   animation: fondo-mural-flow 14s ease-in-out infinite;
 }
 
+/* Marcos animados del cuadro de foto (Tienda) — "Neón Pulsante" respira con
+   un glow que crece y se achica; "Dorado Real"/"Cristal" son un degradado
+   repetido en movimiento (mismo truco que franja-degradado-talentix). */
+@keyframes marco-pulso {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.35); }
+}
+.marco-cuadro-neon {
+  background-color: #d946ef;
+  animation: marco-pulso 1.8s ease-in-out infinite;
+}
+
+@keyframes marco-brillo {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.marco-cuadro-dorado {
+  background-image: linear-gradient(90deg, #fde68a, #fbbf24, #b45309, #fde68a, #fbbf24, #b45309);
+  background-size: 200% 100%;
+  animation: marco-brillo 3s linear infinite;
+}
+.marco-cuadro-cristal {
+  background-image: linear-gradient(90deg, #cffafe, #ffffff, #a5f3fc, #cffafe, #ffffff, #a5f3fc);
+  background-size: 200% 100%;
+  animation: marco-brillo 2.4s linear infinite;
+  box-shadow: 0 0 20px rgba(103, 232, 249, 0.5);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton-shimmer { animation: none; }
   .animate-chisme-blink { animation: none; background-color: var(--color-destructive); }
   .franja-degradado-talentix { animation: none; background-position: 0% 50%; }
   .fondo-mural-animado { animation: none; }
+  .marco-cuadro-neon { animation: none; }
+  .marco-cuadro-dorado, .marco-cuadro-cristal { animation: none; background-position: 0% 50%; }
 }

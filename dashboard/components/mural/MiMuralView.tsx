@@ -33,6 +33,7 @@ import Dock from "@/components/vendor/Dock/Dock";
 import TextType from "@/components/vendor/TextType/TextType";
 import GradientText from "@/components/vendor/GradientText/GradientText";
 import { LanyardBadge } from "./LanyardBadge";
+import { CuadroFoto } from "./CuadroFoto";
 import { PerfilDivertidoForm } from "./PerfilDivertidoForm";
 import { SobreMiSoloLectura } from "./SobreMiSoloLectura";
 import { SelectorFondo } from "./SelectorFondo";
@@ -40,6 +41,7 @@ import { SelectorFondoEspecial } from "./SelectorFondoEspecial";
 import { SelectorColorNombre } from "./SelectorColorNombre";
 import { SelectorColorWidgets } from "./SelectorColorWidgets";
 import { SelectorMascota } from "./SelectorMascota";
+import { SelectorEncabezado } from "./SelectorEncabezado";
 import { LluviaFondo } from "./LluviaFondo";
 import { EfectoCanvasFondoRender } from "./EfectoCanvasFondo";
 import { MuralCanvas } from "./MuralCanvas";
@@ -199,12 +201,21 @@ export function MiMuralView({
       >
         {/* Encabezado: carnet grande y centrado, nombre y rol debajo */}
         <div className="flex shrink-0 flex-col items-center px-4 pb-4 text-center">
-          <LanyardBadge
-            nombreCompleto={nombreCompleto}
-            frontImage={mural.talento.carnetFotoUrl ?? mural.talento.fotoUrl}
-            logoUrl={mural.empresa.logoUrl}
-            marcoClases={clasesMarco(mural.perfil.marcoId)}
-          />
+          {mural.perfil.modoEncabezado === "cuadro" ? (
+            <CuadroFoto
+              nombreCompleto={nombreCompleto}
+              frontImage={mural.talento.carnetFotoUrl ?? mural.talento.fotoUrl}
+              tamano={mural.perfil.cuadroTamano}
+              marcoId={mural.perfil.cuadroMarcoId}
+            />
+          ) : (
+            <LanyardBadge
+              nombreCompleto={nombreCompleto}
+              frontImage={mural.talento.carnetFotoUrl ?? mural.talento.fotoUrl}
+              logoUrl={mural.empresa.logoUrl}
+              marcoClases={clasesMarco(mural.perfil.marcoId)}
+            />
+          )}
           <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
             {mural.perfil.estado &&
               (() => {
@@ -493,7 +504,7 @@ export function MiMuralView({
         <TiendaModal
           open={mostrarTienda}
           onClose={() => setMostrarTienda(false)}
-          onCambio={(marcoId, tituloId, fondoId, mascotaId, colorNombreId) =>
+          onCambio={(marcoId, tituloId, fondoId, mascotaId, colorNombreId, cuadroMarcoId) =>
             setMural((prev) =>
               prev
                 ? {
@@ -505,6 +516,7 @@ export function MiMuralView({
                       fondoId: fondoId ?? prev.perfil.fondoId,
                       mascotaId,
                       colorNombreId,
+                      cuadroMarcoId,
                     },
                   }
                 : prev,
@@ -516,6 +528,23 @@ export function MiMuralView({
       {editable && (
         <Modal open={mostrarFondo} onClose={() => setMostrarFondo(false)} title="Personalizar mural">
           <div className="space-y-5">
+            <div>
+              <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Encabezado del mural
+              </p>
+              <SelectorEncabezado
+                modoEncabezado={mural.perfil.modoEncabezado}
+                cuadroTamano={mural.perfil.cuadroTamano}
+                cuadroMarcoId={mural.perfil.cuadroMarcoId}
+                onCambiado={(cambios) =>
+                  setMural((prev) => (prev ? { ...prev, perfil: { ...prev.perfil, ...cambios } } : prev))
+                }
+                onAbrirTienda={() => {
+                  setMostrarFondo(false);
+                  setMostrarTienda(true);
+                }}
+              />
+            </div>
             <div>
               <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                 Fondo del mural
